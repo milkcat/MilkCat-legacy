@@ -18,8 +18,8 @@ class PartOfSpeechFeatureExtractor: public FeatureExtractor {
   size_t size() const { return term_instance_->size(); }
 
   const char **ExtractFeatureAt(size_t position) {
-    int term_type = term_instance_->integer_at(position, TermInstance::kTermTypeI);
-    const char *term_text = term_instance_->string_at(position, TermInstance::kTermTextS);
+    int term_type = term_instance_->term_type_at(position);
+    const char *term_text = term_instance_->term_text_at(position);
     size_t term_length = strlen(term_text);
 
     switch (term_type) {

@@ -12,7 +12,6 @@
 #include "milkcat.h"
 #include "crf_tagger.h"
 #include "tokenization.h"
-#include "instance.h"
 #include "utils.h"
 #include "tag_set.h"
 #include "segment_tag_set.h"
@@ -132,9 +131,11 @@ class MilkCatHMMSegPOSTaggerProcessor: public MilkCatProcessor {
   }
 
   size_t SentenceLength() { return term_instance_->size(); }
-  const char *GetTerm(int position) { return term_instance_->string_at(position, TermInstance::kTermTextS); }
-  const char *GetPartOfSpeechTag(int position) { return part_of_speech_tag_instance_->string_at(position, PartOfSpeechTagInstance::kPOSTagS); }
-  int GetWordType(int position) { return term_instance_->integer_at(position, TermInstance::kTermTypeI); }
+  const char *GetTerm(int position) { return term_instance_->term_text_at(position); }
+  const char *GetPartOfSpeechTag(int position) { 
+    return part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
+  }
+  int GetWordType(int position) { return term_instance_->term_type_at(position); }
 
  protected:
   HMMSegmentAndPOSTagger *hmm_segment_and_pos_tagger_;
@@ -209,9 +210,11 @@ class HmmAndCrfProcessor: public MilkCatHMMSegPOSTaggerProcessor {
   }
 
   size_t SentenceLength() { return next_term_instance_->size(); }
-  const char *GetTerm(int position) { return next_term_instance_->string_at(position, TermInstance::kTermTextS); }
-  const char *GetPartOfSpeechTag(int position) { return next_part_of_speech_tag_instance_->string_at(position, PartOfSpeechTagInstance::kPOSTagS); }
-  int GetWordType(int position) { return next_term_instance_->integer_at(position, TermInstance::kTermTypeI); }
+  const char *GetTerm(int position) { return next_term_instance_->term_text_at(position); }
+  const char *GetPartOfSpeechTag(int position) { 
+    return next_part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
+  }
+  int GetWordType(int position) { return next_term_instance_->term_type_at(position); }
 
  protected:
   TermInstance *next_term_instance_;
@@ -266,8 +269,8 @@ class MilkCatCRFSegProcessor: public MilkCatProcessor {
   }
 
   size_t SentenceLength() { return term_instance_->size(); }
-  const char *GetTerm(int position) { return term_instance_->string_at(position, TermInstance::kTermTextS); }
-  int GetWordType(int position) { return term_instance_->integer_at(position, TermInstance::kTermTypeI); }
+  const char *GetTerm(int position) { return term_instance_->term_text_at(position); }
+  int GetWordType(int position) { return term_instance_->term_type_at(position); }
 
  protected:
   CRFSegmenter *crf_segmenter_;
@@ -318,7 +321,9 @@ class MilkCatCRFSegPOSTagProcessor: public MilkCatCRFSegProcessor {
     return 1;
   }
 
-  const char *GetPartOfSpeechTag(int position) { return part_of_speech_tag_instance_->string_at(position, PartOfSpeechTagInstance::kPOSTagS); }
+  const char *GetPartOfSpeechTag(int position) { 
+    return part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
+  }
 
  protected:
   CRFPOSTagger *crf_pos_tagger_;

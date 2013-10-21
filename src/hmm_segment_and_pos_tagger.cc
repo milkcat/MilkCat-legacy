@@ -15,7 +15,6 @@
 #include "darts.h"
 #include "utils.h"
 #include "hmm_segment_and_pos_tagger.h"
-#include "instance.h"
 #include "milkcat_config.h"
 #include "pos_tag_set.h"
 #include "token_instance.h"
@@ -199,7 +198,7 @@ void HMMSegmentAndPOSTagger::Viterbi(const TokenInstance *token_instance) {
   for (size_t i = 0; i < token_instance->size(); ++i) {
 
     // not a chinese character
-    switch (token_instance->integer_at(i, TokenInstance::kTokenTypeI)) {
+    switch (token_instance->token_type_at(i)) {
      case TokenInstance::kPeriod:
       ViterbiAddOtherCharPath(i, tag_PU);
       continue;
@@ -225,7 +224,7 @@ void HMMSegmentAndPOSTagger::Viterbi(const TokenInstance *token_instance) {
     for (int j = 0; i + j < token_instance->size(); ++j) {
       size_t key_pos = 0;
 
-      Darts::DoubleArray::value_type term_id = double_array_->traverse(token_instance->string_at(i + j, TokenInstance::kTokenUTF8S),
+      Darts::DoubleArray::value_type term_id = double_array_->traverse(token_instance->token_text_at(i + j),
                                                                        node_pos,
                                                                        key_pos);
       if (term_id >= 0) {
@@ -288,7 +287,7 @@ void HMMSegmentAndPOSTagger::FindBestResult(TermInstance *term_instance,
     buffer.clear();
     previous_node = current_block->previous_node_id;
     for (int i = previous_node; i < current_node; ++i) {
-      buffer.append(token_instance->string_at(i, TokenInstance::kTokenUTF8S));
+      buffer.append(token_instance->token_text_at(i));
     }
     terms.push_back(buffer);
 
@@ -297,7 +296,7 @@ void HMMSegmentAndPOSTagger::FindBestResult(TermInstance *term_instance,
     if (token_number > 1) {
       term_types.push_back(TermInstance::kChineseWord);
     } else {
-      term_types.push_back(token_type_to_word_type(token_instance->integer_at(previous_node, TokenInstance::kTokenTypeI)));
+      term_types.push_back(token_type_to_word_type(token_instance->token_type_at(previous_node)));
     }
     
     POS_tags.push_back(current_block->POS_tag);

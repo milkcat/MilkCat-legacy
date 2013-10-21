@@ -104,10 +104,10 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
   const char *pos_tag;
 
   for (size_t i = 0; i < in_term_instance->size(); ++i) {
-    term_token_number = in_term_instance->integer_at(i, TermInstance::kTermTokenNumberI);
-    current_token_type = in_token_instance->integer_at(current_token, TokenInstance::kTokenTypeI);
-    pos_tag = in_part_of_speech_tag_instance->string_at(i, PartOfSpeechTagInstance::kPOSTagS);
-    term_str = in_term_instance->string_at(i, TermInstance::kTermTextS);
+    term_token_number = in_term_instance->token_number_at(i);
+    current_token_type = in_token_instance->token_type_at(current_token);
+    pos_tag = in_part_of_speech_tag_instance->part_of_speech_tag_at(i);
+    term_str = in_term_instance->term_text_at(i);
     // printf("%d\n", ner_term_number);
 
     if (strcmp(pos_tag, "NR") != 0 && (term_token_number > 1 || 
@@ -193,13 +193,13 @@ void OutOfVocabularyWordRecognition::CopyTermPOSTagValue(TermInstance *dest_term
                                                          int src_position)  {
 
   dest_term_instance->set_value_at(dest_postion,
-                                   src_term_instance->string_at(src_position, TermInstance::kTermTextS),
-                                   src_term_instance->integer_at(src_position, TermInstance::kTermTokenNumberI),
-                                   src_term_instance->integer_at(src_position, TermInstance::kTermTypeI));
+                                   src_term_instance->term_text_at(src_position),
+                                   src_term_instance->token_number_at(src_position),
+                                   src_term_instance->term_type_at(src_position));
 
   dest_part_of_speech_tag_instance->set_value_at(
       dest_postion, 
-      src_part_of_speech_tag_instance->string_at(src_position, PartOfSpeechTagInstance::kPOSTagS));
+      src_part_of_speech_tag_instance->part_of_speech_tag_at(src_position));
 }
 
 void OutOfVocabularyWordRecognition::RecognizeRange(const TokenInstance *token_instance, int begin, int end) {

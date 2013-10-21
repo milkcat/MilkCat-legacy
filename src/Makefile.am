@@ -13,7 +13,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         crf_tagger.h \
                         hmm_segment_and_pos_tagger.cc \
                         hmm_segment_and_pos_tagger.h \
-                        instance.h \
+                        instance_data.h \
+                        instance_data.cc \
                         out_of_vocabulary_word_recognitioin.cc \
                         out_of_vocabulary_word_recognitioin.h \
                         pos_tag_set.cc \
@@ -22,8 +23,11 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         tag_sequence.h \
                         tag_set.h \
                         term_instance.h \
+                        term_instance.cc \
                         part_of_speech_tag_instance.h \
+                        part_of_speech_tag_instance.cc \
                         token_instance.h \
+                        token_instance.cc \
                         token_lex.cc \
                         token_lex.h \
                         tokenization.cc \
@@ -35,7 +39,9 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         milkcat.h \
                         feature_extractor.h \
                         feature_extractor.cc \
-                        crf_pos_tagger.cc
+                        crf_pos_tagger.cc\
+                        strlcpy.cc\
+                        strlcpy.h
 
 
 libmain_a_SOURCES = main.c

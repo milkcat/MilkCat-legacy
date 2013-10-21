@@ -12,7 +12,6 @@
 
 #include <stdio.h>
 #include "darts.h"
-#include "instance.h"
 #include "crf_segmenter.h"
 #include "crf_pos_tagger.h"
 #include "part_of_speech_tag_instance.h"
@@ -68,29 +67,33 @@ class OffsetTokenInstance: public TokenInstance {
   OffsetTokenInstance(): TokenInstance() {
   }
 
-  void Update(const TokenInstance *original_instance, size_t begin, size_t end) {
+  // Update it with a new TokenInstance with its begin and end
+  void Update(const TokenInstance *original_instance, int begin, int end) {
     original_instance_ = original_instance;
     begin_ = begin;
     end_ = end;
     assert(begin < end && end <= original_instance->size());
   }
 
-  const char *string_at(size_t position, int feature_id) const {
-    assert(position < size() && feature_id < original_instance_->string_number());
-    return original_instance_->string_at(position + begin_, feature_id);
+  // Get token string at position
+  const char *token_text_at(int position) const { 
+    assert(position < size());
+    return original_instance_->token_text_at(position + begin_); 
   }
 
-  const int integer_at(size_t position, int feature_id) const {
-    assert(position < size() && feature_id < original_instance_->integer_number());
-    return original_instance_->integer_at(position + begin_, feature_id);
+  // Get the token type at position
+  int token_type_at(int position) const { 
+    assert(position < size());
+    return original_instance_->token_type_at(position + begin_); 
   }
 
-  size_t size() const { return end_ - begin_; }
+  // Get the size of this instance
+  int size() const { return end_ - begin_; }
    
  private:
-  const Instance *original_instance_;
-  size_t begin_;
-  size_t end_;
+  const TokenInstance *original_instance_;
+  int begin_;
+  int end_;
 
   DISALLOW_COPY_AND_ASSIGN(OffsetTokenInstance);
 };

@@ -1,9 +1,6 @@
-#ifndef PREPARE_H
-#define PREPARE_H
+#ifndef TOKENIZATION_H
+#define TOKENIZATION_H
 
-#include <iostream>
-#include <memory>
-#include <vector>
 #include "token_lex.h"
 
 class TokenInstance;

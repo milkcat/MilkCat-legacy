@@ -21,4 +21,8 @@ const char *get_error_message();
 
 int token_type_to_word_type(int token_type);
 
-#endif
+#ifndef HAVE_STRLCPY
+size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif // HAVE_STRLCPY
+
+#endif // UTILSH_

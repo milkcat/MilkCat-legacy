@@ -12,7 +12,6 @@
 #include "string.h"
 #include "stdio.h"
 #include "crf_tagger.h"
-#include "instance.h"
 #include "tag_sequence.h"
 #include "feature_extractor.h"
 #include "tag_set.h"

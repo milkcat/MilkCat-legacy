@@ -3,7 +3,11 @@
 #include "token_lex.h"
 #include "milkcat_config.h"
 
-Tokenization::~Tokenization() {}
+Tokenization::~Tokenization() {
+  if (buffer_alloced_ == true) {
+    yy_delete_buffer(yy_buffer_state_);
+  }
+}
 
 bool Tokenization::GetSentence(TokenInstance *token_instance) {
   int token_type;
@@ -15,9 +19,7 @@ bool Tokenization::GetSentence(TokenInstance *token_instance) {
     if (token_type == TokenInstance::kEnd) 
       break;
     
-    token_instance->set_string_at(token_count, TokenInstance::kTokenUTF8S, yytext);
-    token_instance->set_integer_at(token_count, TokenInstance::kTokenTypeI, token_type);
-    
+    token_instance->set_value_at(token_count, yytext, token_type);
     token_count++;
     
     if (token_type == TokenInstance::kPeriod || token_type == TokenInstance::kCrLf) 

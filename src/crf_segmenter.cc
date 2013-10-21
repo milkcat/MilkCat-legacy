@@ -24,9 +24,8 @@ class SegmentFeatureExtractor: public FeatureExtractor {
   size_t size() const { return token_instance_->size(); }
 
   const char **ExtractFeatureAt(size_t position) {
-    if (token_instance_->integer_at(position, TokenInstance::kTokenTypeI) == TokenInstance::kChineseChar) {
-      strcpy(feature_list_[0], 
-             token_instance_->string_at(position, TokenInstance::kTokenUTF8S));
+    if (token_instance_->token_type_at(position) == TokenInstance::kChineseChar) {
+      strcpy(feature_list_[0], token_instance_->token_text_at(position));
     } else {
       strcpy(feature_list_[0], "。");
     }
@@ -95,14 +94,14 @@ void CRFSegmenter::Segment(TermInstance *term_instance, const TokenInstance *tok
   int term_type;
   for (i = 0; i < tag_sequence_->length(); ++i) {
     token_count++;
-    buffer.append(token_instance->string_at(i, TokenInstance::kTokenUTF8S));
+    buffer.append(token_instance->token_text_at(i));
 
     tag_id = tag_sequence_->GetTagAt(i);
     // printf("%s\n", tag_set_->TagIdToTagString(tag_id));
     if (tag_id == SegmentTagSet::S || tag_id == SegmentTagSet::E) {
 
       if (tag_id == SegmentTagSet::S) {
-        term_type = token_type_to_word_type(token_instance->integer_at(i, TokenInstance::kTokenTypeI));
+        term_type = token_type_to_word_type(token_instance->token_type_at(i));
       } else {
         term_type = TermInstance::kChineseWord;
       }

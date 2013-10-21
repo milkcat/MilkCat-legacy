@@ -35,7 +35,7 @@ AC_TYPE_UINT8_T
 AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memset munmap sqrt strdup])
+AC_CHECK_FUNCS([memset munmap sqrt strdup strlcpy])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile])
