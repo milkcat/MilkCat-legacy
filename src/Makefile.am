@@ -43,5 +43,6 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         strlcpy.cc\
                         strlcpy.h
 
-
+bin_PROGRAMS = mkbigram
+mkbigram_SOURCES = make_bigram_model.cc
 libmain_a_SOURCES = main.c

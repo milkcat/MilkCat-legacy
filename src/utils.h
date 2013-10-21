@@ -1,4 +1,3 @@
-
 /*
  * utils.h
  *
@@ -25,4 +24,4 @@ int token_type_to_word_type(int token_type);
 size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif // HAVE_STRLCPY
 
-#endif // UTILSH_
+#endif // UTILS_H
