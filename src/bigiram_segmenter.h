@@ -50,7 +50,7 @@ class BigramSegmenter {
   static const int kNBest = 3;
 
   // Nodes that used in viterbi decoding
-  OptimalNode *decode_node_[kTokenMax];
+  OptimalNode *decode_node_[kTokenMax + 1];
 
   // Index for words in dictionary
   Darts::DoubleArray *unigram_trie_;

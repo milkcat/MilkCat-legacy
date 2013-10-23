@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <darts.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <algorithm>
 #include "bigram_segmenter.h"
 #include "milkcat_config.h"
 #include "utils.h"
@@ -165,8 +167,31 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   return self;
 }
 
+// Compare two OptimalNodes, use in BigramSegmenter::Process
+bool OptimalNodeCmp(OptimalNode &n1, OptimalNode &n2) {
+  // 0.0 is greater than any other values
+  if (n1.weight == 0.0) return false;
+
+  return n1.weight < n2.weight;
+}
+
 void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *token_instance) {
-  
+  // Clear decode_node
+  for (int i = 0; i < sizeof(decode_node_) / sizeof(OptimalNode *); ++i) {
+    memset(decode_node_[i], 0, BigramSegmenter::kNBest * sizeof(OptimalNode));
+  }
+
+  // Begin-of-sentence node
+  decode_node_[0][0].weight = 1;
+
+  // Start decoding
+  size_t double_array_node_position;
+  for (int i = 0; i < token_instance.size(); ++i) {
+    double_array_node_position = 0;
+    for (int j = 0; j + i < token_instance.size(); ++j) {
+      int term_id = unigram_trie_->traverse()
+    }
+  }
 }
 
 

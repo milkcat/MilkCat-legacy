@@ -93,7 +93,9 @@ int BuildDoubleArray(const std::map<std::string, double> &unigram_data,
                      Darts::DoubleArray &double_array) {
   std::vector<const char *> key;
   std::vector<Darts::DoubleArray::value_type> term_id;
-  int i = 0;
+
+  // term_id = 0 is reserved for out-of-vocabulary word
+  int i = 1;
 
   for (std::map<std::string, double>::const_iterator it = unigram_data.begin(); it != unigram_data.end(); ++it) {
     key.push_back(it->first.c_str());
