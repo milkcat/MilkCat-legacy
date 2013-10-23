@@ -26,5 +26,42 @@
 #ifndef BIGRAM_SEGMENTER_H
 #define BIGRAM_SEGMENTER_H
 
+#include <tr1/unordered_map>
+#include <stdint.h>
+#include "milkcat_config.h"
+#include "darts.h"
+
+
+struct OptimalNode;
+
+class BigramSegmenter {
+ public:
+  static BigramSegmenter *Create(const char *trietree_path,
+                                 const char *unigram_binary_path,
+                                 const char *bigram_binary_path);
+
+  ~BigramSegmenter();
+
+  // Segment a token instance into term instance
+  void Process(TermInstance *term_instance, const TokenInstance *token_instance);
+
+ private:
+  // Number of OptimalNode in each position of decode_node_
+  static const int kNBest = 3;
+
+  // Nodes that used in viterbi decoding
+  OptimalNode *decode_node_[kTokenMax];
+
+  // Index for words in dictionary
+  Darts::DoubleArray *unigram_trie_;
+
+  // Weight for each unigram term (Index by term_id)
+  float *unigram_weight_;
+
+  // Weight for bigram term_id pair, key is left_id << 32 + right_id
+  std::tr1::unordered_map<int64_t, float> bigram_weight_;
+
+  BigramSegmenter(int bigram_number);
+};
 
 #endif
