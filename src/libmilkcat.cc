@@ -21,6 +21,7 @@
 #include "pos_tag_set.h"
 #include "part_of_speech_tag_instance.h"
 #include "hmm_segment_and_pos_tagger.h"
+#include "bigram_segmenter.h"
 #include "out_of_vocabulary_word_recognitioin.h"
 
 
@@ -278,6 +279,66 @@ class MilkCatCRFSegProcessor: public MilkCatProcessor {
   
 };
 
+class BigramSegProcessor: public MilkCatProcessor {
+ public:
+  static BigramSegProcessor *Create(const char *model_dir_path) {
+    BigramSegProcessor *self = new BigramSegProcessor();
+    if (self->Initialize(model_dir_path) == false) {
+      delete self;
+      return NULL;
+    } else {
+      return self;
+    }
+  }
+
+  bool Initialize(const char *model_dir_path) {
+    if (MilkCatProcessor::Initialize() == false) return false;
+    std::string unigram_index_path = std::string(model_dir_path) + "unigram.idx";
+    std::string unigram_data_path = std::string(model_dir_path) + "unigram.bin";
+    std::string bigram_path = std::string(model_dir_path) + "bigram.bin";
+
+    bigram_segmenter_ = BigramSegmenter::Create(unigram_index_path.c_str(),
+                                                unigram_data_path.c_str(),
+                                                bigram_path.c_str());
+    if (bigram_segmenter_ == NULL) return false;
+
+    term_instance_ = new TermInstance();
+    return true;
+  }
+
+  BigramSegProcessor(): bigram_segmenter_(NULL),
+                            term_instance_(NULL) {
+  }
+
+  ~BigramSegProcessor() {
+    if (bigram_segmenter_ != NULL) {
+      delete bigram_segmenter_;
+      bigram_segmenter_ = NULL;
+    }
+
+    if (term_instance_ != NULL) {
+      delete term_instance_;
+      term_instance_ = NULL;
+    }
+  }
+  
+  int NextSentence() {
+    if (MilkCatProcessor::NextSentence() == 0) return 0;
+    bigram_segmenter_->Process(term_instance_, token_instance_);
+
+    return 1;
+  }
+
+  size_t SentenceLength() { return term_instance_->size(); }
+  const char *GetTerm(int position) { return term_instance_->term_text_at(position); }
+  int GetWordType(int position) { return term_instance_->term_type_at(position); }
+
+ protected:
+  BigramSegmenter *bigram_segmenter_;
+  TermInstance *term_instance_;
+  
+};
+
 class MilkCatCRFSegPOSTagProcessor: public MilkCatCRFSegProcessor {
  public:
   static MilkCatCRFSegPOSTagProcessor *Create(const char *model_dir_path) {
@@ -348,7 +409,7 @@ milkcat_t *milkcat_init(int processor_type, const char *model_dir_path) {
     break;
 
    case CRF_SEGMENTER:
-    milkcat->processor = MilkCatCRFSegProcessor::Create(model_dir_path);
+    milkcat->processor = BigramSegProcessor::Create(model_dir_path);
     break;
 
    case CRF_PROCESSOR:

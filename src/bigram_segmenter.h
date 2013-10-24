@@ -33,6 +33,8 @@
 
 
 struct OptimalNode;
+class TokenInstance;
+class TermInstance;
 
 class BigramSegmenter {
  public:
@@ -61,7 +63,10 @@ class BigramSegmenter {
   // Weight for bigram term_id pair, key is left_id << 32 + right_id
   std::tr1::unordered_map<int64_t, float> bigram_weight_;
 
-  BigramSegmenter(int bigram_number);
+  BigramSegmenter();
+
+  // Add an arc to the decode graph with the weight and term_id
+  void AddArcToDecodeGraph(int from_position, int from_index, int to_position, double weight, int term_id);
 };
 
 #endif

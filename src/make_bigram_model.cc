@@ -29,19 +29,16 @@
 #include <assert.h>
 #include <darts.h>
 
-struct UnigramRecord {
-  int32_t word_id;
-  float weight;
-};
-
+#pragma pack(1)
 struct BigramRecord {
   int32_t word_left;
   int32_t word_right;
   float weight;
 };
+#pragma pack(0)
 
-#define DOUBLE_ARRAY_FILE "double_array.bin"
-#define UNIGRAM_FILE "unigram.bin"
+#define UNIGRAM_INDEX_FILE "unigram.idx"
+#define UNIGRAM_DATA_FILE "unigram.bin"
 #define BIGRAM_FILE "bigram.bin"
 
 // Load unigram data from unigram_file, returns the number of entries successfully loaded
@@ -88,19 +85,23 @@ int LoadBigramFile(const char *bigram_file,
   return bigram_data.size();
 }
 
-// Build Double-Array TrieTree data from unigram, returns 0 if successfully builded.
-int BuildDoubleArray(const std::map<std::string, double> &unigram_data, 
-                     Darts::DoubleArray &double_array) {
+// Build Double-Array TrieTree index from unigram, and save the index and the unigram data file
+int BuildAndSaveUnigramData(const std::map<std::string, double> &unigram_data, 
+                            Darts::DoubleArray &double_array) {
   std::vector<const char *> key;
   std::vector<Darts::DoubleArray::value_type> term_id;
+  std::vector<float> weight;
 
   // term_id = 0 is reserved for out-of-vocabulary word
   int i = 1;
+  weight.push_back(0.0);
 
   for (std::map<std::string, double>::const_iterator it = unigram_data.begin(); it != unigram_data.end(); ++it) {
     key.push_back(it->first.c_str());
     term_id.push_back(i++);
+    weight.push_back(it->second);
   }
+
 
   int result = double_array.build(key.size(), &key[0], 0, &term_id[0]);
   if (result != 0) {
@@ -108,45 +109,28 @@ int BuildDoubleArray(const std::map<std::string, double> &unigram_data,
     fflush(stderr);
   }
 
-  return result;
-}
-
-// Save unigram data into binary file UNIGRAM_FILE, returns 0 if successfully saved
-int SaveUnigramBinFile(const std::map<std::string, double> &unigram_data, 
-                       const Darts::DoubleArray &double_array) {
-  FILE *fp = fopen(UNIGRAM_FILE, "wb");
+  FILE *fp = fopen(UNIGRAM_DATA_FILE, "wb");
   if (fp == NULL) {
-    fprintf(stderr, "\nerror: unable to open %s for write.\n", UNIGRAM_FILE);
+    fprintf(stderr, "\nerror: unable to open %s for write.\n", UNIGRAM_DATA_FILE);
     fflush(stderr);
     return -1;
   }
 
-  UnigramRecord unigram_record;
-  const char *word_str;
-  int word_id;
-  double weight;
-  for (std::map<std::string, double>::const_iterator it = unigram_data.begin(); it != unigram_data.end(); ++it) {
-    word_str = it->first.c_str();
-    weight = it->second;
-    word_id = double_array.exactMatchSearch<Darts::DoubleArray::value_type>(word_str);
-    if (word_id < 0) {
-      fprintf(stderr, "\nerror: unable to get word_id of %s.\n", word_str);
-      fflush(stderr);
-      return -1;
-    }
-
-    unigram_record.word_id = static_cast<int32_t>(word_id);
-    unigram_record.weight = static_cast<float>(weight);
-
-    if (1 != fwrite(&unigram_record, sizeof(unigram_record), 1, fp)) {
-      fprintf(stderr, "\nerror: unable to write to file %s.\n", UNIGRAM_FILE);
-      fflush(stderr);
-      return -1;     
-    }
+  if (weight.size() != fwrite(&weight[0], sizeof(float), weight.size(), fp)) {
+    fprintf(stderr, "\nerror: unable to write to file %s.\n", UNIGRAM_DATA_FILE);
+    fflush(stderr);
+    return -1;     
   }
   fclose(fp);
+  
+ 
+  if (0 != double_array.save(UNIGRAM_INDEX_FILE)) {
+    fprintf(stderr, "\nerror: unable to save double array file %s\n", UNIGRAM_INDEX_FILE);
+    fflush(stderr);
+    return 5;
+  }
 
-  return 0;
+  return result;
 }
 
 // Save unigram data into binary file UNIGRAM_FILE, returns 0 if successfully saved
@@ -222,27 +206,11 @@ int main(int argc, char **argv) {
   }
   printf(" OK, %ld entries loaded.\n", bigram_data.size());
 
-  printf("Building Double-Array TrieTree data ...");
+  printf("Saveing unigram index and data file ...");
   fflush(stdout);
-  int result = BuildDoubleArray(unigram_data, double_array);
+  int result = BuildAndSaveUnigramData(unigram_data, double_array);
   if (result != 0) {
     return 4;
-  }
-  printf(" OK\n");
-
-  printf("Saving Double-Array TrieTree file ...");
-  fflush(stdout);
-  if (0 != double_array.save(DOUBLE_ARRAY_FILE)) {
-    fprintf(stderr, "\nerror: unable to save double array file %s\n", DOUBLE_ARRAY_FILE);
-    fflush(stderr);
-    return 5;
-  }
-  printf(" OK\n");
-
-  printf("Saving Unigram Binary File ...");
-  fflush(stdout);
-  if (0 != SaveUnigramBinFile(unigram_data, double_array)) {
-    return 6;
   }
   printf(" OK\n");
 

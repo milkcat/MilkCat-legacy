@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include 
 ACLOCAL_AMFLAGS = -I m4
 
 include_HEADERS = milkcat.h
@@ -37,6 +37,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         libmilkcat.cc \
                         darts.h \
                         milkcat.h \
+                        bigram_segmenter.h \
+                        bigram_segmenter.cc \
                         feature_extractor.h \
                         feature_extractor.cc \
                         crf_pos_tagger.cc\

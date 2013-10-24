@@ -142,8 +142,8 @@ am_libmilkcat_la_OBJECTS = crf_segmenter.lo crf_tagger.lo \
 	out_of_vocabulary_word_recognitioin.lo pos_tag_set.lo \
 	term_instance.lo part_of_speech_tag_instance.lo \
 	token_instance.lo token_lex.lo tokenization.lo utils.lo \
-	libmilkcat.lo feature_extractor.lo crf_pos_tagger.lo \
-	strlcpy.lo
+	libmilkcat.lo bigram_segmenter.lo feature_extractor.lo \
+	crf_pos_tagger.lo strlcpy.lo
 libmilkcat_la_OBJECTS = $(am_libmilkcat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -358,7 +358,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include 
 ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = milkcat.h
 noinst_LIBRARIES = libmain.a
@@ -396,6 +396,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         libmilkcat.cc \
                         darts.h \
                         milkcat.h \
+                        bigram_segmenter.h \
+                        bigram_segmenter.cc \
                         feature_extractor.h \
                         feature_extractor.cc \
                         crf_pos_tagger.cc\
@@ -544,6 +546,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bigram_segmenter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_pos_tagger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_segmenter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_tagger.Plo@am__quote@
