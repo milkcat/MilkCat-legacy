@@ -31,13 +31,21 @@
 #include "milkcat_config.h"
 #include "darts.h"
 
-
-struct OptimalNode;
 class TokenInstance;
 class TermInstance;
 
 class BigramSegmenter {
  public:
+
+  // A node in decode graph
+  struct Node;
+
+  // A Bucket contains several node
+  class Bucket;
+
+  // A pool to alloc and release nodes 
+  class NodePool;
+
   static BigramSegmenter *Create(const char *trietree_path,
                                  const char *unigram_binary_path,
                                  const char *bigram_binary_path);
@@ -48,11 +56,11 @@ class BigramSegmenter {
   void Process(TermInstance *term_instance, const TokenInstance *token_instance);
 
  private:
-  // Number of OptimalNode in each position of decode_node_
+  // Number of Node in each buckets_
   static const int kNBest = 3;
 
-  // Nodes that used in viterbi decoding
-  OptimalNode *decode_node_[kTokenMax + 1];
+  // Buckets contain nodes for viterbi decoding
+  Bucket *buckets_[kTokenMax + 1];
 
   // Index for words in dictionary
   Darts::DoubleArray *unigram_trie_;
@@ -62,6 +70,9 @@ class BigramSegmenter {
 
   // Weight for bigram term_id pair, key is left_id << 32 + right_id
   std::tr1::unordered_map<int64_t, float> bigram_weight_;
+
+  // NodePool instance to alloc and release node
+  NodePool *node_pool_;
 
   BigramSegmenter();
 

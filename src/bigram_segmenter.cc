@@ -35,22 +35,126 @@
 #include "term_instance.h"
 #include "utils.h"
 
-struct OptimalNode {
+struct BigramSegmenter::Node {
+  // The bucket contains this node
+  int bucket_id;
+
   // term_id for this node
   int term_id;
 
   // Weight summation in this path
   double weight;
 
-  // Previous node position in decode_node_
-  int previous_node_position;
-
-  // Previous node index in the position of previous_node_position
-  int previous_node_index;
+  // Previous node pointer
+  const Node *from_node;
 
   // Position in a term_instance
   int term_position;
 };
+
+
+// Compare two Node in weight
+static inline bool NodePtrCmp(const BigramSegmenter::Node *n1, const BigramSegmenter::Node *n2) {
+  return n1->weight < n2->weight;
+}
+
+
+class BigramSegmenter::NodePool {
+ public:
+  NodePool(int capability): nodes_(capability), alloc_index_(0) {
+    for (std::vector<Node *>::iterator it = nodes_.begin(); it != nodes_.end(); ++it) {
+      *it = new Node();
+    }
+  }
+
+  ~NodePool() {
+    for (std::vector<Node *>::iterator it = nodes_.begin(); it != nodes_.end(); ++it) {
+      delete *it;
+    }
+  }
+
+  // Alloc a node
+  Node *Alloc() {
+    Node *node;
+    if (alloc_index_ == nodes_.size()) {
+      nodes_.push_back(new Node());
+    }
+    return nodes_[alloc_index_++];
+  }
+  
+  // Release all node alloced before
+  void ReleaseAll() {
+    alloc_index_ = 0;
+  }
+
+ private:
+  std::vector<Node *> nodes_;
+  int alloc_index_;
+};
+
+class BigramSegmenter::Bucket {
+ public:
+  Bucket(int n_best, NodePool *node_pool, int bucket_id): 
+      n_best_(n_best), 
+      capability_(n_best * 3),
+      bucket_id_(bucket_id),
+      size_(0),
+      node_pool_(node_pool) {
+    nodes_ = new Node *[capability_];
+  }
+
+  ~Bucket() {
+    delete[] nodes_;
+  }
+
+  int size() const { return size_; }
+  const Node *node_at(int index) const { return nodes_[index]; }
+
+  // Shrink nodes_ array and remain top n_best elements
+  void Shrink() {
+    if (size_ <= n_best_) return ;
+    std::partial_sort(nodes_, nodes_ + n_best_, nodes_ + size_, NodePtrCmp);
+    size_ = n_best_;
+  }
+
+  // Clear all elements in bucket
+  void Clear() {
+    size_ = 0;
+  }
+
+  // Get min node in the bucket
+  const Node *MinimalNode() {
+    return *std::min_element(nodes_, nodes_ + size_, NodePtrCmp);
+  }
+  
+  // Add an arc to decode graph
+  void AddArc(const Node *from_node, double weight, int term_id) {
+    nodes_[size_] = node_pool_->Alloc();
+    nodes_[size_]->bucket_id = bucket_id_;
+    nodes_[size_]->term_id = term_id;
+    nodes_[size_]->weight = weight;
+    nodes_[size_]->from_node = from_node;
+
+    // for the begin-of-sentence which from_node == NULL
+    if (from_node != NULL) {
+      nodes_[size_]->term_position = from_node->term_position + 1;
+    } else {
+      nodes_[size_]->term_position = -1;
+    }
+
+    size_++;
+    if (size_ >= capability_) Shrink();
+  }
+
+ private:
+  Node **nodes_;
+  int capability_;
+  NodePool *node_pool_;
+  int bucket_id_;
+  int n_best_;
+  int size_;
+};
+
 
 // Record struct for bigram data
 #pragma pack(1)
@@ -62,9 +166,10 @@ struct BigramRecord {
 #pragma pack(0)
 
 BigramSegmenter::BigramSegmenter(): unigram_trie_(NULL),
-                                    unigram_weight_(NULL) {
-  for (int i = 0; i < sizeof(decode_node_) / sizeof(OptimalNode *); ++i) {
-    decode_node_[i] = NULL;
+                                    unigram_weight_(NULL),
+                                    node_pool_(NULL) {
+  for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
+    buckets_[i] = NULL;
   }
 }
 
@@ -79,10 +184,15 @@ BigramSegmenter::~BigramSegmenter() {
     unigram_weight_ = NULL;
   }
 
-  for (int i = 0; i < sizeof(decode_node_) / sizeof(OptimalNode *); ++i) {
-    if (decode_node_[i] != NULL) {
-      delete[] decode_node_[i];
-      decode_node_[i] = NULL;
+  if (node_pool_ != NULL) {
+    delete node_pool_;
+    node_pool_ = NULL;
+  }
+
+  for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
+    if (buckets_[i] != NULL) {
+      delete buckets_[i];
+      buckets_[i] = NULL;
     }
   }
 }
@@ -96,9 +206,11 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   long file_size;
   int record_number;
 
-  // Initialize the decode_node_
-  for (int i = 0; i < sizeof(self->decode_node_) / sizeof(OptimalNode *); ++i) {
-    self->decode_node_[i] = new OptimalNode[kNBest];
+  self->node_pool_ = new NodePool(kNBest * kTokenMax);
+
+  // Initialize the buckets_
+  for (int i = 0; i < sizeof(self->buckets_) / sizeof(Bucket *); ++i) {
+    self->buckets_[i] = new Bucket(kNBest, self->node_pool_, i);
   }
 
   // Load unigram_trie file
@@ -140,7 +252,7 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
     sprintf(error_message, "unable to open bigram data file %s", bigram_binary_path);
     set_error_message(error_message);
     delete self;
-    return NULL;    
+    return NULL;
   }
 
   fseek(fd, 0L, SEEK_END);
@@ -149,14 +261,14 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   record_number = file_size / sizeof(BigramRecord);
 
   // load_factor 0.5 for unordered map
-  self->bigram_weight_.rehash(record_number * 2); 
+  self->bigram_weight_.rehash(record_number * 2);
   BigramRecord bigram_record;
   for (int i = 0; i < record_number; ++i) {
     if (1 != fread(&bigram_record, sizeof(bigram_record), 1, fd)) {
       sprintf(error_message, "unable to read from bigram data file %s", bigram_binary_path);
       set_error_message(error_message);
       delete self;
-      return NULL;         
+      return NULL;
     }
     self->bigram_weight_[(static_cast<int64_t>(bigram_record.left_id) << 32) + bigram_record.right_id] = bigram_record.weight;
   }
@@ -166,71 +278,44 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   return self;
 }
 
-// Compare two weight value, 0 is greater than any other values
-inline bool OptimalWeightCmp(double w1, double w2) {
-  if (w1 == 0) return false;
-  if (w2 == 0) return true;
-  return w1 < w2; 
-}
-
-// Compare two OptimalNode in weight
-bool OptimalNodeCmp(OptimalNode &n1, OptimalNode &n2) {
-  return OptimalWeightCmp(n1.weight, n2.weight);
-}
-
-void BigramSegmenter::AddArcToDecodeGraph(int from_position, int from_index, int to_position, double weight, int term_id) {
-
-  if (OptimalWeightCmp(weight, decode_node_[to_position][node_greatest_index[to_position]].weight) == true) {
-    // printf("Arc from (%d, %d) to %d weight %f term_id %d\n", from_position, from_index, to_position, weight, term_id);
-    OptimalNode &node = decode_node_[to_position][node_greatest_index[to_position]];
-    node.term_id = term_id;
-    node.weight = weight;
-    node.previous_node_position = from_position;
-    node.previous_node_index = from_index;
-    node.term_position = decode_node_[from_position][from_index].term_position + 1;
-
-    // Find the greatest weight value in node
-    double max_weight = 0.1;
-    int max_index = -1, i;
-    for (i = 0; i < kNBest; ++i) {
-      if (OptimalWeightCmp(max_weight, decode_node_[to_position][i].weight) == true) {
-        max_weight = decode_node_[to_position][i].weight;
-        max_index = i;
-      }
-    }
-    node_greatest_index[to_position] = max_index;
-    // printf("%d\n",node_greatest_index[to_position]);
-  }
-}
-
 void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *token_instance) {
 
   // Add begin-of-sentence node
-  decode_node_[0][0].weight = 1;
-  decode_node_[0][0].term_position = -1;
+  buckets_[0]->AddArc(NULL, 0.0, 0);
 
   // Strat decoding
-  size_t double_array_node,
+  size_t trie_node,
          key_position;
   int64_t left_term_id,
           right_term_id,
           left_right_id;
   std::tr1::unordered_map<int64_t, float>::const_iterator bigram_map_iter;
   double weight;
-  for (int decode_start = 0; decode_start < token_instance->size(); ++decode_start) {
-    double_array_node = 0;
-    for (int node_count = 0; node_count + decode_start < token_instance->size(); ++node_count) {
-      // printf("%d %d\n", decode_start, node_count);
+  const Node *node;
+  for (int bucket_id = 0; bucket_id < token_instance->size(); ++bucket_id) {
+    // Shrink current bucket to ensure node number < n_best
+    buckets_[bucket_id]->Shrink();
+
+    trie_node = 0;
+    for (int bucket_count = 0; bucket_count + bucket_id < token_instance->size(); ++bucket_count) {
+      // printf("%d %d\n", bucket_id, bucket_count);
       key_position = 0;
-      int term_id = unigram_trie_->traverse(token_instance->token_text_at(decode_start + node_count), double_array_node, key_position);
+      int term_id = unigram_trie_->traverse(token_instance->token_text_at(bucket_id + bucket_count), 
+                                            trie_node, 
+                                            key_position);
+
+      double min_weight = 100000000;
+      const Node *min_node = NULL;
+
+      assert(buckets_[bucket_id]->size() > 0);
 
       if (term_id >= 0) {
 
         // This token exists in unigram data
-        for (int optimal_index = 0; optimal_index < kNBest; ++ optimal_index) {
-          if (decode_node_[decode_start][optimal_index].weight == 0) continue;
+        for (int node_id = 0; node_id < buckets_[bucket_id]->size(); ++node_id) {
+          node = buckets_[bucket_id]->node_at(node_id);
 
-          left_term_id = decode_node_[decode_start][optimal_index].term_id;
+          left_term_id = node->term_id;
           right_term_id = term_id;
           left_right_id = (left_term_id << 32) + right_term_id;
 
@@ -238,84 +323,74 @@ void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *
           if (bigram_map_iter != bigram_weight_.end()) {
 
             // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)
-            weight = decode_node_[decode_start][optimal_index].weight + 
-                     bigram_map_iter->second - unigram_weight_[left_term_id];
+            weight = node->weight + bigram_map_iter->second - unigram_weight_[left_term_id];
           } else {
 
             // if np bigram data use p(x_n+1|x_n) = p(x_n+1)
-            weight = decode_node_[decode_start][optimal_index].weight + unigram_weight_[right_term_id];
+            weight = node->weight + unigram_weight_[right_term_id];
           }
-          AddArcToDecodeGraph(decode_start, optimal_index, decode_start + node_count + 1, weight, right_term_id);
+
+          if (weight < min_weight) {
+            min_weight = weight;
+            min_node = node;
+          }
         }
 
-      } else {
+        // Add the min_node to decode graph
+        buckets_[bucket_id + bucket_count + 1]->AddArc(min_node, min_weight, term_id);
 
+      } else {
         // One token out-of-vocabulary word should be always put into Decode Graph
-        if (node_count == 0) {
-          for (int optimal_index = 0; optimal_index < kNBest; ++ optimal_index) {
-            // puts("233");
-            if (decode_node_[decode_start][optimal_index].weight == 0) continue;
-            weight = decode_node_[decode_start][optimal_index].weight + 20;
-            AddArcToDecodeGraph(decode_start, optimal_index, decode_start + 1, weight, right_term_id);
+        // When no arc to next bucket
+        if (bucket_count == 0 && buckets_[bucket_id + 1]->size() == 0) {
+          for (int node_id = 0; node_id < buckets_[bucket_id]->size(); ++node_id) {
+            node = buckets_[bucket_id]->node_at(node_id);
+            weight = node->weight + 20;
+
+            if (weight < min_weight) {
+              min_weight = weight;
+              min_node = node;
+            }
           }
+
+          // term_id = 0 for out-of-vocabulary word
+          buckets_[bucket_id + 1]->AddArc(min_node, min_weight, 0);
         } // end if node count == 0
 
         if (term_id == -2) break;
       } // end if term_id >= 0
-    } // end for node_count
+    } // end for bucket_count
   } // end for decode_start
 
   // Find the best result from decoding graph
-  OptimalNode *last = decode_node_[token_instance->size()];
-  
-  //
-  double min_value = 0;
-  int min_index = -1;
-  for (int i = 0; i < kNBest; ++i) {
-    if (OptimalWeightCmp(last[i].weight, min_value) == true) {
-      min_value = last[i].weight;
-      min_index = i;
-    }
-  }
-
-  int previous_position,
-      previous_index,
-      position = token_instance->size(),
-      index = min_index,
-      term_type;
+  node = buckets_[token_instance->size()]->MinimalNode();
+  term_instance->set_size(node->term_position + 1);
+  int bucket_id, from_bucket_id, term_type;
   std::string buffer;
-  term_instance->set_size(decode_node_[position][index].term_position + 1);
-  while (position != 0) {
-    previous_position = decode_node_[position][index].previous_node_position;
-    previous_index = decode_node_[position][index].previous_node_index;
-
+  while (node->term_position >= 0) {
     buffer.clear();
-    for (int i = previous_position; i < position; ++i) {
+    bucket_id = node->bucket_id;
+    from_bucket_id = node->from_node->bucket_id;
+
+    for (int i = from_bucket_id; i < bucket_id; ++i) {
       buffer.append(token_instance->token_text_at(i));
     }
     
-    term_type = position - previous_position > 1? TermInstance::kChineseWord: 
-                                                  token_type_to_word_type(token_instance->token_type_at(previous_position));
-    term_instance->set_value_at(decode_node_[position][index].term_position,
+    term_type = bucket_id - from_bucket_id > 1? TermInstance::kChineseWord: 
+                                                token_type_to_word_type(token_instance->token_type_at(from_bucket_id));
+    term_instance->set_value_at(node->term_position,
                                 buffer.c_str(),
-                                position - previous_position,
+                                bucket_id - from_bucket_id,
                                 term_type);
     // printf("---%d---\n", decode_node_[position][index].term_position);
-    position = previous_position;
-    index = previous_index;
+    node = node->from_node;
   } // end while
 
   // Clear decode_node
   for (int i = 0; i < token_instance->size() + 1; ++i) {
-    memset(decode_node_[i], 0, sizeof(OptimalNode) * kNBest);
-    node_greatest_index[i] = 0;
+    buckets_[i]->Clear();
   }
+  node_pool_->ReleaseAll();
 
 }
-
-
-
-
-
-
 
