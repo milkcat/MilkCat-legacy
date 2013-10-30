@@ -144,84 +144,6 @@ class MilkCatHMMSegPOSTaggerProcessor: public MilkCatProcessor {
   PartOfSpeechTagInstance *part_of_speech_tag_instance_;
 };
 
-class HmmAndCrfProcessor: public MilkCatHMMSegPOSTaggerProcessor {
- public:
-  static HmmAndCrfProcessor *Create(const char *model_dir_path) {
-    HmmAndCrfProcessor *self = new HmmAndCrfProcessor();
-    if (self->Initialize(model_dir_path) == false) {
-      delete self;
-      return NULL;
-    } else {
-      return self;
-    }
-  }
-
-  bool Initialize(const char *model_dir_path) {
-    if (MilkCatHMMSegPOSTaggerProcessor::Initialize(model_dir_path) == false)
-      return false;
-
-    next_term_instance_ = new TermInstance();
-    next_part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
-
-    out_of_vocabulary_word_recognitioin_ = OutOfVocabularyWordRecognition::Create(
-        (std::string(model_dir_path) + "pd_model").c_str(), 
-        (std::string(model_dir_path) + "ctb_pos.model").c_str(), 
-        (std::string(model_dir_path) + "filter_word.darts").c_str());
-
-    if (out_of_vocabulary_word_recognitioin_ == NULL) 
-      return false;
-
-    return true;
-  } 
-
-  HmmAndCrfProcessor(): next_term_instance_(NULL),
-                        next_part_of_speech_tag_instance_(NULL),
-                        out_of_vocabulary_word_recognitioin_(NULL) {
-  }
-
-  ~HmmAndCrfProcessor() {
-    if (next_term_instance_ != NULL) {
-      delete next_term_instance_;
-      next_term_instance_ = NULL;
-    }
-
-    if (next_part_of_speech_tag_instance_ != NULL) {
-      delete next_part_of_speech_tag_instance_;
-      next_part_of_speech_tag_instance_ = NULL;
-    }
-
-    if (out_of_vocabulary_word_recognitioin_ != NULL) {
-      delete out_of_vocabulary_word_recognitioin_;
-      out_of_vocabulary_word_recognitioin_ = NULL;
-    }
-  }
-
-  int NextSentence() {
-    if (0 == MilkCatHMMSegPOSTaggerProcessor::NextSentence())
-      return 0;
-
-    out_of_vocabulary_word_recognitioin_->Process(
-        next_term_instance_, 
-        next_part_of_speech_tag_instance_, 
-        term_instance_,
-        part_of_speech_tag_instance_,
-        token_instance_);
-
-    return 1;
-  }
-
-  size_t SentenceLength() { return next_term_instance_->size(); }
-  const char *GetTerm(int position) { return next_term_instance_->term_text_at(position); }
-  const char *GetPartOfSpeechTag(int position) { 
-    return next_part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
-  }
-  int GetWordType(int position) { return next_term_instance_->term_type_at(position); }
-
- protected:
-  TermInstance *next_term_instance_;
-  PartOfSpeechTagInstance *next_part_of_speech_tag_instance_;
-  OutOfVocabularyWordRecognition *out_of_vocabulary_word_recognitioin_;
-};
 
 class MilkCatCRFSegProcessor: public MilkCatProcessor {
  public:
@@ -293,6 +215,9 @@ class BigramSegProcessor: public MilkCatProcessor {
 
   bool Initialize(const char *model_dir_path) {
     if (MilkCatProcessor::Initialize() == false) return false;
+
+    next_term_instance_ = new TermInstance();
+
     std::string unigram_index_path = std::string(model_dir_path) + "unigram.idx";
     std::string unigram_data_path = std::string(model_dir_path) + "unigram.bin";
     std::string bigram_path = std::string(model_dir_path) + "bigram.bin";
@@ -302,12 +227,20 @@ class BigramSegProcessor: public MilkCatProcessor {
                                                 bigram_path.c_str());
     if (bigram_segmenter_ == NULL) return false;
 
+    out_of_vocabulary_word_recognitioin_ = OutOfVocabularyWordRecognition::Create(
+        (std::string(model_dir_path) + "pd_model").c_str(), 
+        (std::string(model_dir_path) + "filter_word.darts").c_str());
+
+    if (out_of_vocabulary_word_recognitioin_ == NULL) return false;
+
     term_instance_ = new TermInstance();
     return true;
   }
 
   BigramSegProcessor(): bigram_segmenter_(NULL),
-                            term_instance_(NULL) {
+                        term_instance_(NULL),
+                        next_term_instance_(NULL),
+                        out_of_vocabulary_word_recognitioin_(NULL) {
   }
 
   ~BigramSegProcessor() {
@@ -320,23 +253,36 @@ class BigramSegProcessor: public MilkCatProcessor {
       delete term_instance_;
       term_instance_ = NULL;
     }
+
+    if (next_term_instance_ != NULL) {
+      delete next_term_instance_;
+      next_term_instance_ = NULL;
+    }
+
+    if (out_of_vocabulary_word_recognitioin_ != NULL) {
+      delete out_of_vocabulary_word_recognitioin_;
+      out_of_vocabulary_word_recognitioin_ = NULL;
+    }
   }
   
   int NextSentence() {
     if (MilkCatProcessor::NextSentence() == 0) return 0;
     bigram_segmenter_->Process(term_instance_, token_instance_);
-
+    out_of_vocabulary_word_recognitioin_->Process(next_term_instance_,
+                                                  term_instance_,
+                                                  token_instance_);
     return 1;
   }
 
-  size_t SentenceLength() { return term_instance_->size(); }
-  const char *GetTerm(int position) { return term_instance_->term_text_at(position); }
-  int GetWordType(int position) { return term_instance_->term_type_at(position); }
+  size_t SentenceLength() { return next_term_instance_->size(); }
+  const char *GetTerm(int position) { return next_term_instance_->term_text_at(position); }
+  int GetWordType(int position) { return next_term_instance_->term_type_at(position); }
 
  protected:
   BigramSegmenter *bigram_segmenter_;
   TermInstance *term_instance_;
-  
+  TermInstance *next_term_instance_;
+  OutOfVocabularyWordRecognition *out_of_vocabulary_word_recognitioin_;
 };
 
 class MilkCatCRFSegPOSTagProcessor: public MilkCatCRFSegProcessor {
@@ -405,7 +351,7 @@ milkcat_t *milkcat_init(int processor_type, const char *model_dir_path) {
 
   switch (processor_type) {
    case NORMAL_PROCESSOR:
-    milkcat->processor = HmmAndCrfProcessor::Create(model_dir_path);
+    milkcat->processor = BigramSegProcessor::Create(model_dir_path);
     break;
 
    case CRF_SEGMENTER:

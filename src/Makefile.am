@@ -43,7 +43,11 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         feature_extractor.cc \
                         crf_pos_tagger.cc\
                         strlcpy.cc\
-                        strlcpy.h
+                        strlcpy.h \
+                        crfpp_model.h \
+                        crfpp_model.cc \
+                        crfpp_tagger.h \
+                        crfpp_tagger.cc
 
 bin_PROGRAMS = mkbigram
 mkbigram_SOURCES = make_bigram_model.cc

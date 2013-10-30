@@ -22,33 +22,26 @@ class OffsetTokenInstance;
 class OutOfVocabularyWordRecognition {
  public:
   static OutOfVocabularyWordRecognition *Create(const char *crf_segment_model_path, 
-                                                const char *crf_pos_tagger_model_path,
                                                 const char *ner_filter_word_path);
   ~OutOfVocabularyWordRecognition();
   void Process(TermInstance *term_instance,
-               PartOfSpeechTagInstance *part_of_speech_tag_instance, 
                const TermInstance *in_term_instance, 
-               const PartOfSpeechTagInstance *in_part_of_speech_tag_instance, 
                const TokenInstance *in_token_instance);
 
  private:
   OffsetTokenInstance *offset_instance_;
   TermInstance *term_instance_;
-  PartOfSpeechTagInstance *part_of_speech_tag_instance_;
   CRFSegmenter *crf_segmenter_;
-  CRFPOSTagger *crf_pos_tagger_;
   Darts::DoubleArray *double_array_;
 
   OutOfVocabularyWordRecognition();
 
   void RecognizeRange(const TokenInstance *token_instance, int begin, int end);
 
-  void CopyTermPOSTagValue(TermInstance *dest_term_instance, 
-                           PartOfSpeechTagInstance *dest_part_of_speech_tag_instance,
-                           int dest_postion, 
-                           const TermInstance *src_term_instance, 
-                           const PartOfSpeechTagInstance *src_part_of_speech_tag_instance,
-                           int src_position);
+  void CopyTermValue(TermInstance *dest_term_instance, 
+                     int dest_postion, 
+                     const TermInstance *src_term_instance, 
+                     int src_position);
   
   // Check if the chinese character is filtered in named entity recognition
   bool IsFiltered(const char *utf8_ch) {
