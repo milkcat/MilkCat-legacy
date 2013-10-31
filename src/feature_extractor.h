@@ -9,18 +9,12 @@
 #define FEATURE_EXTRACTOR_H
 
 #include <stdlib.h>
+#include "milkcat_config.h"
 
 class FeatureExtractor {
  public:
-  FeatureExtractor(size_t feature_number);
-  virtual ~FeatureExtractor();
-  virtual const char **ExtractFeatureAt(size_t position) = 0;
+  virtual void ExtractFeatureAt(size_t position, char (*feature_list)[kFeatureLengthMax], int list_size) = 0;
   virtual size_t size() const = 0;
-  size_t feature_number() { return feature_number_; }
-
- protected:
-  char **feature_list_;
-  size_t feature_number_;
 };
 
 #endif

@@ -142,8 +142,8 @@ am_libmilkcat_la_OBJECTS = crf_segmenter.lo crf_tagger.lo \
 	out_of_vocabulary_word_recognitioin.lo pos_tag_set.lo \
 	term_instance.lo part_of_speech_tag_instance.lo \
 	token_instance.lo token_lex.lo tokenization.lo utils.lo \
-	libmilkcat.lo bigram_segmenter.lo feature_extractor.lo \
-	crf_pos_tagger.lo strlcpy.lo crfpp_model.lo crfpp_tagger.lo
+	libmilkcat.lo bigram_segmenter.lo crf_pos_tagger.lo strlcpy.lo \
+	crfpp_model.lo crfpp_tagger.lo
 libmilkcat_la_OBJECTS = $(am_libmilkcat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -399,7 +399,6 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         bigram_segmenter.h \
                         bigram_segmenter.cc \
                         feature_extractor.h \
-                        feature_extractor.cc \
                         crf_pos_tagger.cc\
                         strlcpy.cc\
                         strlcpy.h \
@@ -556,7 +555,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_tagger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crfpp_model.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crfpp_tagger.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/feature_extractor.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmm_segment_and_pos_tagger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/instance_data.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmilkcat.Plo@am__quote@

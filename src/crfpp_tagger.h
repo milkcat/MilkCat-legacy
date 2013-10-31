@@ -62,6 +62,17 @@ class CrfppTagger {
   int result_[kMaxBucket];
   FeatureExtractor *feature_extractor_;
 
+  char feature_cache_[kMaxBucket][kMaxFeature][kFeatureLengthMax];
+  int feature_cache_left_;
+  int feature_cache_right_;
+  bool feature_cache_flag_[kMaxBucket];
+
+  // Get the feature from cache or feature extractor
+  const char *GetFeatureAt(int position, int index);
+
+  // Clear the Feature cache
+  void ClearFeatureCache();
+
   // Get the id list of bigram features in position, returns the size of the list
   int GetBigramFeatureIds(int position, int *feature_ids);
 
@@ -83,8 +94,8 @@ class CrfppTagger {
   // Get the best tag sequence from Viterbi result
   void FindBestResult(int begin, int end);
 
-  const char *GetIndex(const char *&p, int position) const;
-  bool ApplyRule(std::string &output_str, const char *template_str, size_t position) const;
+  const char *GetIndex(const char *&p, int position);
+  bool ApplyRule(std::string &output_str, const char *template_str, size_t position);
   
 };
 

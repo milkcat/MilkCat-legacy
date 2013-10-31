@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include "crfpp_tagger.h"
 #include "utils.h"
 
@@ -49,6 +50,7 @@ const char *EOS[kMaxContextSize] = { "_B+1", "_B+2", "_B+3", "_B+4",
 CrfppTagger::CrfppTagger(CrfppModel *model): model_(model) {
   for (int i = 0; i < kMaxBucket; ++i) {
     buckets_[i] = new Node[model_->GetTagNumber()];
+    feature_cache_flag_[i] = false;
   }
 }
 
@@ -58,8 +60,37 @@ CrfppTagger::~CrfppTagger() {
   }
 }
 
+void CrfppTagger::ClearFeatureCache() {
+  for (int i = feature_cache_left_; i <= feature_cache_right_; ++i) {
+    feature_cache_flag_[i] = false;
+  }
+  feature_cache_left_ = INT_MAX;
+  feature_cache_right_ = INT_MIN;
+}
+
+const char *CrfppTagger::GetFeatureAt(int position, int index) {
+  if (feature_cache_flag_[position] == false) {
+    // Cache unmatch
+    feature_extractor_->ExtractFeatureAt(position, feature_cache_[position], model_->xsize());
+    feature_cache_flag_[position] = true;
+
+    if (feature_cache_left_ > position) {
+      feature_cache_left_ = position;
+    }
+
+    if (feature_cache_right_ < position) {
+      feature_cache_right_ = position;
+    }
+  }
+
+  return feature_cache_[position][index];
+}
+
 void CrfppTagger::TagRange(FeatureExtractor *feature_extractor, int begin, int end) {
   feature_extractor_ = feature_extractor;
+
+  ClearFeatureCache();
+
   Viterbi(begin, end);
   FindBestResult(begin, end);
 }
@@ -150,7 +181,7 @@ int CrfppTagger::GetUnigramFeatureIds(int position, int *feature_ids) {
     assert(result);
     feature_id = model_->GetFeatureId(feature_str.c_str());
     if (feature_id != -1) {
-      printf("%s %d\n", feature_str.c_str(), feature_id);
+      // printf("%s %d\n", feature_str.c_str(), feature_id);
       feature_ids[count++] = feature_id;
     }
   }
@@ -179,7 +210,7 @@ int CrfppTagger::GetBigramFeatureIds(int position, int *feature_ids) {
   return count;
 }
 
-const char *CrfppTagger::GetIndex(const char *&p, int position) const {
+const char *CrfppTagger::GetIndex(const char *&p, int position) {
   if (*p++ !='[') {
     return 0;
   }
@@ -236,10 +267,10 @@ NEXT2:
     return EOS[idx - feature_extractor_->size()];
   }
 
-  return feature_extractor_->ExtractFeatureAt(idx)[col];
+  return GetFeatureAt(idx, col);
 }
 
-bool CrfppTagger::ApplyRule(std::string &output_str, const char *template_str, size_t position) const {
+bool CrfppTagger::ApplyRule(std::string &output_str, const char *template_str, size_t position) {
   const char *p = template_str,
              *index_str;
 

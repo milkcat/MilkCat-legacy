@@ -17,20 +17,16 @@
 
 class SegmentFeatureExtractor: public FeatureExtractor {
  public:
-  SegmentFeatureExtractor(): FeatureExtractor(1) {
-  }
-
   void set_token_instance(const TokenInstance *token_instance) { token_instance_ = token_instance; }
   size_t size() const { return token_instance_->size(); }
 
-  const char **ExtractFeatureAt(size_t position) {
+  void ExtractFeatureAt(size_t position, char (*feature_list)[kFeatureLengthMax], int list_size) {
+    assert(list_size == 1);
     if (token_instance_->token_type_at(position) == TokenInstance::kChineseChar) {
-      strcpy(feature_list_[0], token_instance_->token_text_at(position));
+      strcpy(feature_list[0], token_instance_->token_text_at(position));
     } else {
-      strcpy(feature_list_[0], "。");
+      strcpy(feature_list[0], "。");
     }
-
-    return const_cast<const char **>(feature_list_);
   }
 
  private:

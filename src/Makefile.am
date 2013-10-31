@@ -40,7 +40,6 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         bigram_segmenter.h \
                         bigram_segmenter.cc \
                         feature_extractor.h \
-                        feature_extractor.cc \
                         crf_pos_tagger.cc\
                         strlcpy.cc\
                         strlcpy.h \

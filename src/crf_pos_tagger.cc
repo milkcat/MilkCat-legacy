@@ -8,16 +8,16 @@
 #include <string.h>
 #include "crf_pos_tagger.h"
 #include "feature_extractor.h"
+#include "milkcat_config.h"
 
 class PartOfSpeechFeatureExtractor: public FeatureExtractor {
  public:
-  PartOfSpeechFeatureExtractor(): FeatureExtractor(3) {
-  }
 
   void set_term_instance(const TermInstance *term_instance) { term_instance_ = term_instance; }
   size_t size() const { return term_instance_->size(); }
 
-  const char **ExtractFeatureAt(size_t position) {
+  void ExtractFeatureAt(size_t position, char (*feature_list)[kFeatureLengthMax], int list_size) {
+    assert(list_size == 3);
     int term_type = term_instance_->term_type_at(position);
     const char *term_text = term_instance_->term_text_at(position);
     size_t term_length = strlen(term_text);
@@ -25,40 +25,36 @@ class PartOfSpeechFeatureExtractor: public FeatureExtractor {
     switch (term_type) {
      case TermInstance::kChineseWord:
       // term itself
-      strcpy(feature_list_[0], term_text);     
+      strcpy(feature_list[0], term_text);     
 
       // first character of the term
-      strncpy(feature_list_[1], term_text, 3);
-      feature_list_[1][4] = 0;
+      strncpy(feature_list[1], term_text, 3);
+      feature_list[1][4] = 0;
 
       // last character of the term
-      strcpy(feature_list_[2], term_text + term_length - 3);
+      strcpy(feature_list[2], term_text + term_length - 3);
       break;
 
      case TermInstance::kEnglishWord:
      case TermInstance::kSymbol:
-      strcpy(feature_list_[0], "A");   
-      strcpy(feature_list_[1], "A");
-      strcpy(feature_list_[2], "A");
+      strcpy(feature_list[0], "A");   
+      strcpy(feature_list[1], "A");
+      strcpy(feature_list[2], "A");
       break;
 
      case TermInstance::kNumber:
-      strcpy(feature_list_[0], "1");   
-      strcpy(feature_list_[1], "1");
-      strcpy(feature_list_[2], "1");
+      strcpy(feature_list[0], "1");   
+      strcpy(feature_list[1], "1");
+      strcpy(feature_list[2], "1");
       break;
 
      default:
-      strcpy(feature_list_[0], ".");   
-      strcpy(feature_list_[1], ".");
-      strcpy(feature_list_[2], ".");
+      strcpy(feature_list[0], ".");   
+      strcpy(feature_list[1], ".");
+      strcpy(feature_list[2], ".");
       break;     
     }
-
-    return const_cast<const char **>(feature_list_);
   }
-
-
  private:
   const TermInstance *term_instance_;
 };

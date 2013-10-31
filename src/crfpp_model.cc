@@ -118,7 +118,6 @@ CrfppModel *CrfppModel::Create(const char *model_path) {
     while (y_str[pos++] != '\0') {}
   }
 
-  // ignore template data
   int32_t tmpl_str_size;
   read_value<int32_t>(&ptr, &tmpl_str_size);
   const char *tmpl_str = read_pointer(&ptr, tmpl_str_size);
