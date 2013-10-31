@@ -76,12 +76,12 @@ CRFSegmenter::CRFSegmenter(): tag_set_(NULL),
                               tag_sequence_(NULL),
                               feature_extractor_(NULL) {}
 
-void CRFSegmenter::Segment(TermInstance *term_instance, const TokenInstance *token_instance) {
+void CRFSegmenter::SegmentRange(TermInstance *term_instance, const TokenInstance *token_instance, int begin, int end) {
   std::string buffer;
 
   feature_extractor_->set_token_instance(token_instance);
-  crf_tagger_->Tag(feature_extractor_, tag_sequence_);
-  assert(token_instance->size() == tag_sequence_->length());
+  crf_tagger_->TagRange(feature_extractor_, tag_sequence_, begin, end);
+  assert(end - begin == tag_sequence_->length());
 
   TagSet::TagId tag_id;
   int term_count = 0;
@@ -90,14 +90,14 @@ void CRFSegmenter::Segment(TermInstance *term_instance, const TokenInstance *tok
   int term_type;
   for (i = 0; i < tag_sequence_->length(); ++i) {
     token_count++;
-    buffer.append(token_instance->token_text_at(i));
+    buffer.append(token_instance->token_text_at(begin + i));
 
     tag_id = tag_sequence_->GetTagAt(i);
     // printf("%s\n", tag_set_->TagIdToTagString(tag_id));
     if (tag_id == SegmentTagSet::S || tag_id == SegmentTagSet::E) {
 
       if (tag_id == SegmentTagSet::S) {
-        term_type = token_type_to_word_type(token_instance->token_type_at(i));
+        term_type = token_type_to_word_type(token_instance->token_type_at(begin + i));
       } else {
         term_type = TermInstance::kChineseWord;
       }

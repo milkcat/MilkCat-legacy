@@ -14,7 +14,11 @@ class CRFTagger {
   ~CRFTagger();
 
   static CRFTagger *Create(const char *model_path, TagSet *tag_set);
-  void Tag(FeatureExtractor *feature_extractor, TagSequence *tag_sequence) const;
+  void Tag(FeatureExtractor *feature_extractor, TagSequence *tag_sequence) const {
+  	TagRange(feature_extractor, tag_sequence, 0, feature_extractor->size());
+  }
+  
+  void TagRange(FeatureExtractor *feature_extractor, TagSequence *tag_sequence, int begin, int end) const;
 
  private:
   CrfppTagger *crfpp_tagger_;

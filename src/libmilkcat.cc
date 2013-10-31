@@ -229,7 +229,7 @@ class BigramSegProcessor: public MilkCatProcessor {
 
     out_of_vocabulary_word_recognitioin_ = OutOfVocabularyWordRecognition::Create(
         (std::string(model_dir_path) + "pd_model").c_str(), 
-        (std::string(model_dir_path) + "filter_word.darts").c_str());
+        (std::string(model_dir_path) + "oov_property.idx").c_str());
 
     if (out_of_vocabulary_word_recognitioin_ == NULL) return false;
 

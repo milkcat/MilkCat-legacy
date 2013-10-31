@@ -17,8 +17,6 @@
 #include "part_of_speech_tag_instance.h"
 #include "token_instance.h"
 
-class OffsetTokenInstance;
-
 class OutOfVocabularyWordRecognition {
  public:
   static OutOfVocabularyWordRecognition *Create(const char *crf_segment_model_path, 
@@ -28,8 +26,10 @@ class OutOfVocabularyWordRecognition {
                const TermInstance *in_term_instance, 
                const TokenInstance *in_token_instance);
 
+  static const int kOOVBeginOfWord = 1;
+  static const int kOOVFilteredWord = 2;
+
  private:
-  OffsetTokenInstance *offset_instance_;
   TermInstance *term_instance_;
   CRFSegmenter *crf_segmenter_;
   Darts::DoubleArray *double_array_;
@@ -42,53 +42,7 @@ class OutOfVocabularyWordRecognition {
                      int dest_postion, 
                      const TermInstance *src_term_instance, 
                      int src_position);
-  
-  // Check if the chinese character is filtered in named entity recognition
-  bool IsFiltered(const char *utf8_ch) {
-    return double_array_->exactMatchSearch<int>(utf8_ch) >= 0;
-  }
 };
 
-
-/**
- * This class is a new instance contains the range of [begin, end) 
- * from the original instance
- *
- */
-class OffsetTokenInstance: public TokenInstance {
- public:
-  OffsetTokenInstance(): TokenInstance() {
-  }
-
-  // Update it with a new TokenInstance with its begin and end
-  void Update(const TokenInstance *original_instance, int begin, int end) {
-    original_instance_ = original_instance;
-    begin_ = begin;
-    end_ = end;
-    assert(begin < end && end <= original_instance->size());
-  }
-
-  // Get token string at position
-  const char *token_text_at(int position) const { 
-    assert(position < size());
-    return original_instance_->token_text_at(position + begin_); 
-  }
-
-  // Get the token type at position
-  int token_type_at(int position) const { 
-    assert(position < size());
-    return original_instance_->token_type_at(position + begin_); 
-  }
-
-  // Get the size of this instance
-  int size() const { return end_ - begin_; }
-   
- private:
-  const TokenInstance *original_instance_;
-  int begin_;
-  int end_;
-
-  DISALLOW_COPY_AND_ASSIGN(OffsetTokenInstance);
-};
 
 #endif

@@ -81,7 +81,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = mkbigram$(EXEEXT)
+bin_PROGRAMS = mkbigram$(EXEEXT) mkdict$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp $(include_HEADERS)
@@ -157,6 +157,9 @@ PROGRAMS = $(bin_PROGRAMS)
 am_mkbigram_OBJECTS = make_bigram_model.$(OBJEXT)
 mkbigram_OBJECTS = $(am_mkbigram_OBJECTS)
 mkbigram_LDADD = $(LDADD)
+am_mkdict_OBJECTS = mkdict.$(OBJEXT)
+mkdict_OBJECTS = $(am_mkdict_OBJECTS)
+mkdict_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -210,9 +213,9 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libmain_a_SOURCES) $(libmilkcat_la_SOURCES) \
-	$(mkbigram_SOURCES)
+	$(mkbigram_SOURCES) $(mkdict_SOURCES)
 DIST_SOURCES = $(libmain_a_SOURCES) $(libmilkcat_la_SOURCES) \
-	$(mkbigram_SOURCES)
+	$(mkbigram_SOURCES) $(mkdict_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -408,6 +411,7 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         crfpp_tagger.cc
 
 mkbigram_SOURCES = make_bigram_model.cc
+mkdict_SOURCES = mkdict.cc
 libmain_a_SOURCES = main.c
 all: all-am
 
@@ -543,6 +547,10 @@ mkbigram$(EXEEXT): $(mkbigram_OBJECTS) $(mkbigram_DEPENDENCIES) $(EXTRA_mkbigram
 	@rm -f mkbigram$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(mkbigram_OBJECTS) $(mkbigram_LDADD) $(LIBS)
 
+mkdict$(EXEEXT): $(mkdict_OBJECTS) $(mkdict_DEPENDENCIES) $(EXTRA_mkdict_DEPENDENCIES) 
+	@rm -f mkdict$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(mkdict_OBJECTS) $(mkdict_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -560,6 +568,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmilkcat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/make_bigram_model.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mkdict.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/out_of_vocabulary_word_recognitioin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/part_of_speech_tag_instance.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pos_tag_set.Plo@am__quote@

@@ -69,15 +69,15 @@ CRFTagger::~CRFTagger() {
   }
 }
 
-void CRFTagger::Tag(FeatureExtractor *feature_extractor, TagSequence *tag_sequence) const {
-  size_t size = feature_extractor->size();
+void CRFTagger::TagRange(FeatureExtractor *feature_extractor, TagSequence *tag_sequence, int begin, int end) const {
+  int size = end - begin;
 
   tag_sequence->set_length(size);
-  crfpp_tagger_->Tag(feature_extractor);
+  crfpp_tagger_->TagRange(feature_extractor, begin, end);
   for (size_t i = 0; i < size; ++i) {
     // printf("%d\n", i);
     tag_sequence->SetTagAt(i, crfpp_tag_id_to_local_tag_id_[crfpp_tagger_->GetTagAt(i)]);
-    //cprintf("%s  ", tag_set_->TagIdToTagString(crfpp_tag_id_to_local_tag_id_[crfpp_->y(i)]));
+    // printf("%s  ", tag_set_->TagIdToTagString(crfpp_tag_id_to_local_tag_id_[crfpp_tagger_->GetTagAt(i)]));
   }
   // printf("\n");
 }

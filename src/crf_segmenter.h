@@ -12,17 +12,22 @@
 #include "segment_tag_set.h"
 #include "tag_sequence.h"
 #include "utils.h"
+#include "token_instance.h"
 
 class SegmentFeatureExtractor;
 class TermInstance;
-class TokenInstance;
 
 class CRFSegmenter {
  public:
   static CRFSegmenter *Create(const char *model_path);
   ~CRFSegmenter();
 
-  void Segment(TermInstance *term_instance, const TokenInstance *token_instance);
+  // Segment a range [begin, end) of token 
+  void SegmentRange(TermInstance *term_instance, const TokenInstance *token_instance, int begin, int end);
+
+  void Segment(TermInstance *term_instance, const TokenInstance *token_instance) {
+  	SegmentRange(term_instance, token_instance, 0, token_instance->size());
+  }
  
  private:
   CRFTagger *crf_tagger_;

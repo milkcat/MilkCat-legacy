@@ -48,6 +48,7 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         crfpp_tagger.h \
                         crfpp_tagger.cc
 
-bin_PROGRAMS = mkbigram
+bin_PROGRAMS = mkbigram mkdict
 mkbigram_SOURCES = make_bigram_model.cc
+mkdict_SOURCES = mkdict.cc
 libmain_a_SOURCES = main.c

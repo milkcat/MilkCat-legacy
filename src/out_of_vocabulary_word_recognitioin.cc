@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <iostream>
 #include <string.h>
 #include "darts.h"
 #include "utils.h"
@@ -26,7 +27,6 @@ OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::Create(const cha
     return NULL;
   }
 
-  self->offset_instance_ = new OffsetTokenInstance();
   self->term_instance_ = new TermInstance();
   self->double_array_ = new Darts::DoubleArray();
   
@@ -46,11 +46,6 @@ OutOfVocabularyWordRecognition::~OutOfVocabularyWordRecognition() {
     crf_segmenter_ = NULL;
   }
 
-  if (offset_instance_ != NULL) {
-    delete offset_instance_;
-    offset_instance_ = NULL;
-  }
-
   if (term_instance_ != NULL) {
     delete term_instance_;
     term_instance_ = NULL;
@@ -62,8 +57,7 @@ OutOfVocabularyWordRecognition::~OutOfVocabularyWordRecognition() {
   }
 }
 
-OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition(): offset_instance_(NULL),
-                                                                  term_instance_(NULL),
+OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition(): term_instance_(NULL),
                                                                   crf_segmenter_(NULL),
                                                                   double_array_(NULL) {
 }
@@ -79,6 +73,8 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
   int ner_term_number = 0;
   const char *term_str;
   const char *pos_tag;
+  bool oov_flag = false,
+       next_oov_flag = false;
 
   for (size_t i = 0; i < in_term_instance->size(); ++i) {
     term_token_number = in_term_instance->token_number_at(i);
@@ -86,13 +82,30 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
     term_str = in_term_instance->term_text_at(i);
     // printf("%d\n", ner_term_number);
 
-    if (term_token_number > 1 || 
-        current_token_type != TokenInstance::kChineseChar ||
-        IsFiltered(term_str) == true) {
+    if (next_oov_flag == true) {
+      oov_flag = true;
+      next_oov_flag = false;
+    } else if (term_token_number > 1 || current_token_type != TokenInstance::kChineseChar) {
+      oov_flag = false;
+    } else {
+      int oov_property = double_array_->exactMatchSearch<int>(term_str);
+      if (oov_property == kOOVBeginOfWord) {
+        next_oov_flag = true;
+        oov_flag = true;
+      } else if (oov_property == kOOVFilteredWord) {
+        oov_flag = false;      
+      } else {
+        oov_flag = true;
+      }
+    }
+
+    if (oov_flag) {
+      ner_term_number++;
+
+    } else {
 
       // Recognize token from ner_begin_token to current_token
       if (ner_term_number > 1) {
-        // printf("ner_term_number %d\n", ner_term_number);
         RecognizeRange(in_token_instance, ner_begin_token, current_token);
         
         for (size_t j = 0; j < term_instance_->size(); ++j) {
@@ -110,9 +123,6 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
       ner_begin_token = current_token + term_token_number;
       current_term++;
       ner_term_number = 0;
-
-    } else {
-      ner_term_number++;
     }
 
     current_token += term_token_number;
@@ -147,8 +157,7 @@ void OutOfVocabularyWordRecognition::CopyTermValue(TermInstance *dest_term_insta
 
 void OutOfVocabularyWordRecognition::RecognizeRange(const TokenInstance *token_instance, int begin, int end) {
   printf("rgn %d %d\n", begin, end);
-  offset_instance_->Update(token_instance, begin, end);
-  crf_segmenter_->Segment(term_instance_, offset_instance_);
+  crf_segmenter_->SegmentRange(term_instance_, token_instance, begin, end);
   printf("s %d\n", term_instance_->size());
   for (int i = 0; i < term_instance_->size(); ++i) {
     puts(term_instance_->term_text_at(i));
