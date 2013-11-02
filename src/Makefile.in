@@ -137,13 +137,11 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmilkcat_la_LIBADD =
-am_libmilkcat_la_OBJECTS = crf_segmenter.lo crf_tagger.lo \
-	hmm_segment_and_pos_tagger.lo instance_data.lo \
-	out_of_vocabulary_word_recognitioin.lo pos_tag_set.lo \
-	term_instance.lo part_of_speech_tag_instance.lo \
-	token_instance.lo token_lex.lo tokenization.lo utils.lo \
-	libmilkcat.lo bigram_segmenter.lo crf_pos_tagger.lo strlcpy.lo \
-	crfpp_model.lo crfpp_tagger.lo
+am_libmilkcat_la_OBJECTS = crf_segmenter.lo instance_data.lo \
+	out_of_vocabulary_word_recognitioin.lo term_instance.lo \
+	part_of_speech_tag_instance.lo token_instance.lo token_lex.lo \
+	tokenization.lo utils.lo libmilkcat.lo bigram_segmenter.lo \
+	crf_pos_tagger.lo strlcpy.lo crf_model.lo crf_tagger.lo
 libmilkcat_la_OBJECTS = $(am_libmilkcat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -366,24 +364,15 @@ ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = milkcat.h
 noinst_LIBRARIES = libmain.a
 lib_LTLIBRARIES = libmilkcat.la
-libmilkcat_la_LDFLAGS = -lstdc++ -lcrfpp
+libmilkcat_la_LDFLAGS = -lstdc++
 libmilkcat_la_SOURCES = milkcat_config.h \
                         crf_pos_tagger.h \
                         crf_segmenter.cc \
                         crf_segmenter.h \
-                        crf_tagger.cc \
-                        crf_tagger.h \
-                        hmm_segment_and_pos_tagger.cc \
-                        hmm_segment_and_pos_tagger.h \
                         instance_data.h \
                         instance_data.cc \
                         out_of_vocabulary_word_recognitioin.cc \
                         out_of_vocabulary_word_recognitioin.h \
-                        pos_tag_set.cc \
-                        pos_tag_set.h \
-                        segment_tag_set.h \
-                        tag_sequence.h \
-                        tag_set.h \
                         term_instance.h \
                         term_instance.cc \
                         part_of_speech_tag_instance.h \
@@ -405,10 +394,10 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         crf_pos_tagger.cc\
                         strlcpy.cc\
                         strlcpy.h \
-                        crfpp_model.h \
-                        crfpp_model.cc \
-                        crfpp_tagger.h \
-                        crfpp_tagger.cc
+                        crf_model.h \
+                        crf_model.cc \
+                        crf_tagger.h \
+                        crf_tagger.cc
 
 mkbigram_SOURCES = make_bigram_model.cc
 mkdict_SOURCES = mkdict.cc
@@ -558,12 +547,10 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bigram_segmenter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_model.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_pos_tagger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_segmenter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_tagger.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crfpp_model.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crfpp_tagger.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmm_segment_and_pos_tagger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/instance_data.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmilkcat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
@@ -571,7 +558,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mkdict.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/out_of_vocabulary_word_recognitioin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/part_of_speech_tag_instance.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pos_tag_set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/term_instance.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/token_instance.Plo@am__quote@

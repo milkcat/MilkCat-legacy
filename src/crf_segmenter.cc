@@ -9,7 +9,6 @@
 #include <string>
 #include <string.h>
 #include "crf_segmenter.h"
-#include "segment_tag_set.h"
 #include "term_instance.h"
 #include "token_instance.h"
 #include "feature_extractor.h"
@@ -34,15 +33,30 @@ class SegmentFeatureExtractor: public FeatureExtractor {
 };
 
 CRFSegmenter *CRFSegmenter::Create(const char *model_path) {
+  char error_message[1024];
   CRFSegmenter *self = new CRFSegmenter();
+  self->crf_model_ = CRFModel::Create(model_path);
+  if (self->crf_model_ == NULL) {
+    delete self;
+    return NULL;
+  }
 
-  self->tag_set_ = new SegmentTagSet();
-  self->tag_sequence_ = new TagSequence(1000);
-  self->crf_tagger_ = CRFTagger::Create(model_path, self->tag_set_);
+  self->crf_tagger_ = new CRFTagger(self->crf_model_);
   self->feature_extractor_ = new SegmentFeatureExtractor();
 
-  if (self->crf_tagger_ == NULL) {
+  // Get the tag's value in CRF++ model
+  self->S = self->crf_tagger_->GetTagId("S");
+  self->B = self->crf_tagger_->GetTagId("B");
+  self->B1 = self->crf_tagger_->GetTagId("B1");
+  self->B2 = self->crf_tagger_->GetTagId("B2");
+  self->M = self->crf_tagger_->GetTagId("M");
+  self->E = self->crf_tagger_->GetTagId("E");
+
+  if (self->S < 0 || self->B < 0 || self->B1 < 0 || self->B2 < 0 || 
+      self->M < 0 || self->E < 0) {
     delete self;
+    sprintf(error_message, "bad CRF++ segmenter model %s, unable to find S, B, B1, B2, M, E tag.", model_path);
+    set_error_message(error_message);
     return NULL;
   }
 
@@ -50,11 +64,6 @@ CRFSegmenter *CRFSegmenter::Create(const char *model_path) {
 }
 
 CRFSegmenter::~CRFSegmenter() {
-  if (tag_set_ != NULL) {
-    delete tag_set_;
-    tag_set_ = NULL;
-  }
-
   if (feature_extractor_ != NULL) {
     delete feature_extractor_;
     feature_extractor_ = NULL;
@@ -65,38 +74,36 @@ CRFSegmenter::~CRFSegmenter() {
     crf_tagger_ = NULL;
   }
 
-  if (tag_sequence_ != NULL) {
-    delete tag_sequence_;
-    tag_sequence_ = NULL;
+  if (crf_model_ != NULL) {
+    delete crf_model_;
+    crf_model_ = NULL;
   }
 }
 
-CRFSegmenter::CRFSegmenter(): tag_set_(NULL), 
-                              crf_tagger_(NULL), 
-                              tag_sequence_(NULL),
+CRFSegmenter::CRFSegmenter(): crf_tagger_(NULL), 
+                              crf_model_(NULL),
                               feature_extractor_(NULL) {}
 
 void CRFSegmenter::SegmentRange(TermInstance *term_instance, const TokenInstance *token_instance, int begin, int end) {
   std::string buffer;
 
   feature_extractor_->set_token_instance(token_instance);
-  crf_tagger_->TagRange(feature_extractor_, tag_sequence_, begin, end);
-  assert(end - begin == tag_sequence_->length());
+  crf_tagger_->TagRange(feature_extractor_, begin, end);
 
-  TagSet::TagId tag_id;
+  int tag_id;
   int term_count = 0;
   size_t i = 0;
   int token_count = 0;
   int term_type;
-  for (i = 0; i < tag_sequence_->length(); ++i) {
+  for (i = 0; i < end - begin; ++i) {
     token_count++;
     buffer.append(token_instance->token_text_at(begin + i));
 
-    tag_id = tag_sequence_->GetTagAt(i);
+    tag_id = crf_tagger_->GetTagAt(i);
     // printf("%s\n", tag_set_->TagIdToTagString(tag_id));
-    if (tag_id == SegmentTagSet::S || tag_id == SegmentTagSet::E) {
+    if (tag_id == S || tag_id == E) {
 
-      if (tag_id == SegmentTagSet::S) {
+      if (tag_id == S) {
         term_type = token_type_to_word_type(token_instance->token_type_at(begin + i));
       } else {
         term_type = TermInstance::kChineseWord;

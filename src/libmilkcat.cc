@@ -13,14 +13,9 @@
 #include "crf_tagger.h"
 #include "tokenization.h"
 #include "utils.h"
-#include "tag_set.h"
-#include "segment_tag_set.h"
 #include "term_instance.h"
 #include "token_instance.h"
-#include "tag_sequence.h"
-#include "pos_tag_set.h"
 #include "part_of_speech_tag_instance.h"
-#include "hmm_segment_and_pos_tagger.h"
 #include "bigram_segmenter.h"
 #include "out_of_vocabulary_word_recognitioin.h"
 
@@ -68,80 +63,6 @@ class MilkCatProcessor {
  protected:
   Tokenization *tokenization_;
   TokenInstance *token_instance_;
-};
-
-class MilkCatHMMSegPOSTaggerProcessor: public MilkCatProcessor {
- public:
-  static MilkCatHMMSegPOSTaggerProcessor *Create(const char *model_dir_path) {
-    MilkCatHMMSegPOSTaggerProcessor *self = new MilkCatHMMSegPOSTaggerProcessor();
-    if (self->Initialize(model_dir_path) == false) {
-      delete self;
-      return NULL;
-    } else {
-      return self;
-    }
-  }
-
-  bool Initialize(const char *model_dir_path) {
-    if (MilkCatProcessor::Initialize() == false)
-      return false;
-
-    term_instance_ = new TermInstance();
-    part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
-
-    hmm_segment_and_pos_tagger_ = HMMSegmentAndPOSTagger::Create(
-        (std::string(model_dir_path) + "term.darts").c_str(), 
-        (std::string(model_dir_path) + "pos_term_emit.model").c_str(), 
-        (std::string(model_dir_path) + "pos_tag_trans.model").c_str());
-
-    if (hmm_segment_and_pos_tagger_ == NULL) 
-      return false;
-
-    return true;
-  } 
-
-  MilkCatHMMSegPOSTaggerProcessor(): term_instance_(NULL),
-                                     part_of_speech_tag_instance_(NULL),
-                                     hmm_segment_and_pos_tagger_(NULL) {
-  }
-
-  ~MilkCatHMMSegPOSTaggerProcessor() {
-    if (term_instance_ != NULL) {
-      delete term_instance_;
-      term_instance_ = NULL;
-    }
-
-    if (part_of_speech_tag_instance_ != NULL) {
-      delete part_of_speech_tag_instance_;
-      part_of_speech_tag_instance_ = NULL;
-    }
-
-    if (hmm_segment_and_pos_tagger_ != NULL) {
-      delete hmm_segment_and_pos_tagger_;
-      hmm_segment_and_pos_tagger_ = NULL;
-    }
-  }
-
-  int NextSentence() {
-    if (0 == MilkCatProcessor::NextSentence())
-      return 0;
-
-    hmm_segment_and_pos_tagger_->Process(term_instance_, part_of_speech_tag_instance_, token_instance_);
-
-    return 1;
-  }
-
-  size_t SentenceLength() { return term_instance_->size(); }
-  const char *GetTerm(int position) { return term_instance_->term_text_at(position); }
-  const char *GetPartOfSpeechTag(int position) { 
-    return part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
-  }
-  int GetWordType(int position) { return term_instance_->term_type_at(position); }
-
- protected:
-  HMMSegmentAndPOSTagger *hmm_segment_and_pos_tagger_;
-  TermInstance *term_instance_;
-  PartOfSpeechTagInstance *part_of_speech_tag_instance_;
 };
 
 
@@ -360,10 +281,6 @@ milkcat_t *milkcat_init(int processor_type, const char *model_dir_path) {
 
    case CRF_PROCESSOR:
     milkcat->processor = MilkCatCRFSegPOSTagProcessor::Create(model_dir_path);
-    break;
-
-   case HMM_PROCESSOR:
-    milkcat->processor = MilkCatHMMSegPOSTaggerProcessor::Create(model_dir_path);
     break;
 
    default:

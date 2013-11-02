@@ -9,8 +9,6 @@
 #define CRF_SEGMENTER_H
 
 #include "crf_tagger.h"
-#include "segment_tag_set.h"
-#include "tag_sequence.h"
 #include "utils.h"
 #include "token_instance.h"
 
@@ -31,9 +29,11 @@ class CRFSegmenter {
  
  private:
   CRFTagger *crf_tagger_;
-  SegmentTagSet *tag_set_;
-  TagSequence *tag_sequence_;
+  CRFModel *crf_model_;
+
   SegmentFeatureExtractor *feature_extractor_;
+
+  int S, B, B1, B2, M, E;
 
   CRFSegmenter();
 

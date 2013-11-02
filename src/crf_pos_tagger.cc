@@ -64,30 +64,24 @@ class PartOfSpeechFeatureExtractor: public FeatureExtractor {
 CRFPOSTagger *CRFPOSTagger::Create(const char *model_path) {
   CRFPOSTagger *self = new CRFPOSTagger();
 
-  self->pos_tag_set_ = new POSTagSet();
-  self->tag_sequence_ = new TagSequence(kTokenMax);
   self->feature_extractor_ = new PartOfSpeechFeatureExtractor();
-
-  self->crf_tagger_ = CRFTagger::Create(model_path, self->pos_tag_set_);
-  if (self->crf_tagger_ == NULL) {
+  self->crf_model_ = CRFModel::Create(model_path);
+  if (self->crf_model_ == NULL) {
     delete self;
     return NULL;
   }
 
+  self->crf_tagger_ = new CRFTagger(self->crf_model_);
+
   return self;
 }
 
-CRFPOSTagger::CRFPOSTagger(): pos_tag_set_(NULL), 
-                              crf_tagger_(NULL), 
-                              tag_sequence_(NULL),
-                              feature_extractor_(NULL) {}
+CRFPOSTagger::CRFPOSTagger(): crf_tagger_(NULL), 
+                              crf_model_(NULL),
+                              feature_extractor_(NULL) {
+}
 
 CRFPOSTagger::~CRFPOSTagger() {
-  if (pos_tag_set_ != NULL) {
-    delete pos_tag_set_;
-    pos_tag_set_ = NULL;
-  }
-
   if (feature_extractor_ != NULL) {
     delete feature_extractor_;
     feature_extractor_ = NULL;
@@ -98,17 +92,17 @@ CRFPOSTagger::~CRFPOSTagger() {
     crf_tagger_ = NULL;
   }
 
-  if (tag_sequence_ != NULL) {
-    delete tag_sequence_;
-    tag_sequence_ = NULL;
+  if (crf_model_ != NULL) {
+    delete crf_model_;
+    crf_model_ = NULL;
   }
 }
 
 void CRFPOSTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, const TermInstance *term_instance) {
   feature_extractor_->set_term_instance(term_instance);
-  crf_tagger_->Tag(feature_extractor_, tag_sequence_);
+  crf_tagger_->Tag(feature_extractor_);
   for (size_t i = 0; i < term_instance->size(); ++i) {
-    part_of_speech_tag_instance->set_value_at(i, pos_tag_set_->TagIdToTagString(tag_sequence_->GetTagAt(i))); 
+    part_of_speech_tag_instance->set_value_at(i, crf_tagger_->GetTagText(crf_tagger_->GetTagAt(i))); 
   }
   part_of_speech_tag_instance->set_size(term_instance->size());
 }

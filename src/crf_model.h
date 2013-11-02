@@ -1,5 +1,6 @@
 //
 // crfpp_model.h --- Created at 2013-10-28
+// crf_model.h --- Created at 2013-11-02
 // Copyright (c) 2013 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,25 +33,25 @@
 #include <vector>
 #include "darts.h"
 
-class CrfppModel {
+class CRFModel {
  public:
   // Open a CRF++ model file
-  static CrfppModel *Create(const char *model_path);
+  static CRFModel *Create(const char *model_path);
 
-  ~CrfppModel();
+  ~CRFModel();
 
   // Get internal id of feature_str, if not exists return -1
-  int GetFeatureId(const char *feature_str) {
+  int GetFeatureId(const char *feature_str) const {
     return double_array_->exactMatchSearch<Darts::DoubleArray::result_type>(feature_str);
   }
   
   // Get Tag's string text by its id
-  const char *GetTagText(int tag_id) {
+  const char *GetTagText(int tag_id) const {
     return y_[tag_id];
   }
 
   // Get Tag's id by its text, return -1 if it not exists
-  int GetTagId(const char *tag_text) {
+  int GetTagId(const char *tag_text) const  {
     for (std::vector<const char *>::const_iterator it = y_.begin(); it != y_.end(); ++it) {
       if (strcmp(tag_text, *it) == 0) return it - y_.begin();
     }
@@ -59,37 +60,37 @@ class CrfppModel {
   }
 
   // Get the unigram template
-  const char *GetUnigramTemplate(int index) {
+  const char *GetUnigramTemplate(int index) const {
     return unigram_templs_[index];
   }
 
   // Get the number of unigram template
-  int UnigramTemplateNum() {
+  int UnigramTemplateNum() const {
     return unigram_templs_.size();
   }
 
   // Get the bigram template
-  const char *GetBigramTemplate(int index) {
+  const char *GetBigramTemplate(int index) const {
     return bigram_templs_[index];
   }
 
   // Get the number of unigram template
-  int BigramTemplateNum() {
+  int BigramTemplateNum() const {
     return bigram_templs_.size();
   }
 
   // Get the number of tag
-  int GetTagNumber() {
+  int GetTagNumber() const {
     return y_.size();
   }
   
   // Get the cost for feature with current tag
-  double GetUnigramCost(int feature_id, int tag_id) {
+  double GetUnigramCost(int feature_id, int tag_id) const {
     return cost_data_[feature_id + tag_id];
   }
 
   // Get the bigram cost for feature with left tag and right tag
-  double GetBigramCost(int feature_id, int left_tag_id, int right_tag_id) {
+  double GetBigramCost(int feature_id, int left_tag_id, int right_tag_id) const {
     return cost_data_[feature_id + left_tag_id * y_.size() + right_tag_id];
   }
 
@@ -107,7 +108,7 @@ class CrfppModel {
   double cost_factor_;
   int xsize_;
 
-  CrfppModel();
+  CRFModel();
 };
 
 #endif 

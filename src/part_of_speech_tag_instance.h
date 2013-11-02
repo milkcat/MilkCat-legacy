@@ -12,8 +12,6 @@
 #include <assert.h>
 #include "instance_data.h"
 #include "term_instance.h"
-#include "tag_sequence.h"
-#include "pos_tag_set.h"
 #include "utils.h"
 
 class PartOfSpeechTagInstance {
