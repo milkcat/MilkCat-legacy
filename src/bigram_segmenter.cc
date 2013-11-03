@@ -324,6 +324,7 @@ void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *
 
             // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)
             weight = node->weight + bigram_map_iter->second - unigram_weight_[left_term_id];
+            // printf("bigram find %d %d\n", bucket_id, bucket_count);
           } else {
 
             // if np bigram data use p(x_n+1|x_n) = p(x_n+1)

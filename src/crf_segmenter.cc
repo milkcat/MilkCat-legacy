@@ -88,7 +88,7 @@ void CRFSegmenter::SegmentRange(TermInstance *term_instance, const TokenInstance
   std::string buffer;
 
   feature_extractor_->set_token_instance(token_instance);
-  crf_tagger_->TagRange(feature_extractor_, begin, end);
+  crf_tagger_->TagRange(feature_extractor_, begin, end, S, S);
 
   int tag_id;
   int term_count = 0;
@@ -100,7 +100,7 @@ void CRFSegmenter::SegmentRange(TermInstance *term_instance, const TokenInstance
     buffer.append(token_instance->token_text_at(begin + i));
 
     tag_id = crf_tagger_->GetTagAt(i);
-    // printf("%s\n", tag_set_->TagIdToTagString(tag_id));
+    printf("%s\n", crf_tagger_->GetTagText(tag_id));
     if (tag_id == S || tag_id == E) {
 
       if (tag_id == S) {

@@ -43,12 +43,17 @@ class CRFTagger {
   static const int kMaxBucket = kTokenMax;
   static const int kMaxFeature = 24;
 
+  // Tag a range of instance with the begin tag before the result and the end tag after the result
+  void TagRange(FeatureExtractor *feature_extractor, int begin, int end, int begin_tag, int end_tag);
+
   // Tag a range of instance
-  void TagRange(FeatureExtractor *feature_extractor, int begin, int end);
+  void TagRange(FeatureExtractor *feature_extractor, int begin, int end) {
+  	TagRange(feature_extractor, begin, end, -1, -1);
+  }
 
   // Tag a sentence the result could retrive by GetTagAt
   void Tag(FeatureExtractor *feature_extractor) {
-    TagRange(feature_extractor, 0, feature_extractor->size());
+    TagRange(feature_extractor, 0, feature_extractor->size(), -1, -1);
   }
 
   // Get the result tag at position, position starts from 0
@@ -105,11 +110,14 @@ class CRFTagger {
   // Calcualte the bigram cost from tag to tag in bucket
   void CalculateArcCost(int position);
 
+  // Calculate the cost of the arc from begin tag to all tags in position 0
+  void CalculateBeginTagArcCost(int begin_tag);
+
   // Viterbi algorithm
-  void Viterbi(int begin, int end);
+  void Viterbi(int begin, int end, int begin_tag, int end_tag);
 
   // Get the best tag sequence from Viterbi result
-  void FindBestResult(int begin, int end);
+  void FindBestResult(int begin, int end, int end_tag);
 
   const char *GetIndex(const char *&p, int position);
   bool ApplyRule(std::string &output_str, const char *template_str, size_t position);

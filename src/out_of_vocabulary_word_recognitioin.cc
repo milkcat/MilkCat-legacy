@@ -82,20 +82,27 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
     term_str = in_term_instance->term_text_at(i);
     // printf("%d\n", ner_term_number);
 
-    if (next_oov_flag == true) {
-      oov_flag = true;
-      next_oov_flag = false;
-    } else if (term_token_number > 1 || current_token_type != TokenInstance::kChineseChar) {
+    if (term_token_number > 1) {
+      if (next_oov_flag == true) {
+        oov_flag = true;
+        next_oov_flag = false;
+      } else {
+        oov_flag = false;
+      }
+    } else if (current_token_type != TokenInstance::kChineseChar) {
       oov_flag = false;
+      next_oov_flag = false;
     } else {
       int oov_property = double_array_->exactMatchSearch<int>(term_str);
       if (oov_property == kOOVBeginOfWord) {
         next_oov_flag = true;
         oov_flag = true;
       } else if (oov_property == kOOVFilteredWord) {
-        oov_flag = false;      
+        oov_flag = false;
+        next_oov_flag = false;
       } else {
         oov_flag = true;
+        next_oov_flag = false;
       }
     }
 

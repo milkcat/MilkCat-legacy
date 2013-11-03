@@ -88,34 +88,45 @@ const char *CRFTagger::GetFeatureAt(int position, int index) {
   return feature_cache_[position][index];
 }
 
-void CRFTagger::TagRange(FeatureExtractor *feature_extractor, int begin, int end) {
+void CRFTagger::TagRange(FeatureExtractor *feature_extractor, int begin, int end, int begin_tag, int end_tag) {
   feature_extractor_ = feature_extractor;
 
   ClearFeatureCache();
 
-  Viterbi(begin, end);
-  FindBestResult(begin, end);
+  Viterbi(begin, end, begin_tag, end_tag);
+  FindBestResult(begin, end, end_tag);
 }
 
-void CRFTagger::Viterbi(int begin, int end) {
+void CRFTagger::Viterbi(int begin, int end, int begin_tag, int end_tag) {
   assert(begin >= 0 && begin < end && end <= feature_extractor_->size());
   ClearBucket(begin);
+  if (begin_tag != -1) CalculateBeginTagArcCost(begin_tag);
   CalculateBucketCost(begin);
+
   for (int position = begin + 1; position < end; ++position) {
     ClearBucket(position);
     CalculateArcCost(position);
     CalculateBucketCost(position);
   }
+
+  if (end_tag != -1) CalculateArcCost(end);
 }
 
-void CRFTagger::FindBestResult(int begin, int end) {
+void CRFTagger::FindBestResult(int begin, int end, int end_tag) {
   int best_tag_id = 0;
   double best_cost = -1e37;
   const Node *last_bucket = buckets_[end - 1];
-  for (int tag_id = 0; tag_id < model_->GetTagNumber(); ++tag_id) {
-    if (best_cost < last_bucket[tag_id].cost) {
-      best_tag_id = tag_id;
-      best_cost = last_bucket[tag_id].cost;
+
+  if (end_tag != -1) {
+
+    // Have the end tag ... so find the previous tag pf the end tag
+    best_tag_id = buckets_[end][end_tag].left_tag_id;
+  } else {
+    for (int tag_id = 0; tag_id < model_->GetTagNumber(); ++tag_id) {
+      if (best_cost < last_bucket[tag_id].cost) {
+        best_tag_id = tag_id;
+        best_cost = last_bucket[tag_id].cost;
+      }
     }
   }
 
@@ -142,6 +153,22 @@ void CRFTagger::CalculateBucketCost(int position) {
       cost += model_->GetUnigramCost(feature_id, tag_id);
     }
     buckets_[position][tag_id].cost = cost;
+  }
+}
+
+void CRFTagger::CalculateBeginTagArcCost(int begin_tag) {
+  int feature_ids[kMaxFeature],
+      feature_id;
+  int feature_num = GetBigramFeatureIds(0, feature_ids);
+  double cost;
+
+  for (int tag_id = 0; tag_id < model_->GetTagNumber(); ++tag_id) {
+    cost = 0;
+    for (int i = 0; i < feature_num; ++i) {
+      feature_id = feature_ids[i];
+      cost += model_->GetBigramCost(feature_id, begin_tag, tag_id);
+    }
+    buckets_[0][tag_id].cost = cost;
   }
 }
 
