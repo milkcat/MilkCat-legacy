@@ -34,18 +34,6 @@
 #include "crf_model.h"
 #include "utils.h"
 
-static inline const char *read_pointer(const char **ptr, size_t size) {
-  const char *r = *ptr;
-  *ptr += size;
-  return r;
-}
-
-template <class T> 
-static inline void read_value(const char **ptr, T *value) {
-  const char *r = read_pointer(ptr, sizeof(T));
-  memcpy(value, r, sizeof(T));
-}
-
 CRFModel::CRFModel(): data_(NULL), cost_num_(0), cost_data_(NULL),
                           double_array_(NULL), cost_factor_(0.0) {
 }
@@ -112,7 +100,7 @@ CRFModel *CRFModel::Create(const char *model_path) {
 
   int32_t y_str_size;
   read_value<int32_t>(&ptr, &y_str_size);
-  const char *y_str = read_pointer(&ptr, y_str_size);
+  const char *y_str = read_data(&ptr, y_str_size);
   int pos = 0;
   while (pos < y_str_size) {
     self->y_.push_back(y_str + pos);
@@ -121,7 +109,7 @@ CRFModel *CRFModel::Create(const char *model_path) {
 
   int32_t tmpl_str_size;
   read_value<int32_t>(&ptr, &tmpl_str_size);
-  const char *tmpl_str = read_pointer(&ptr, tmpl_str_size);
+  const char *tmpl_str = read_data(&ptr, tmpl_str_size);
   pos = 0;
   while (pos < tmpl_str_size) {
     const char *v = tmpl_str + pos;

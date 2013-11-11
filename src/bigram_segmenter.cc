@@ -241,6 +241,7 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
     sprintf(error_message, "unable to read from unigram data file %s", unigram_binary_path);
     set_error_message(error_message);
     delete self;
+    fclose(fd);
     return NULL;      
   }
 
@@ -268,6 +269,7 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
       sprintf(error_message, "unable to read from bigram data file %s", bigram_binary_path);
       set_error_message(error_message);
       delete self;
+      fclose(fd);
       return NULL;
     }
     self->bigram_weight_[(static_cast<int64_t>(bigram_record.left_id) << 32) + bigram_record.right_id] = bigram_record.weight;
@@ -324,11 +326,12 @@ void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *
 
             // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)
             weight = node->weight + bigram_map_iter->second - unigram_weight_[left_term_id];
-            // printf("bigram find %d %d\n", bucket_id, bucket_count);
+            // printf("bigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           } else {
 
             // if np bigram data use p(x_n+1|x_n) = p(x_n+1)
             weight = node->weight + unigram_weight_[right_term_id];
+            // printf("unigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           }
 
           if (weight < min_weight) {
@@ -383,7 +386,6 @@ void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *
                                 buffer.c_str(),
                                 bucket_id - from_bucket_id,
                                 term_type);
-    // printf("---%d---\n", decode_node_[position][index].term_position);
     node = node->from_node;
   } // end while
 

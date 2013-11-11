@@ -37,9 +37,13 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         crf_model.h \
                         crf_model.cc \
                         crf_tagger.h \
-                        crf_tagger.cc
+                        crf_tagger.cc \
+                        configuration.h \
+                        configuration.cc \
+                        hmm_part_of_speech_tagger.h \
+                        hmm_part_of_speech_tagger.cc
 
-bin_PROGRAMS = mkbigram mkdict
-mkbigram_SOURCES = make_bigram_model.cc
-mkdict_SOURCES = mkdict.cc
+bin_PROGRAMS = mc_model
+mc_model_SOURCES = mk_model.cc 
+mc_model_LDADD = libmilkcat.la
 libmain_a_SOURCES = main.c

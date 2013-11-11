@@ -1,3 +1,5 @@
+
+#include <stdio.h>
 #include "token_instance.h"
 #include "tokenization.h"
 #include "token_lex.h"
@@ -13,7 +15,7 @@ bool Tokenization::GetSentence(TokenInstance *token_instance) {
   int token_type;
   int token_count = 0;
 
-  while (token_count < kTokenMax) {
+  while (token_count < kTokenMax - 1) {
     token_type = yylex();
 
     if (token_type == TokenInstance::kEnd) 

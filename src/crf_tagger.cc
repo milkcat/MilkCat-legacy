@@ -104,7 +104,7 @@ void CRFTagger::Viterbi(int begin, int end, int begin_tag, int end_tag) {
   CalculateBucketCost(begin);
 
   for (int position = begin + 1; position < end; ++position) {
-    ClearBucket(position);
+    // ClearBucket(position);
     CalculateArcCost(position);
     CalculateBucketCost(position);
   }
@@ -153,6 +153,7 @@ void CRFTagger::CalculateBucketCost(int position) {
       cost += model_->GetUnigramCost(feature_id, tag_id);
     }
     buckets_[position][tag_id].cost = cost;
+    // printf("Bucket Cost: %d %s %lf\n", position, model_->GetTagText(tag_id), cost);
   }
 }
 

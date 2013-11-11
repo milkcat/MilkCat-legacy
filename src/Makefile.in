@@ -81,7 +81,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = mkbigram$(EXEEXT) mkdict$(EXEEXT)
+bin_PROGRAMS = mc_model$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp $(include_HEADERS)
@@ -141,7 +141,8 @@ am_libmilkcat_la_OBJECTS = crf_segmenter.lo instance_data.lo \
 	out_of_vocabulary_word_recognitioin.lo term_instance.lo \
 	part_of_speech_tag_instance.lo token_instance.lo token_lex.lo \
 	tokenization.lo utils.lo libmilkcat.lo bigram_segmenter.lo \
-	crf_pos_tagger.lo strlcpy.lo crf_model.lo crf_tagger.lo
+	crf_pos_tagger.lo strlcpy.lo crf_model.lo crf_tagger.lo \
+	configuration.lo hmm_part_of_speech_tagger.lo
 libmilkcat_la_OBJECTS = $(am_libmilkcat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -152,12 +153,9 @@ libmilkcat_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(libmilkcat_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 PROGRAMS = $(bin_PROGRAMS)
-am_mkbigram_OBJECTS = make_bigram_model.$(OBJEXT)
-mkbigram_OBJECTS = $(am_mkbigram_OBJECTS)
-mkbigram_LDADD = $(LDADD)
-am_mkdict_OBJECTS = mkdict.$(OBJEXT)
-mkdict_OBJECTS = $(am_mkdict_OBJECTS)
-mkdict_LDADD = $(LDADD)
+am_mc_model_OBJECTS = mk_model.$(OBJEXT)
+mc_model_OBJECTS = $(am_mc_model_OBJECTS)
+mc_model_DEPENDENCIES = libmilkcat.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -211,9 +209,9 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(libmain_a_SOURCES) $(libmilkcat_la_SOURCES) \
-	$(mkbigram_SOURCES) $(mkdict_SOURCES)
+	$(mc_model_SOURCES)
 DIST_SOURCES = $(libmain_a_SOURCES) $(libmilkcat_la_SOURCES) \
-	$(mkbigram_SOURCES) $(mkdict_SOURCES)
+	$(mc_model_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -397,10 +395,14 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         crf_model.h \
                         crf_model.cc \
                         crf_tagger.h \
-                        crf_tagger.cc
+                        crf_tagger.cc \
+                        configuration.h \
+                        configuration.cc \
+                        hmm_part_of_speech_tagger.h \
+                        hmm_part_of_speech_tagger.cc
 
-mkbigram_SOURCES = make_bigram_model.cc
-mkdict_SOURCES = mkdict.cc
+mc_model_SOURCES = mk_model.cc 
+mc_model_LDADD = libmilkcat.la
 libmain_a_SOURCES = main.c
 all: all-am
 
@@ -532,13 +534,9 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-mkbigram$(EXEEXT): $(mkbigram_OBJECTS) $(mkbigram_DEPENDENCIES) $(EXTRA_mkbigram_DEPENDENCIES) 
-	@rm -f mkbigram$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(mkbigram_OBJECTS) $(mkbigram_LDADD) $(LIBS)
-
-mkdict$(EXEEXT): $(mkdict_OBJECTS) $(mkdict_DEPENDENCIES) $(EXTRA_mkdict_DEPENDENCIES) 
-	@rm -f mkdict$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(mkdict_OBJECTS) $(mkdict_LDADD) $(LIBS)
+mc_model$(EXEEXT): $(mc_model_OBJECTS) $(mc_model_DEPENDENCIES) $(EXTRA_mc_model_DEPENDENCIES) 
+	@rm -f mc_model$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(mc_model_OBJECTS) $(mc_model_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -547,15 +545,16 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bigram_segmenter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/configuration.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_model.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_pos_tagger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_segmenter.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crf_tagger.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hmm_part_of_speech_tagger.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/instance_data.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmilkcat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/make_bigram_model.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mkdict.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mk_model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/out_of_vocabulary_word_recognitioin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/part_of_speech_tag_instance.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strlcpy.Plo@am__quote@

@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  while (NULL != fgets(input_buffer, 2048, fp)) {
+  while (NULL != fgets(input_buffer, 1048576, fp)) {
     milkcat_process(processor, input_buffer);
     while (milkcat_next(processor) != 0) {
       // printf("22222222\n");

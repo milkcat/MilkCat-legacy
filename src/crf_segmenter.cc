@@ -24,7 +24,7 @@ class SegmentFeatureExtractor: public FeatureExtractor {
     if (token_instance_->token_type_at(position) == TokenInstance::kChineseChar) {
       strcpy(feature_list[0], token_instance_->token_text_at(position));
     } else {
-      strcpy(feature_list[0], "。");
+      strcpy(feature_list[0], "，");
     }
   }
 
@@ -100,7 +100,6 @@ void CRFSegmenter::SegmentRange(TermInstance *term_instance, const TokenInstance
     buffer.append(token_instance->token_text_at(begin + i));
 
     tag_id = crf_tagger_->GetTagAt(i);
-    printf("%s\n", crf_tagger_->GetTagText(tag_id));
     if (tag_id == S || tag_id == E) {
 
       if (tag_id == S) {

@@ -124,8 +124,6 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
         current_term++;
       }
 
-      // printf("%d\n", i);
-
       CopyTermValue(term_instance, current_term, in_term_instance, i);
       ner_begin_token = current_token + term_token_number;
       current_term++;
@@ -163,10 +161,5 @@ void OutOfVocabularyWordRecognition::CopyTermValue(TermInstance *dest_term_insta
 }
 
 void OutOfVocabularyWordRecognition::RecognizeRange(const TokenInstance *token_instance, int begin, int end) {
-  printf("rgn %d %d\n", begin, end);
   crf_segmenter_->SegmentRange(term_instance_, token_instance, begin, end);
-  printf("s %d\n", term_instance_->size());
-  for (int i = 0; i < term_instance_->size(); ++i) {
-    puts(term_instance_->term_text_at(i));
-  }
 }

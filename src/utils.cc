@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "term_instance.h"
 #include "token_instance.h"
 #include "utils.h"
@@ -43,3 +44,18 @@ int token_type_to_word_type(int token_type) {
     return TermInstance::kOther;
   }
 }
+
+char *trim(char *str)
+{
+  char *end;
+
+  while(isspace(*str)) str++;
+  if (*str == 0) return str;
+
+  end = str + strlen(str) - 1;
+  while(end > str && isspace(*end)) end--;
+
+  *(end + 1) = 0;
+  return str;
+}
+
