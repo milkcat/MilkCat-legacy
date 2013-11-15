@@ -33,7 +33,6 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         feature_extractor.h \
                         crf_pos_tagger.cc\
                         strlcpy.cc\
-                        strlcpy.h \
                         crf_model.h \
                         crf_model.cc \
                         crf_tagger.h \
@@ -41,7 +40,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         configuration.h \
                         configuration.cc \
                         hmm_part_of_speech_tagger.h \
-                        hmm_part_of_speech_tagger.cc
+                        hmm_part_of_speech_tagger.cc \
+                        static_hash_table.h
 
 bin_PROGRAMS = mc_model
 mc_model_SOURCES = mk_model.cc 

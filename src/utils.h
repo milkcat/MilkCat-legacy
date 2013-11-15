@@ -15,7 +15,7 @@
             void operator=(const TypeName&)
 
 // Print an error message and exit when a fatal error occured
-void set_error_message(char *message);
+void set_error_message(const char *message);
 const char *get_error_message();
 
 int token_type_to_word_type(int token_type);

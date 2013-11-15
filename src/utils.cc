@@ -15,7 +15,7 @@
 #include "utils.h"
 
 static char error_message_[2048] = "null";
-void set_error_message(char *message) {
+void set_error_message(const char *message) {
   strcpy(error_message_, message);
 }
 

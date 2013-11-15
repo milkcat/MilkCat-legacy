@@ -195,6 +195,7 @@ void CRFTagger::CalculateArcCost(int position) {
     }
     buckets_[position][tag_id].cost = best_cost;
     buckets_[position][tag_id].left_tag_id = best_tag_id;
+    // printf("Arc Cost: %d %s %s %lf\n", position, model_->GetTagText(tag_id), model_->GetTagText(best_tag_id), best_cost);
   }
 }
 

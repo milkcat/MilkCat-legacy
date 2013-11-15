@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdexcept>
 #include "hmm_part_of_speech_tagger.h"
 #include "part_of_speech_tag_instance.h"
 #include "term_instance.h"
@@ -94,114 +95,93 @@ HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
 HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path, const char *index_path) {
   HMMPartOfSpeechTagger *self = new HMMPartOfSpeechTagger();
   char error_message[1024];
+  FILE *fd = NULL;
 
-  FILE *fd = fopen(model_path, "r");
-  if (fd == NULL) {
-    sprintf(error_message, "unable to open HMM model file %s\n", model_path);
-    goto create_failed;
-  }
+  try {
+    fd = fopen(model_path, "r");
+    if (fd == NULL) 
+      throw std::runtime_error(std::string("unable to open HMM model file ") + model_path);
 
-  // Read magic number
-  int32_t magic_number;
-  if (1 != fread(&magic_number, sizeof(int32_t), 1, fd)) {
-    sprintf(error_message, "unable to read from file %s\n", model_path);
-    goto create_failed;  
-  }
+    // Read magic number
+    int32_t magic_number;
+    if (1 != fread(&magic_number, sizeof(int32_t), 1, fd)) 
+      throw std::runtime_error(std::string("unable to read from file ") + model_path);
 
-  if (magic_number != 0x3322) {
-    sprintf(error_message, "invalid HMM model file %s\n", model_path);
-    goto create_failed;
-  }
+    if (magic_number != 0x3322)
+      throw std::runtime_error(std::string("invalid HMM model file ") + model_path);
 
-  int32_t tag_num;
-  if (1 != fread(&tag_num, sizeof(int32_t), 1, fd)) {
-    sprintf(error_message, "unable to read from file %s\n", model_path);
-    goto create_failed;  
-  }
+    int32_t tag_num;
+    if (1 != fread(&tag_num, sizeof(int32_t), 1, fd))
+      throw std::runtime_error(std::string("unable to read from file ") + model_path);
 
-  int32_t max_term_id;
-  if (1 != fread(&max_term_id, sizeof(int32_t), 1, fd)) {
-    sprintf(error_message, "unable to read from file %s\n", model_path);
-    goto create_failed;  
-  }
+    int32_t max_term_id;
+    if (1 != fread(&max_term_id, sizeof(int32_t), 1, fd))
+      throw std::runtime_error(std::string("unable to read from file ") + model_path);
 
-  int32_t emit_num;
-  if (1 != fread(&emit_num, sizeof(int32_t), 1, fd)) {
-    sprintf(error_message, "unable to read from file %s\n", model_path);
-    goto create_failed;  
-  }
+    int32_t emit_num;
+    if (1 != fread(&emit_num, sizeof(int32_t), 1, fd))
+      throw std::runtime_error(std::string("unable to read from file ") + model_path);
 
-  self->tag_str_ = reinterpret_cast<char (*)[16]>(new char[16 * tag_num]);
-  for (int i = 0; i < tag_num; ++i) {
-    if (1 != fread(self->tag_str_[i], 16, 1, fd)) {
-      sprintf(error_message, "unable to read from file %s\n", model_path);
-      goto create_failed;  
+    self->tag_str_ = reinterpret_cast<char (*)[16]>(new char[16 * tag_num]);
+    for (int i = 0; i < tag_num; ++i) {
+      if (1 != fread(self->tag_str_[i], 16, 1, fd)) 
+        throw std::runtime_error(std::string("unable to read from file ") + model_path);
     }
-  }
 
-  self->transition_matrix_ = new double[tag_num * tag_num];
-  float f_weight;
-  for (int i = 0; i < tag_num * tag_num; ++i) {
-    if (1 != fread(&f_weight, sizeof(float), 1, fd)) {
-      sprintf(error_message, "unable to read from file %s\n", model_path);
-      goto create_failed;  
+    self->transition_matrix_ = new double[tag_num * tag_num];
+    float f_weight;
+    for (int i = 0; i < tag_num * tag_num; ++i) {
+      if (1 != fread(&f_weight, sizeof(float), 1, fd))
+        throw std::runtime_error(std::string("unable to read from file ") + model_path);
+      self->transition_matrix_[i] = f_weight;
     }
-    self->transition_matrix_[i] = f_weight;
-  }
 
-  self->emit_matrix_ = new TermTagProbability *[max_term_id + 1];
-  memset(self->emit_matrix_, 0, sizeof(TermTagProbability *) * (max_term_id + 1));
-  HMMEmitRecord emit_record;
-  TermTagProbability *emit_node;
-  for (int i = 0; i < emit_num; ++i) {
-    if (1 != fread(&emit_record, sizeof(emit_record), 1, fd)) {
-      sprintf(error_message, "unable to read from file %s\n", model_path);
-      goto create_failed;  
+
+    self->emit_matrix_ = new TermTagProbability *[max_term_id + 1];
+    memset(self->emit_matrix_, 0, sizeof(TermTagProbability *) * (max_term_id + 1));
+    HMMEmitRecord emit_record;
+    TermTagProbability *emit_node;
+    for (int i = 0; i < emit_num; ++i) {
+      if (1 != fread(&emit_record, sizeof(emit_record), 1, fd)) 
+        throw std::runtime_error(std::string("unable to read from file ") + model_path);
+      if (emit_record.term_id > max_term_id) 
+        throw std::runtime_error(std::string("unable to read from file ") + model_path);
+      emit_node = new TermTagProbability();
+      emit_node->tag_id = emit_record.tag_id;
+      emit_node->weight = emit_record.weight;
+      emit_node->next = self->emit_matrix_[emit_record.term_id];
+      self->emit_matrix_[emit_record.term_id] = emit_node;
     }
-    if (emit_record.term_id > max_term_id) {
-      sprintf(error_message, "invalid HMM model file %s\n", model_path);
-      goto create_failed;         
+
+    // Get a char to reach EOF
+    fgetc(fd);
+    if (0 == feof(fd))
+      throw std::runtime_error(std::string("invalid HMM model file ") + model_path); 
+
+    fclose(fd);
+    self->tag_num_ = tag_num;
+    self->max_term_id_ = max_term_id;
+
+    for (int i = 0; i < kMaxBucket; ++i) {
+      self->buckets_[i] = new Node[tag_num];
     }
-    emit_node = new TermTagProbability();
-    emit_node->tag_id = emit_record.tag_id;
-    emit_node->weight = emit_record.weight;
-    emit_node->next = self->emit_matrix_[emit_record.term_id];
-    self->emit_matrix_[emit_record.term_id] = emit_node;
+
+    self->oth_emit_node_ = new TermTagProbability();
+    self->oth_emit_node_->tag_id = kOthTag;
+    self->oth_emit_node_->weight = 20;
+    self->oth_emit_node_->next = NULL;
+
+    if (0 != self->unigram_trie_.open(index_path))
+      throw std::runtime_error(std::string("unable to open index file  ") + index_path); 
+
+    return self;
+
+  } catch (std::exception &ex) {
+    set_error_message(ex.what());
+    delete self;
+    if (fd != NULL) fclose(fd);
+    return NULL;
   }
-  
-  // Get a char to reach EOF
-  fgetc(fd);
-  if (0 == feof(fd)) {
-    printf("%ld\n", ftell(fd));
-    sprintf(error_message, "invalid HMM model file %s\n", model_path);
-    goto create_failed;    
-  }
-
-  fclose(fd);
-  self->tag_num_ = tag_num;
-  self->max_term_id_ = max_term_id;
-
-  for (int i = 0; i < kMaxBucket; ++i) {
-    self->buckets_[i] = new Node[tag_num];
-  }
-
-  self->oth_emit_node_ = new TermTagProbability();
-  self->oth_emit_node_->tag_id = kOthTag;
-  self->oth_emit_node_->weight = 20;
-  self->oth_emit_node_->next = NULL;
-
-  if (0 != self->unigram_trie_.open(index_path)) {
-    sprintf(error_message, "unable to open index file %s\n", index_path);
-    goto create_failed;      
-  }
-
-  return self;
-
-create_failed:
-  set_error_message(error_message);
-  delete self;
-  if (fd != NULL) fclose(fd);
-  return NULL;    
 }
 
 void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance) {

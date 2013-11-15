@@ -26,9 +26,9 @@
 #ifndef BIGRAM_SEGMENTER_H
 #define BIGRAM_SEGMENTER_H
 
-#include <tr1/unordered_map>
 #include <stdint.h>
 #include "milkcat_config.h"
+#include "static_hashtable.h"
 #include "darts.h"
 
 class TokenInstance;
@@ -69,7 +69,7 @@ class BigramSegmenter {
   float *unigram_weight_;
 
   // Weight for bigram term_id pair, key is left_id << 32 + right_id
-  std::tr1::unordered_map<int64_t, float> bigram_weight_;
+  const StaticHashTable<int64_t, float> *bigram_weight_;
 
   // NodePool instance to alloc and release node
   NodePool *node_pool_;

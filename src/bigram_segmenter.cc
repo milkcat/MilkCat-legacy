@@ -167,7 +167,8 @@ struct BigramRecord {
 
 BigramSegmenter::BigramSegmenter(): unigram_trie_(NULL),
                                     unigram_weight_(NULL),
-                                    node_pool_(NULL) {
+                                    node_pool_(NULL),
+                                    bigram_weight_(NULL) {
   for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
     buckets_[i] = NULL;
   }
@@ -187,6 +188,11 @@ BigramSegmenter::~BigramSegmenter() {
   if (node_pool_ != NULL) {
     delete node_pool_;
     node_pool_ = NULL;
+  }
+
+  if (bigram_weight_ != NULL) {
+    delete bigram_weight_;
+    bigram_weight_ = NULL; 
   }
 
   for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
@@ -248,34 +254,13 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   fclose(fd);
 
   // Load bigram weight file
-  fd = fopen(bigram_binary_path, "r");
-  if (fd == NULL) {
-    sprintf(error_message, "unable to open bigram data file %s", bigram_binary_path);
+  self->bigram_weight_ = StaticHashTable<int64_t, float>::Load(bigram_binary_path);
+  if (self->bigram_weight_ == NULL) {
+    sprintf(error_message, "unable to read from bigram data file %s", bigram_binary_path);
     set_error_message(error_message);
     delete self;
-    return NULL;
+    return NULL;     
   }
-
-  fseek(fd, 0L, SEEK_END);
-  file_size = ftell(fd);
-  fseek(fd, 0L, SEEK_SET);
-  record_number = file_size / sizeof(BigramRecord);
-
-  // load_factor 0.5 for unordered map
-  self->bigram_weight_.rehash(record_number * 2);
-  BigramRecord bigram_record;
-  for (int i = 0; i < record_number; ++i) {
-    if (1 != fread(&bigram_record, sizeof(bigram_record), 1, fd)) {
-      sprintf(error_message, "unable to read from bigram data file %s", bigram_binary_path);
-      set_error_message(error_message);
-      delete self;
-      fclose(fd);
-      return NULL;
-    }
-    self->bigram_weight_[(static_cast<int64_t>(bigram_record.left_id) << 32) + bigram_record.right_id] = bigram_record.weight;
-  }
-
-  fclose(fd);
 
   return self;
 }
@@ -291,7 +276,7 @@ void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *
   int64_t left_term_id,
           right_term_id,
           left_right_id;
-  std::tr1::unordered_map<int64_t, float>::const_iterator bigram_map_iter;
+  const float *bigram_map_iter;
   double weight;
   const Node *node;
   for (int bucket_id = 0; bucket_id < token_instance->size(); ++bucket_id) {
@@ -321,11 +306,12 @@ void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *
           right_term_id = term_id;
           left_right_id = (left_term_id << 32) + right_term_id;
 
-          bigram_map_iter = bigram_weight_.find(left_right_id); 
-          if (bigram_map_iter != bigram_weight_.end()) {
+          bigram_map_iter = bigram_weight_->Find(left_right_id); 
+          if (bigram_map_iter != NULL) {
 
             // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)
-            weight = node->weight + bigram_map_iter->second - unigram_weight_[left_term_id];
+            weight = node->weight + 0.7 * (*bigram_map_iter - unigram_weight_[left_term_id]) + 
+                                    0.3 * unigram_weight_[right_term_id];
             // printf("bigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           } else {
 

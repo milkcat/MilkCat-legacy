@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <darts.h>
 #include "utils.h"
+#include "static_hashtable.h"
 
 #pragma pack(1)
 struct BigramRecord {
@@ -172,8 +173,10 @@ int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, double
 
   BigramRecord bigram_record;
   const char *left_word, *right_word;
-  int left_id, right_id;
+  int32_t left_id, right_id;
   double weight;
+  std::vector<int64_t> keys;
+  std::vector<float> values;
   for (std::map<std::pair<std::string, std::string>, double>::const_iterator it = bigram_data.begin(); 
        it != bigram_data.end();  
        ++it) {
@@ -188,17 +191,21 @@ int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, double
       return -1;
     }
 
-    bigram_record.word_left = static_cast<int32_t>(left_id);
-    bigram_record.word_right = static_cast<int32_t>(right_id);
-    bigram_record.weight = static_cast<float>(weight);
-
-    if (1 != fwrite(&bigram_record, sizeof(BigramRecord), 1, fp)) {
-      fprintf(stderr, "\nerror: unable to write to file %s.\n", BIGRAM_FILE);
-      fflush(stderr);
-      return -1;     
-    }
+    keys.push_back((static_cast<int64_t>(left_id) << 32) + right_id);
+    values.push_back(static_cast<float>(weight));
   }
 
+  const StaticHashTable<int64_t, float> *hashtable = StaticHashTable<int64_t, float>::Build(&keys[0], &values[0], keys.size());
+  if (hashtable == 0) {
+    fprintf(stderr, "\nerror: unable to build hash table.\n");
+    fflush(stderr);    
+  }
+  if (hashtable->Save(BIGRAM_FILE) == false) {
+    fprintf(stderr, "\nerror: unable to write to file %s.\n", BIGRAM_FILE);
+    fflush(stderr);      
+  }
+
+  delete hashtable;
   fclose(fp);
   return 0;
 }

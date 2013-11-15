@@ -380,7 +380,7 @@ milkcat_t *milkcat_init(int processor_type, const char *model_dir_path) {
     break;
 
    case CRF_SEGMENTER:
-    milkcat->processor = BigramSegProcessor::Create(model_dir_path);
+    milkcat->processor = CRFSegProcessor::Create(model_dir_path);
     break;
 
    case CRF_PROCESSOR:
