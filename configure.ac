@@ -3,6 +3,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT(MilkCat, 0.1, ling032x@gmail.com)
+AC_CONFIG_AUX_DIR([scripts])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign]) 
 AC_CONFIG_MACRO_DIR([m4])
 AM_PROG_AR
