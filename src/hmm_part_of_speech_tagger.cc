@@ -51,10 +51,13 @@ struct HMMEmitRecord {
 #pragma pack(0)
 
 HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): tag_str_(NULL),
-                                                transition_matrix_(NULL),
-                                                oth_emit_node_(NULL) {
+                                                transition_matrix_(NULL) {
   for (int i = 0; i < kMaxBucket; ++i) {
     buckets_[i] = NULL;
+  }
+
+  for (int i = 0; i < 6; ++i) {
+    default_emit_[i] = NULL;
   }
 }
 
@@ -86,14 +89,19 @@ HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
     buckets_[i] = NULL;
   }
 
-  if (oth_emit_node_ != NULL) {
-    delete oth_emit_node_;
-    oth_emit_node_ = NULL;
+  for (int i = 0; i < 6; ++i) {
+    if (default_emit_[i] != NULL) {
+      delete default_emit_[i];
+      default_emit_[i] = NULL;
+    } 
   }
 }
 
-HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path, const char *index_path) {
+HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path, 
+                                                     const char *index_path,
+                                                     const char *default_tag_path) {
   HMMPartOfSpeechTagger *self = new HMMPartOfSpeechTagger();
+  Configuration *default_tag_conf = NULL;
   char error_message[1024];
   FILE *fd = NULL;
 
@@ -166,29 +174,85 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path, con
       self->buckets_[i] = new Node[tag_num];
     }
 
-    self->oth_emit_node_ = new TermTagProbability();
-    self->oth_emit_node_->tag_id = kOthTag;
-    self->oth_emit_node_->weight = 20;
-    self->oth_emit_node_->next = NULL;
-
     if (0 != self->unigram_trie_.open(index_path))
       throw std::runtime_error(std::string("unable to open index file  ") + index_path); 
 
+    // Get default tags
+    default_tag_conf = Configuration::LoadFromPath(default_tag_path);
+    if (default_tag_conf == NULL) {
+      throw std::runtime_error(std::string("unable to open default tag configuration file ") + default_tag_path); 
+    }
+
+    // Note that LoadDefaultTags will throw runtime_error
+    self->LoadDefaultTags(default_tag_conf, "word", self->default_emit_ + TermInstance::kChineseWord);
+    self->LoadDefaultTags(default_tag_conf, "english", self->default_emit_ + TermInstance::kEnglishWord);
+    self->LoadDefaultTags(default_tag_conf, "number", self->default_emit_ + TermInstance::kNumber);
+    self->LoadDefaultTags(default_tag_conf, "symbol", self->default_emit_ + TermInstance::kSymbol);
+    self->LoadDefaultTags(default_tag_conf, "punction", self->default_emit_ + TermInstance::kPunction);
+    self->LoadDefaultTags(default_tag_conf, "other", self->default_emit_ + TermInstance::kOther);
+
+    delete default_tag_conf;
     return self;
 
   } catch (std::exception &ex) {
     set_error_message(ex.what());
     delete self;
     if (fd != NULL) fclose(fd);
+    if (default_tag_conf != NULL) delete default_tag_conf;
     return NULL;
   }
 }
 
-void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance) {
-  for (int i = 0; i < term_instance->size(); ++i) {
-    term_ids_[i] = unigram_trie_.exactMatchSearch<Darts::DoubleArray::value_type>(term_instance->term_text_at(i));
+int HMMPartOfSpeechTagger::GetTagIdByStr(const char *tag_str) {
+  for (int i = 0; i < tag_num_; ++i) {
+    if (strcmp(tag_str_[i], tag_str) == 0) {
+      return i;
+    }
   }
 
+  return -1;
+}
+
+void HMMPartOfSpeechTagger::LoadDefaultTags(const Configuration *conf, const char *key, TermTagProbability **emit_node) {
+
+  if (conf->HasKey(key) == false) 
+    throw std::runtime_error(std::string("unable to find key '") + key + "' in default tag configuration file");
+  
+  const char *tag = conf->GetString(key);
+  int tag_id = GetTagIdByStr(tag);
+  if (tag_id < 0) 
+    throw std::runtime_error(std::string(tag) + " not exists in tag set");
+
+  *emit_node = new TermTagProbability();
+  (*emit_node)->tag_id = tag_id;
+  (*emit_node)->weight = 20;
+  (*emit_node)->next = NULL;
+}
+
+void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
+  int term_id;
+  TermTagProbability *emit_node;
+
+  for (int i = 0; i < term_instance->size(); ++i) {
+    term_id = unigram_trie_.exactMatchSearch<Darts::DoubleArray::value_type>(term_instance->term_text_at(i));
+    if (term_id > max_term_id_ || term_id < 0) {
+      term_tags_[i] = default_emit_[term_instance->term_type_at(i)];
+    } else {
+      emit_node = emit_matrix_[term_id];
+      if (emit_node == NULL) {
+        term_tags_[i] = default_emit_[term_instance->term_type_at(i)];
+      } else {
+        term_tags_[i] = emit_node;
+      }
+    }
+  }
+}
+
+void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance) {
+  // Get each term's plausible emit tags
+  BuildEmitTagfForNode(term_instance);
+
+  // Clear the first node
   memset(buckets_[0], 0, tag_num_ * sizeof(Node));
 
   // Viterbi algorithm
@@ -201,7 +265,7 @@ void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_inst
   // Find the best result
   int last_position = term_instance->size() - 1;
   const Node *last_bucket = buckets_[last_position];
-  const TermTagProbability *emit_node = GetEmitLinkList(term_ids_[last_position]);
+  const TermTagProbability *emit_node = term_tags_[last_position];
   int min_tag_id;
   double min_cost = 1e37;
   while (emit_node) {
@@ -221,21 +285,8 @@ void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_inst
   part_of_speech_tag_instance->set_size(term_instance->size());
 }
 
-const HMMPartOfSpeechTagger::TermTagProbability *HMMPartOfSpeechTagger::GetEmitLinkList(int term_id) const {
-  if (term_id > max_term_id_ || term_id < 0) {
-    return oth_emit_node_;
-  } else {
-    TermTagProbability *emit_node = emit_matrix_[term_id];
-    if (emit_node == NULL) {
-      return oth_emit_node_;
-    } else {
-      return emit_node;
-    }
-  }
-}
-
 void HMMPartOfSpeechTagger::CalculateBucketCost(int position) {
-  const TermTagProbability *emit_node = GetEmitLinkList(term_ids_[position]);
+  const TermTagProbability *emit_node = term_tags_[position];
   while (emit_node) {
     buckets_[position][emit_node->tag_id].weight += emit_node->weight;
     // printf("%s %lf\n", tag_str_[emit_node->tag_id], emit_node->weight);
@@ -245,8 +296,8 @@ void HMMPartOfSpeechTagger::CalculateBucketCost(int position) {
 
 void HMMPartOfSpeechTagger::CalculateArcCost(int position) {
   const TermTagProbability *left_emit_node, *emit_node, *p;
-  left_emit_node = GetEmitLinkList(term_ids_[position - 1]);
-  emit_node = GetEmitLinkList(term_ids_[position]);
+  left_emit_node = term_tags_[position - 1];
+  emit_node = term_tags_[position];
 
   double min_cost = 1e37,
          cost;

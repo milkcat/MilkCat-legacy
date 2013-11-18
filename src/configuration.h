@@ -26,18 +26,23 @@
 #define CONFIGURATION_H
 
 #include <string>
-#include <tr1/unordered_map>
+#include <map>
 
 class Configuration {
  public:
-  // Load or create the configuration file of path
-  static Configuration *LoadOrCreateFromPath(const char *path);
+  Configuration();
+
+  // Load the configuration file of path
+  static Configuration *LoadFromPath(const char *path);
 
   // Get integer value by key, default is 0
-  int GetInteger(const char *key);
+  int GetInteger(const char *key) const;
 
   // Get string value by key, default is ""
-  const char *GetString(const char *key);
+  const char *GetString(const char *key) const;
+
+  // Check if the key exists in configuration file
+  bool HasKey(const char *key) const;
 
   // Set the integer value of key
   void SetInteger(const char *key, int value);
@@ -46,13 +51,10 @@ class Configuration {
   void SetString(const char *key, const char * value);
 
   // Save the configuration into file
-  bool Save();
+  bool SaveToPath(const char *path);
 
  private:
-  std::tr1::unordered_map<std::string, std::string> data_;
-  std::string path;
-
-  Configuration();
+  std::map<std::string, std::string> data_;
 };
 
 #endif

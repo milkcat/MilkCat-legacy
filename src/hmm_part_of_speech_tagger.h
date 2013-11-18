@@ -30,6 +30,7 @@
 
 class PartOfSpeechTagInstance;
 class TermInstance;
+class Configuration;
 
 class HMMPartOfSpeechTagger {
  public:
@@ -39,16 +40,21 @@ class HMMPartOfSpeechTagger {
   ~HMMPartOfSpeechTagger();
   void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance);
 
-  static HMMPartOfSpeechTagger *Create(const char *model_path, const char *index_path);
+  static HMMPartOfSpeechTagger *Create(const char *model_path, 
+                                       const char *index_path,
+                                       const char *default_tag_path);
 
  private:
   struct TermTagProbability;
   struct Node;
 
   Node *buckets_[kMaxBucket];
-  int term_ids_[kMaxBucket];
+  TermTagProbability *term_tags_[kMaxBucket];
   TermTagProbability **emit_matrix_;
-  TermTagProbability *oth_emit_node_;
+
+  // Default out of vocabulary word emit matrix for TermInstance's term type
+  TermTagProbability *default_emit_[6];
+
   char (* tag_str_)[16];
   int tag_num_;
   int max_term_id_;
@@ -60,7 +66,15 @@ class HMMPartOfSpeechTagger {
   void CalculateBucketCost(int position);
   void CalculateArcCost(int position);
 
-  const TermTagProbability *GetEmitLinkList(int term_id) const;
+  // Get the tag's id by its text if the tag not exists return -1
+  int GetTagIdByStr(const char *tag_str);
+
+  // Load the default tag key from configuration file and put in emit_node
+  void LoadDefaultTags(const Configuration *conf, const char *key, TermTagProbability **emit_node);
+
+  // Get each term's emit tag and save it in term_tags_
+  void BuildEmitTagfForNode(TermInstance *term_instance);
+
 };
 
 

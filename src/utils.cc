@@ -45,17 +45,14 @@ int token_type_to_word_type(int token_type) {
   }
 }
 
-char *trim(char *str)
-{
-  char *end;
+char *trim(char *s) {
+  char *p = s;
+  int l = strlen(p);
 
-  while(isspace(*str)) str++;
-  if (*str == 0) return str;
+  while(isspace(p[l - 1])) p[--l] = 0;
+  while(* p && isspace(* p)) ++p, --l;
 
-  end = str + strlen(str) - 1;
-  while(end > str && isspace(*end)) end--;
-
-  *(end + 1) = 0;
-  return str;
+  memmove(s, p, l + 1);
+  return s;
 }
 

@@ -6,6 +6,7 @@
 
 int print_usage() {
   fprintf(stderr, "Usage: milkcat [-m hmm_crf|crf|crf_seg] [-d model_directory] [-i] [-t] [file]\n");
+  return 0;
 }
 
 const char *word_type_str(MC_WORD_TYPE word_type) {

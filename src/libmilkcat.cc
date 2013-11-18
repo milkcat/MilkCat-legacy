@@ -325,10 +325,11 @@ class BigramSegHMMPartOfSpeechTagProcessor: public BigramSegProcessor {
   bool Initialize(const char *model_dir_path) {
     std::string model_path = std::string(model_dir_path) + "ctb_pos.hmm";
     std::string index_path = std::string(model_dir_path) + "unigram.idx";
+    std::string default_tag_path = std::string(model_dir_path) + "default_tag.cfg";
     if (BigramSegProcessor::Initialize(model_dir_path) == false) return false;
 
     part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
-    hmm_pos_tagger_ = HMMPartOfSpeechTagger::Create(model_path.c_str(), index_path.c_str());
+    hmm_pos_tagger_ = HMMPartOfSpeechTagger::Create(model_path.c_str(), index_path.c_str(), default_tag_path.c_str());
     if (hmm_pos_tagger_ == NULL)
       return false;
 

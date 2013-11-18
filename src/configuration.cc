@@ -31,7 +31,7 @@
 
 Configuration::Configuration() {}
 
-Configuration *Configuration::LoadOrCreateFromPath(const char *path) {
+Configuration *Configuration::LoadFromPath(const char *path) {
   char line[2048], 
        key[2048],
        value[2048],
@@ -40,9 +40,15 @@ Configuration *Configuration::LoadOrCreateFromPath(const char *path) {
   int line_number = 0;
   FILE *fp = fopen(path, "r");
   Configuration *self = new Configuration();
-  self->path = path;
 
-  if (fp == NULL) return self;
+  if (fp == NULL) {
+    sprintf(error_messge, "unable to open configuration file %s", path);
+    set_error_message(error_messge);
+    fclose(fp);
+    delete self;
+    return NULL;
+  }
+
   while (NULL != fgets(line, 2048, fp)) {
     line_number++;
     trim(line);
@@ -60,8 +66,10 @@ Configuration *Configuration::LoadOrCreateFromPath(const char *path) {
 
     strlcpy(key, line, p - line + 1);
     strlcpy(value, p + 1, 1024);
+    puts(value);
     trim(key);
     trim(value);
+    puts(value);
 
     self->data_[key] = value;
   }
@@ -70,11 +78,11 @@ Configuration *Configuration::LoadOrCreateFromPath(const char *path) {
   return self;
 }
 
-bool Configuration::Save() {
-  FILE *fp = fopen(path.c_str(), "w");
+bool Configuration::SaveToPath(const char *path) {
+  FILE *fp = fopen(path, "w");
   if (fp == NULL) return false;
 
-  for (std::tr1::unordered_map<std::string, std::string>::iterator it = data_.begin(); it != data_.end(); ++it) {
+  for (std::map<std::string, std::string>::iterator it = data_.begin(); it != data_.end(); ++it) {
     fprintf(fp, "%s = %s\n", it->first.c_str(), it->second.c_str());
   }
 
@@ -82,12 +90,21 @@ bool Configuration::Save() {
   return true;
 }
 
-int Configuration::GetInteger(const char *key) {
-  return atoi(data_[key].c_str());
+int Configuration::GetInteger(const char *key) const {
+  return atoi(GetString(key));
 }
 
-const char *Configuration::GetString(const char *key) {
-  return data_[key].c_str();
+bool Configuration::HasKey(const char *key) const {
+  return data_.find(key) != data_.end();
+}
+
+const char *Configuration::GetString(const char *key) const {
+  std::map<std::string, std::string>::const_iterator it = data_.find(std::string(key));
+  if (it != data_.end()) {
+    return it->second.c_str();
+  } else {
+    return "";
+  }
 }
 
 void Configuration::SetInteger(const char *key, int value) {
