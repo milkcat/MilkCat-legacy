@@ -9,7 +9,7 @@
 #include "milkcat_config.h"
 
 TermInstance::TermInstance() {
-  instance_data_ = new InstanceData(1, 2, kTokenMax);
+  instance_data_ = new InstanceData(1, 3, kTokenMax);
 } 
 
 TermInstance::~TermInstance() {
