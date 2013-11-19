@@ -51,13 +51,10 @@ struct HMMEmitRecord {
 #pragma pack(0)
 
 HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): tag_str_(NULL),
-                                                transition_matrix_(NULL) {
+                                                transition_matrix_(NULL),
+                                                one_tag_emit_(NULL) {
   for (int i = 0; i < kMaxBucket; ++i) {
     buckets_[i] = NULL;
-  }
-
-  for (int i = 0; i < 6; ++i) {
-    default_emit_[i] = NULL;
   }
 }
 
@@ -89,11 +86,14 @@ HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
     buckets_[i] = NULL;
   }
 
-  for (int i = 0; i < 6; ++i) {
-    if (default_emit_[i] != NULL) {
-      delete default_emit_[i];
-      default_emit_[i] = NULL;
-    } 
+  if (one_tag_emit_ != NULL) {
+    for (int i = 0; i < tag_num_; ++i) {
+      if (one_tag_emit_[i] != NULL) {
+        delete one_tag_emit_[i];
+        one_tag_emit_[i] = NULL;
+      }
+    }
+    delete[] one_tag_emit_;
   }
 }
 
@@ -183,13 +183,24 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path,
       throw std::runtime_error(std::string("unable to open default tag configuration file ") + default_tag_path); 
     }
 
+    self->one_tag_emit_ = new TermTagProbability *[self->tag_num_];
+    for (int i = 0; i < self->tag_num_; ++i) {
+      self->one_tag_emit_[i] = new TermTagProbability();
+      self->one_tag_emit_[i]->tag_id = i;
+      self->one_tag_emit_[i]->weight = 20;
+      self->one_tag_emit_[i]->next = NULL;
+    }
+
+    puts("233");
+
+
     // Note that LoadDefaultTags will throw runtime_error
-    self->LoadDefaultTags(default_tag_conf, "word", self->default_emit_ + TermInstance::kChineseWord);
-    self->LoadDefaultTags(default_tag_conf, "english", self->default_emit_ + TermInstance::kEnglishWord);
-    self->LoadDefaultTags(default_tag_conf, "number", self->default_emit_ + TermInstance::kNumber);
-    self->LoadDefaultTags(default_tag_conf, "symbol", self->default_emit_ + TermInstance::kSymbol);
-    self->LoadDefaultTags(default_tag_conf, "punction", self->default_emit_ + TermInstance::kPunction);
-    self->LoadDefaultTags(default_tag_conf, "other", self->default_emit_ + TermInstance::kOther);
+    self->LoadDefaultTags(default_tag_conf, "word", self->term_type_emit_tag_ + TermInstance::kChineseWord);
+    self->LoadDefaultTags(default_tag_conf, "english", self->term_type_emit_tag_ + TermInstance::kEnglishWord);
+    self->LoadDefaultTags(default_tag_conf, "number", self->term_type_emit_tag_ + TermInstance::kNumber);
+    self->LoadDefaultTags(default_tag_conf, "symbol", self->term_type_emit_tag_ + TermInstance::kSymbol);
+    self->LoadDefaultTags(default_tag_conf, "punction", self->term_type_emit_tag_ + TermInstance::kPunction);
+    self->LoadDefaultTags(default_tag_conf, "other", self->term_type_emit_tag_ + TermInstance::kOther);
 
     delete default_tag_conf;
     return self;
@@ -213,7 +224,7 @@ int HMMPartOfSpeechTagger::GetTagIdByStr(const char *tag_str) {
   return -1;
 }
 
-void HMMPartOfSpeechTagger::LoadDefaultTags(const Configuration *conf, const char *key, TermTagProbability **emit_node) {
+void HMMPartOfSpeechTagger::LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag) {
 
   if (conf->HasKey(key) == false) 
     throw std::runtime_error(std::string("unable to find key '") + key + "' in default tag configuration file");
@@ -223,10 +234,7 @@ void HMMPartOfSpeechTagger::LoadDefaultTags(const Configuration *conf, const cha
   if (tag_id < 0) 
     throw std::runtime_error(std::string(tag) + " not exists in tag set");
 
-  *emit_node = new TermTagProbability();
-  (*emit_node)->tag_id = tag_id;
-  (*emit_node)->weight = 20;
-  (*emit_node)->next = NULL;
+  *emit_tag = tag_id;
 }
 
 void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
@@ -236,11 +244,11 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
   for (int i = 0; i < term_instance->size(); ++i) {
     term_id = unigram_trie_.exactMatchSearch<Darts::DoubleArray::value_type>(term_instance->term_text_at(i));
     if (term_id > max_term_id_ || term_id < 0) {
-      term_tags_[i] = default_emit_[term_instance->term_type_at(i)];
+      term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_instance->term_type_at(i)]];
     } else {
       emit_node = emit_matrix_[term_id];
       if (emit_node == NULL) {
-        term_tags_[i] = default_emit_[term_instance->term_type_at(i)];
+        term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_instance->term_type_at(i)]];
       } else {
         term_tags_[i] = emit_node;
       }
