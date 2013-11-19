@@ -16,6 +16,10 @@ class TermInstance {
   static const int kTermTextS = 0;
   static const int kTermTokenNumberI = 0;
   static const int kTermTypeI = 1;
+  static const int kTermIdI = 2;
+
+  static const int kTermIdNone = -2;
+  static const int kTermIdOutOfVocabulary = -1;
 
   enum {
     kChineseWord = 0,
@@ -35,6 +39,9 @@ class TermInstance {
   // Get the token number of this term at position
   int token_number_at(int position) const { return instance_data_->integer_at(position, kTermTokenNumberI); }
 
+  // Get the id of term (in unigram index)
+  int term_id_at(int position) const { return instance_data_->integer_at(position, kTermIdI); }
+
   // Set the size of this instance
   void set_size(int size) { instance_data_->set_size(size); }
 
@@ -42,10 +49,11 @@ class TermInstance {
   int size() const { return instance_data_->size(); }
 
   // Set the value at position
-  void set_value_at(int position, const char *term, int token_number, int term_type) {
+  void set_value_at(int position, const char *term, int token_number, int term_type, int term_id = kTermIdNone) {
     instance_data_->set_string_at(position, kTermTextS, term);
     instance_data_->set_integer_at(position, kTermTokenNumberI, token_number);
     instance_data_->set_integer_at(position, kTermTypeI, term_type);
+    instance_data_->set_integer_at(position, kTermIdI, term_id);
   }
 
  private:

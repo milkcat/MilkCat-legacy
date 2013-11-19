@@ -371,7 +371,8 @@ void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *
     term_instance->set_value_at(node->term_position,
                                 buffer.c_str(),
                                 bucket_id - from_bucket_id,
-                                term_type);
+                                term_type,
+                                node->term_id == 0? TermInstance::kTermIdOutOfVocabulary: node->term_id);
     node = node->from_node;
   } // end while
 

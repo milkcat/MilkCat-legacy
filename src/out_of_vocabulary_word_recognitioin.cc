@@ -157,7 +157,8 @@ void OutOfVocabularyWordRecognition::CopyTermValue(TermInstance *dest_term_insta
   dest_term_instance->set_value_at(dest_postion,
                                    src_term_instance->term_text_at(src_position),
                                    src_term_instance->token_number_at(src_position),
-                                   src_term_instance->term_type_at(src_position));
+                                   src_term_instance->term_type_at(src_position),
+                                   src_term_instance->term_id_at(src_position));
 }
 
 void OutOfVocabularyWordRecognition::RecognizeRange(const TokenInstance *token_instance, int begin, int end) {
