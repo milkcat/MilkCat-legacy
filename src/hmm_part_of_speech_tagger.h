@@ -52,8 +52,11 @@ class HMMPartOfSpeechTagger {
   TermTagProbability *term_tags_[kMaxBucket];
   TermTagProbability **emit_matrix_;
 
-  // Default out of vocabulary word emit matrix for TermInstance's term type
-  TermTagProbability *default_emit_[6];
+  // The emit linklist with only oen tag
+  TermTagProbability **one_tag_emit_;
+
+  // the the default emit tag for term type
+  int term_type_emit_tag_[6];
 
   char (* tag_str_)[16];
   int tag_num_;
@@ -69,8 +72,8 @@ class HMMPartOfSpeechTagger {
   // Get the tag's id by its text if the tag not exists return -1
   int GetTagIdByStr(const char *tag_str);
 
-  // Load the default tag key from configuration file and put in emit_node
-  void LoadDefaultTags(const Configuration *conf, const char *key, TermTagProbability **emit_node);
+  // Load the default tag key from configuration file and put in term_type_emit_tag_
+  void LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag);
 
   // Get each term's emit tag and save it in term_tags_
   void BuildEmitTagfForNode(TermInstance *term_instance);
