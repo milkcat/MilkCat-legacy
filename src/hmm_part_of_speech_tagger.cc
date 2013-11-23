@@ -241,8 +241,10 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
 
   for (int i = 0; i < term_instance->size(); ++i) {
     term_id = term_instance->term_id_at(i);
-    if (term_id == TermInstance::kTermIdNone)
+    if (term_id == TermInstance::kTermIdNone) {
       term_id = unigram_trie_.exactMatchSearch<Darts::DoubleArray::value_type>(term_instance->term_text_at(i));
+      term_instance->set_term_id_at(i, term_id >= 0? term_id: TermInstance::kTermIdOutOfVocabulary);
+    }
     
     if (term_id > max_term_id_ || term_id < 0) {
       term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_instance->term_type_at(i)]];

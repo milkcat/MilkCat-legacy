@@ -42,6 +42,9 @@ class TermInstance {
   // Get the id of term (in unigram index)
   int term_id_at(int position) const { return instance_data_->integer_at(position, kTermIdI); }
 
+  // Set the term id at position
+  void set_term_id_at(int position, int term_id) { instance_data_->set_integer_at(position, kTermIdI, term_id); }
+
   // Set the size of this instance
   void set_size(int size) { instance_data_->set_size(size); }
 

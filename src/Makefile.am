@@ -41,6 +41,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         configuration.cc \
                         hmm_part_of_speech_tagger.h \
                         hmm_part_of_speech_tagger.cc \
+                        mixed_part_of_speech_tagger.h \
+                        mixed_part_of_speech_tagger.cc \
                         static_hash_table.h
 
 bin_PROGRAMS = mc_model

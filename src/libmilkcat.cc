@@ -20,7 +20,7 @@
 #include "bigram_segmenter.h"
 #include "out_of_vocabulary_word_recognitioin.h"
 #include "hmm_part_of_speech_tagger.h"
-
+#include "mixed_part_of_speech_tagger.h"
 
 
 class Processor {
@@ -327,11 +327,19 @@ class BigramSegHMMPartOfSpeechTagProcessor: public BigramSegProcessor {
     std::string model_path = std::string(model_dir_path) + "ctb_pos.hmm";
     std::string index_path = std::string(model_dir_path) + "unigram.idx";
     std::string default_tag_path = std::string(model_dir_path) + "default_tag.cfg";
+    std::string crf_model_path = std::string(model_dir_path) + "ctb_pos.crf";
     if (BigramSegProcessor::Initialize(model_dir_path) == false) return false;
 
     part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
     hmm_pos_tagger_ = HMMPartOfSpeechTagger::Create(model_path.c_str(), index_path.c_str(), default_tag_path.c_str());
+    crf_pos_tagger_ = CRFPOSTagger::Create(crf_model_path.c_str());
+
+    mixed_pos_tagger_ = new MixedPartOfSpeechTagger(crf_pos_tagger_, hmm_pos_tagger_);
+
     if (hmm_pos_tagger_ == NULL)
+      return false;
+
+    if (crf_pos_tagger_ == NULL)
       return false;
 
     return true;
@@ -343,6 +351,16 @@ class BigramSegHMMPartOfSpeechTagProcessor: public BigramSegProcessor {
       hmm_pos_tagger_ = NULL;
     }
 
+    if (crf_pos_tagger_ != NULL) {
+      delete crf_pos_tagger_;
+      crf_pos_tagger_ = NULL;
+    }
+
+    if (mixed_pos_tagger_ != NULL) {
+      delete mixed_pos_tagger_;
+      mixed_pos_tagger_ = NULL;
+    }
+
     if (part_of_speech_tag_instance_ != NULL) {
       delete part_of_speech_tag_instance_;
       part_of_speech_tag_instance_ = NULL;
@@ -351,7 +369,7 @@ class BigramSegHMMPartOfSpeechTagProcessor: public BigramSegProcessor {
 
   int NextSentence() {
     if (BigramSegProcessor::NextSentence() == 0) return 0;
-    hmm_pos_tagger_->Tag(part_of_speech_tag_instance_, next_term_instance_);
+    mixed_pos_tagger_->Tag(part_of_speech_tag_instance_, next_term_instance_);
 
     return 1;
   }
@@ -361,7 +379,9 @@ class BigramSegHMMPartOfSpeechTagProcessor: public BigramSegProcessor {
   }
 
  protected:
+  CRFPOSTagger *crf_pos_tagger_;
   HMMPartOfSpeechTagger *hmm_pos_tagger_;
+  MixedPartOfSpeechTagger *mixed_pos_tagger_;
   PartOfSpeechTagInstance *part_of_speech_tag_instance_;
 };
 
