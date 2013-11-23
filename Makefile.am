@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = gnu no-dependencies
-SUBDIRS = src
+SUBDIRS = src data
 ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = milkcat

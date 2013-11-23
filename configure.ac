@@ -38,6 +38,9 @@ AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memset munmap sqrt strdup strlcpy])
 
+# Set the model dir
+pkgdatadir=${datadir}/${PACKAGE}
+
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile data/Makefile])
 AC_OUTPUT
