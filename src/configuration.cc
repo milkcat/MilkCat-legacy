@@ -66,10 +66,8 @@ Configuration *Configuration::LoadFromPath(const char *path) {
 
     strlcpy(key, line, p - line + 1);
     strlcpy(value, p + 1, 1024);
-    puts(value);
     trim(key);
     trim(value);
-    puts(value);
 
     self->data_[key] = value;
   }

@@ -167,6 +167,7 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path,
       throw std::runtime_error(std::string("invalid HMM model file ") + model_path); 
 
     fclose(fd);
+    fd = NULL;
     self->tag_num_ = tag_num;
     self->max_term_id_ = max_term_id;
 
@@ -190,9 +191,6 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path,
       self->one_tag_emit_[i]->weight = 20;
       self->one_tag_emit_[i]->next = NULL;
     }
-
-    puts("233");
-
 
     // Note that LoadDefaultTags will throw runtime_error
     self->LoadDefaultTags(default_tag_conf, "word", self->term_type_emit_tag_ + TermInstance::kChineseWord);

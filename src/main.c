@@ -29,7 +29,7 @@ const char *word_type_str(MC_WORD_TYPE word_type) {
 }
 
 int main(int argc, char **argv) {
-  char model_path[1024] = "./";
+  char model_path[1024] = "";
   int method = NORMAL_PROCESSOR;
   char c;
   int errflag = 0;
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
   }
 
   char *input_buffer = (char *)malloc(1048576);
-  milkcat_t *processor = milkcat_init(method, model_path);
+  milkcat_t *processor = milkcat_init(method, *model_path == '\0'? NULL: model_path);
   size_t sentence_length;
   int i;
   char ch;

@@ -9,6 +9,7 @@
 #include <string>
 #include <string.h>
 #include <stdio.h>
+#include <config.h>
 #include "milkcat.h"
 #include "crf_tagger.h"
 #include "tokenization.h"
@@ -80,7 +81,7 @@ class CRFSegProcessor: public Processor {
 
   bool Initialize(const char *model_dir_path) {
     if (Processor::Initialize() == false) return false;
-    std::string model_path = std::string(model_dir_path) + "pd_model";
+    std::string model_path = std::string(model_dir_path) + "ctb_seg.crf";
 
     crf_segmenter_ = CRFSegmenter::Create(model_path.c_str());
     if (crf_segmenter_ == NULL) return false;
@@ -149,7 +150,7 @@ class BigramSegProcessor: public Processor {
     if (bigram_segmenter_ == NULL) return false;
 
     out_of_vocabulary_word_recognitioin_ = OutOfVocabularyWordRecognition::Create(
-        (std::string(model_dir_path) + "pd_model").c_str(), 
+        (std::string(model_dir_path) + "ctb_seg.crf").c_str(), 
         (std::string(model_dir_path) + "oov_property.idx").c_str());
 
     if (out_of_vocabulary_word_recognitioin_ == NULL) return false;
@@ -219,7 +220,7 @@ class CRFSegPOSTagProcessor: public CRFSegProcessor {
   }
 
   bool Initialize(const char *model_dir_path) {
-    std::string model_path = std::string(model_dir_path) + "ctb_pos.model";
+    std::string model_path = std::string(model_dir_path) + "ctb_pos.crf";
     if (CRFSegProcessor::Initialize(model_dir_path) == false) return false;
 
     part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
@@ -271,7 +272,7 @@ class BigramSegCRFPartOfSpeechTagProcessor: public BigramSegProcessor {
   }
 
   bool Initialize(const char *model_dir_path) {
-    std::string model_path = std::string(model_dir_path) + "ctb_pos.model";
+    std::string model_path = std::string(model_dir_path) + "ctb_pos.crf";
     if (BigramSegProcessor::Initialize(model_dir_path) == false) return false;
 
     part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
@@ -374,6 +375,8 @@ milkcat_t *milkcat_init(int processor_type, const char *model_dir_path) {
   milkcat_t *milkcat = new milkcat_t;
   milkcat->sentence_length = 0;
   milkcat->current_position = 0;
+  if (model_dir_path == NULL)
+    model_dir_path = MODEL_PATH;
 
   switch (processor_type) {
    case NORMAL_PROCESSOR:

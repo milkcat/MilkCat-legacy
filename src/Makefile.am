@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/include 
+AM_CPPFLAGS = -I$(top_srcdir)/include -DMODEL_PATH=\"$(pkgdatadir)/\"
 ACLOCAL_AMFLAGS = -I m4
 
 include_HEADERS = milkcat.h
