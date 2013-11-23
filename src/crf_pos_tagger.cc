@@ -98,11 +98,14 @@ CRFPOSTagger::~CRFPOSTagger() {
   }
 }
 
-void CRFPOSTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, const TermInstance *term_instance) {
+void CRFPOSTagger::TagRange(PartOfSpeechTagInstance *part_of_speech_tag_instance, 
+                            const TermInstance *term_instance,
+                            int begin,
+                            int end) {
   feature_extractor_->set_term_instance(term_instance);
-  crf_tagger_->Tag(feature_extractor_);
-  for (size_t i = 0; i < term_instance->size(); ++i) {
+  crf_tagger_->TagRange(feature_extractor_, begin, end);
+  for (size_t i = 0; i < end - begin; ++i) {
     part_of_speech_tag_instance->set_value_at(i, crf_tagger_->GetTagText(crf_tagger_->GetTagAt(i))); 
   }
-  part_of_speech_tag_instance->set_size(term_instance->size());
+  part_of_speech_tag_instance->set_size(end - begin);
 }

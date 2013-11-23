@@ -22,7 +22,12 @@ class CRFPOSTagger {
   static CRFPOSTagger *Create(const char *model_path);
   ~CRFPOSTagger();
 
-  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, const TermInstance *term_instance);
+  // Tag a range [begin, end) of TermInstance
+  void TagRange(PartOfSpeechTagInstance *part_of_speech_tag_instance, const TermInstance *term_instance, int begin, int end);
+
+  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, const TermInstance *term_instance) {
+  	TagRange(part_of_speech_tag_instance, term_instance, 0, term_instance->size());
+  }
 
  private:
   CRFTagger *crf_tagger_;

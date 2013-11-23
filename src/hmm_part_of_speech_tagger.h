@@ -35,7 +35,6 @@ class Configuration;
 class HMMPartOfSpeechTagger {
  public:
   static const int kMaxBucket = kTokenMax;
-  static const int kOthTag = 32;
 
   ~HMMPartOfSpeechTagger();
   void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance);
