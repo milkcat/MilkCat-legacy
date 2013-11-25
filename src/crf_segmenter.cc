@@ -84,7 +84,7 @@ CRFSegmenter::CRFSegmenter(): crf_tagger_(NULL),
                               crf_model_(NULL),
                               feature_extractor_(NULL) {}
 
-void CRFSegmenter::SegmentRange(TermInstance *term_instance, const TokenInstance *token_instance, int begin, int end) {
+void CRFSegmenter::SegmentRange(TermInstance *term_instance, TokenInstance *token_instance, int begin, int end) {
   std::string buffer;
 
   feature_extractor_->set_token_instance(token_instance);

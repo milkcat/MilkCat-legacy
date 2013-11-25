@@ -1,6 +1,6 @@
 /*
- * named_entity_recognitioin.h
- * out_of_vocabulary_word_recognitioin.h (2013-09-03)
+ * named_entity_recognition.h
+ * out_of_vocabulary_word_recognition.h (2013-09-03)
  *
  * by ling0322 at 2013-08-26
  *
@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include "darts.h"
 #include "crf_segmenter.h"
-#include "crf_pos_tagger.h"
 #include "part_of_speech_tag_instance.h"
 #include "token_instance.h"
 
@@ -23,8 +22,8 @@ class OutOfVocabularyWordRecognition {
                                                 const char *ner_filter_word_path);
   ~OutOfVocabularyWordRecognition();
   void Process(TermInstance *term_instance,
-               const TermInstance *in_term_instance, 
-               const TokenInstance *in_token_instance);
+               TermInstance *in_term_instance, 
+               TokenInstance *in_token_instance);
 
   static const int kOOVBeginOfWord = 1;
   static const int kOOVFilteredWord = 2;
@@ -36,11 +35,11 @@ class OutOfVocabularyWordRecognition {
 
   OutOfVocabularyWordRecognition();
 
-  void RecognizeRange(const TokenInstance *token_instance, int begin, int end);
+  void RecognizeRange(TokenInstance *token_instance, int begin, int end);
 
   void CopyTermValue(TermInstance *dest_term_instance, 
                      int dest_postion, 
-                     const TermInstance *src_term_instance, 
+                     TermInstance *src_term_instance, 
                      int src_position);
 };
 
