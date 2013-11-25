@@ -27,12 +27,13 @@
 
 #include <darts.h>
 #include "milkcat_config.h"
+#include "part_of_speech_tagger.h"
 
 class PartOfSpeechTagInstance;
 class TermInstance;
 class Configuration;
 
-class HMMPartOfSpeechTagger {
+class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
  public:
   static const int kMaxBucket = kTokenMax;
 
@@ -65,7 +66,10 @@ class HMMPartOfSpeechTagger {
 
   HMMPartOfSpeechTagger();
 
+  // Calculate the emit cost in position
   void CalculateBucketCost(int position);
+
+  // Calculate the transition cost from position - 1 to position
   void CalculateArcCost(int position);
 
   // Get the tag's id by its text if the tag not exists return -1

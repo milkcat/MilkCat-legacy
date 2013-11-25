@@ -18,375 +18,184 @@
 #include "token_instance.h"
 #include "part_of_speech_tag_instance.h"
 #include "bigram_segmenter.h"
-#include "out_of_vocabulary_word_recognitioin.h"
+#include "out_of_vocabulary_word_recognition.h"
+#include "mixed_segmenter.h"
 #include "hmm_part_of_speech_tagger.h"
 #include "mixed_part_of_speech_tagger.h"
+#include "crf_part_of_speech_tagger.h"
 
+const int kDefaultTokenizer = 0;
+
+const int kBigramSegmenter = 0;
+const int kCrfSegmenter = 1;
+const int kMixedSegmenter = 2;
+
+const int kCrfPartOfSpeechTagger = 0;
+const int kHmmPartOfSpeechTagger = 1;
+const int kMixedPartOfSpeechTagger = 2;
+
+const char *UNIGRAM_INDEX = "unigram.idx";
+const char *UNIGRAM_DATA = "unigram.bin";
+const char *BIGRAM_DATA = "bigram.bin";
+const char *HMM_PART_OF_SPEECH_MODEL = "ctb_pos.hmm";
+const char *CRF_PART_OF_SPEECH_MODEL = "ctb_pos.crf";
+const char *CRF_SEGMENTER_MODEL = "ctb_seg.crf";
+const char *DEFAULT_TAG = "default_tag.cfg";
+const char *OOV_PROPERTY = "oov_property.idx";
 
 class Processor {
  public:
-  Processor(): tokenization_(NULL),
-               token_instance_(NULL) {
-  }
-
-  virtual ~Processor() {
-    if (tokenization_ != NULL) {
-      delete tokenization_;
-      tokenization_ = NULL;
-    }
-
-    if (token_instance_ != NULL) {
-      delete token_instance_;
-      token_instance_ = NULL;
-    }
-  }
-
-  virtual bool Initialize() {
-    tokenization_ = new Tokenization();
+  Processor(Tokenization *tokenizer, Segmenter *segmenetr, PartOfSpeechTagger *part_of_speech_tagger):
+      tokenizer_(tokenizer), 
+      segmenter_(segmenetr),
+      part_of_speech_tagger_(part_of_speech_tagger) {
+        
     token_instance_ = new TokenInstance();
-
-    return true;
+    term_instance_ = new TermInstance();
+    part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
   }
 
-  virtual int NextSentence() {
-    if (tokenization_->GetSentence(token_instance_) == false) 
-      return 0;
-    else
-      return 1;
+  ~Processor() {
+    delete token_instance_;
+    token_instance_ = NULL;
+
+    delete term_instance_;
+    term_instance_ = NULL;
+
+    delete part_of_speech_tag_instance_;
+    part_of_speech_tag_instance_ = NULL;
   }
 
-  virtual void Process(const char *text) { tokenization_->Scan(text); }
-  virtual size_t SentenceLength() { return 0; }
-  virtual const char *GetTerm(int position) { return NULL; }
-  virtual const char *GetPartOfSpeechTag(int position) { return NULL; }
-  virtual int GetWordType(int position) { return -1; }
+  // Parse the next sentence return 1 if has next sentence else return 0
+  int NextSentence() {
+    if (tokenizer_->GetSentence(token_instance_) == false) return 0;
+    segmenter_->Segment(term_instance_, token_instance_);
+
+    if (part_of_speech_tagger_ != NULL) 
+      part_of_speech_tagger_->Tag(part_of_speech_tag_instance_, term_instance_);
+
+    return 1;
+  }
+
+  // Start to process a sentence
+  void Process(const char *text) { 
+    tokenizer_->Scan(text); 
+  }
+
+  // Get term/part-of-speech tag number of a sentence
+  int SentenceLength() { 
+    return term_instance_->size();
+  }
+
+  // Get the term at position of current senetnce
+  const char *GetTerm(int position) { 
+    return term_instance_->term_text_at(position); 
+  }
+
+  // Get the part-of-speech tag of term in current sentence
+  // If no part-of-speech tagger return NULL
+  const char *GetPartOfSpeechTag(int position) { 
+    if (part_of_speech_tagger_ == NULL) return NULL;
+    return part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
+  }
+
+  // Get the term type in current sentence 
+  int GetWordType(int position) { 
+    return term_instance_->term_type_at(position); 
+  }
 
  protected:
-  Tokenization *tokenization_;
+  Tokenization *tokenizer_;
+  Segmenter *segmenter_;
+  PartOfSpeechTagger *part_of_speech_tagger_;
+
   TokenInstance *token_instance_;
-};
-
-
-class CRFSegProcessor: public Processor {
- public:
-  static CRFSegProcessor *Create(const char *model_dir_path) {
-    CRFSegProcessor *self = new CRFSegProcessor();
-    if (self->Initialize(model_dir_path) == false) {
-      delete self;
-      return NULL;
-    } else {
-      return self;
-    }
-  }
-
-  bool Initialize(const char *model_dir_path) {
-    if (Processor::Initialize() == false) return false;
-    std::string model_path = std::string(model_dir_path) + "ctb_seg.crf";
-
-    crf_segmenter_ = CRFSegmenter::Create(model_path.c_str());
-    if (crf_segmenter_ == NULL) return false;
-
-    term_instance_ = new TermInstance();
-    return true;
-  }
-
-  CRFSegProcessor(): crf_segmenter_(NULL),
-                     term_instance_(NULL) {
-  }
-
-  ~CRFSegProcessor() {
-    if (crf_segmenter_ != NULL) {
-      delete crf_segmenter_;
-      crf_segmenter_ = NULL;
-    }
-
-    if (term_instance_ != NULL) {
-      delete term_instance_;
-      term_instance_ = NULL;
-    }
-  }
-  
-  int NextSentence() {
-    if (Processor::NextSentence() == 0) return 0;
-    crf_segmenter_->Segment(term_instance_, token_instance_);
-
-    return 1;
-  }
-
-  size_t SentenceLength() { return term_instance_->size(); }
-  const char *GetTerm(int position) { return term_instance_->term_text_at(position); }
-  int GetWordType(int position) { return term_instance_->term_type_at(position); }
-
- protected:
-  CRFSegmenter *crf_segmenter_;
   TermInstance *term_instance_;
-  
-};
-
-class BigramSegProcessor: public Processor {
- public:
-  static BigramSegProcessor *Create(const char *model_dir_path) {
-    BigramSegProcessor *self = new BigramSegProcessor();
-    if (self->Initialize(model_dir_path) == false) {
-      delete self;
-      return NULL;
-    } else {
-      return self;
-    }
-  }
-
-  bool Initialize(const char *model_dir_path) {
-    if (Processor::Initialize() == false) return false;
-
-    next_term_instance_ = new TermInstance();
-
-    std::string unigram_index_path = std::string(model_dir_path) + "unigram.idx";
-    std::string unigram_data_path = std::string(model_dir_path) + "unigram.bin";
-    std::string bigram_path = std::string(model_dir_path) + "bigram.bin";
-
-    bigram_segmenter_ = BigramSegmenter::Create(unigram_index_path.c_str(),
-                                                unigram_data_path.c_str(),
-                                                bigram_path.c_str());
-    if (bigram_segmenter_ == NULL) return false;
-
-    out_of_vocabulary_word_recognitioin_ = OutOfVocabularyWordRecognition::Create(
-        (std::string(model_dir_path) + "ctb_seg.crf").c_str(), 
-        (std::string(model_dir_path) + "oov_property.idx").c_str());
-
-    if (out_of_vocabulary_word_recognitioin_ == NULL) return false;
-
-    term_instance_ = new TermInstance();
-    return true;
-  }
-
-  BigramSegProcessor(): bigram_segmenter_(NULL),
-                        term_instance_(NULL),
-                        next_term_instance_(NULL),
-                        out_of_vocabulary_word_recognitioin_(NULL) {
-  }
-
-  ~BigramSegProcessor() {
-    if (bigram_segmenter_ != NULL) {
-      delete bigram_segmenter_;
-      bigram_segmenter_ = NULL;
-    }
-
-    if (term_instance_ != NULL) {
-      delete term_instance_;
-      term_instance_ = NULL;
-    }
-
-    if (next_term_instance_ != NULL) {
-      delete next_term_instance_;
-      next_term_instance_ = NULL;
-    }
-
-    if (out_of_vocabulary_word_recognitioin_ != NULL) {
-      delete out_of_vocabulary_word_recognitioin_;
-      out_of_vocabulary_word_recognitioin_ = NULL;
-    }
-  }
-  
-  int NextSentence() {
-    if (Processor::NextSentence() == 0) return 0;
-    bigram_segmenter_->Process(term_instance_, token_instance_);
-    out_of_vocabulary_word_recognitioin_->Process(next_term_instance_,
-                                                  term_instance_,
-                                                  token_instance_);
-    return 1;
-  }
-
-  size_t SentenceLength() { return next_term_instance_->size(); }
-  const char *GetTerm(int position) { return next_term_instance_->term_text_at(position); }
-  int GetWordType(int position) { return next_term_instance_->term_type_at(position); }
-
- protected:
-  BigramSegmenter *bigram_segmenter_;
-  TermInstance *term_instance_;
-  TermInstance *next_term_instance_;
-  OutOfVocabularyWordRecognition *out_of_vocabulary_word_recognitioin_;
-};
-
-class CRFSegPOSTagProcessor: public CRFSegProcessor {
- public:
-  static CRFSegPOSTagProcessor *Create(const char *model_dir_path) {
-    CRFSegPOSTagProcessor *self = new CRFSegPOSTagProcessor();
-    if (self->Initialize(model_dir_path) == false) {
-      delete self;
-      return NULL;
-    } else {
-      return self;
-    }
-  }
-
-  bool Initialize(const char *model_dir_path) {
-    std::string model_path = std::string(model_dir_path) + "ctb_pos.crf";
-    if (CRFSegProcessor::Initialize(model_dir_path) == false) return false;
-
-    part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
-    crf_pos_tagger_ = CRFPOSTagger::Create(model_path.c_str());
-    if (crf_pos_tagger_ == NULL)
-      return false;
-
-    return true;
-  }
-
-  ~CRFSegPOSTagProcessor() {
-    if (crf_pos_tagger_ != NULL) {
-      delete crf_pos_tagger_;
-      crf_pos_tagger_ = NULL;
-    }
-
-    if (part_of_speech_tag_instance_ != NULL) {
-      delete part_of_speech_tag_instance_;
-      part_of_speech_tag_instance_ = NULL;
-    }
-  }
-
-  int NextSentence() {
-    if (CRFSegProcessor::NextSentence() == 0) return 0;
-    crf_pos_tagger_->Tag(part_of_speech_tag_instance_, term_instance_);
-
-    return 1;
-  }
-
-  const char *GetPartOfSpeechTag(int position) { 
-    return part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
-  }
-
- protected:
-  CRFPOSTagger *crf_pos_tagger_;
   PartOfSpeechTagInstance *part_of_speech_tag_instance_;
 };
 
-class BigramSegCRFPartOfSpeechTagProcessor: public BigramSegProcessor {
- public:
-  static BigramSegCRFPartOfSpeechTagProcessor *Create(const char *model_dir_path) {
-    BigramSegCRFPartOfSpeechTagProcessor *self = new BigramSegCRFPartOfSpeechTagProcessor();
-    if (self->Initialize(model_dir_path) == false) {
-      delete self;
-      return NULL;
-    } else {
-      return self;
-    }
+Tokenization *TokenizerFactory(int tokenizer_id) {
+  switch (tokenizer_id) {
+   case kDefaultTokenizer:
+    return new Tokenization();
+
+   default:
+    set_error_message("invalid tokenizer_id.");
+    return NULL;
+  }
+}
+
+Segmenter *SegmenterFactory(int segmenter_id, const char *model_path) {
+  std::string model_path_str(model_path);
+
+  std::string unigram_index = model_path_str + UNIGRAM_INDEX;
+  std::string unigram_data = model_path_str + UNIGRAM_DATA;
+  std::string bigram_data = model_path_str + BIGRAM_DATA;
+  std::string crf_seg_model = model_path_str + CRF_SEGMENTER_MODEL;
+  std::string oov_property = model_path_str + OOV_PROPERTY;
+
+  switch (segmenter_id) {
+   case kBigramSegmenter:
+    return BigramSegmenter::Create(
+      unigram_index.c_str(),
+      unigram_data.c_str(),
+      bigram_data.c_str());
+
+   case kCrfSegmenter:
+    return CRFSegmenter::Create(crf_seg_model.c_str());
+
+   case kMixedSegmenter:
+    return MixedSegmenter::Create(
+      unigram_index.c_str(),
+      unigram_data.c_str(),
+      bigram_data.c_str(),
+      oov_property.c_str(),
+      crf_seg_model.c_str());
+
+   default:
+    set_error_message("invalid segmenter_id.");
+    return NULL;
+  }
+}
+
+PartOfSpeechTagger *PartOfSpeechTaggerFactory(int part_of_speech_tagger_id, const char *model_path) {
+  std::string model_path_str(model_path);
+
+  std::string unigram_index = model_path_str + UNIGRAM_INDEX;
+  std::string crf_pos_model = model_path_str + CRF_PART_OF_SPEECH_MODEL;
+  std::string hmm_pos_model = model_path_str + HMM_PART_OF_SPEECH_MODEL;
+  std::string default_tag = model_path_str + DEFAULT_TAG;
+
+  switch (part_of_speech_tagger_id) {
+   case kCrfPartOfSpeechTagger:
+    return CRFPartOfSpeechTagger::Create(crf_pos_model.c_str());
+
+   case kHmmPartOfSpeechTagger:
+    return HMMPartOfSpeechTagger::Create(
+      hmm_pos_model.c_str(),
+      unigram_index.c_str(),
+      default_tag.c_str());
+
+   case kMixedPartOfSpeechTagger:
+    return MixedPartOfSpeechTagger::Create(
+      hmm_pos_model.c_str(),
+      unigram_index.c_str(),
+      default_tag.c_str(),
+      crf_pos_model.c_str());
+
+   default:
+    set_error_message("invalid part_of_speech_tagger_id.");
+    return NULL;   
   }
 
-  bool Initialize(const char *model_dir_path) {
-    std::string model_path = std::string(model_dir_path) + "ctb_pos.crf";
-    if (BigramSegProcessor::Initialize(model_dir_path) == false) return false;
-
-    part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
-    crf_pos_tagger_ = CRFPOSTagger::Create(model_path.c_str());
-    if (crf_pos_tagger_ == NULL)
-      return false;
-
-    return true;
-  }
-
-  ~BigramSegCRFPartOfSpeechTagProcessor() {
-    if (crf_pos_tagger_ != NULL) {
-      delete crf_pos_tagger_;
-      crf_pos_tagger_ = NULL;
-    }
-
-    if (part_of_speech_tag_instance_ != NULL) {
-      delete part_of_speech_tag_instance_;
-      part_of_speech_tag_instance_ = NULL;
-    }
-  }
-
-  int NextSentence() {
-    if (BigramSegProcessor::NextSentence() == 0) return 0;
-    crf_pos_tagger_->Tag(part_of_speech_tag_instance_, next_term_instance_);
-
-    return 1;
-  }
-
-  const char *GetPartOfSpeechTag(int position) { 
-    return part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
-  }
-
- protected:
-  CRFPOSTagger *crf_pos_tagger_;
-  PartOfSpeechTagInstance *part_of_speech_tag_instance_;
-};
-
-class BigramSegHMMPartOfSpeechTagProcessor: public BigramSegProcessor {
- public:
-  static BigramSegHMMPartOfSpeechTagProcessor *Create(const char *model_dir_path) {
-    BigramSegHMMPartOfSpeechTagProcessor *self = new BigramSegHMMPartOfSpeechTagProcessor();
-    if (self->Initialize(model_dir_path) == false) {
-      delete self;
-      return NULL;
-    } else {
-      return self;
-    }
-  }
-
-  bool Initialize(const char *model_dir_path) {
-    std::string model_path = std::string(model_dir_path) + "ctb_pos.hmm";
-    std::string index_path = std::string(model_dir_path) + "unigram.idx";
-    std::string default_tag_path = std::string(model_dir_path) + "default_tag.cfg";
-    std::string crf_model_path = std::string(model_dir_path) + "ctb_pos.crf";
-    if (BigramSegProcessor::Initialize(model_dir_path) == false) return false;
-
-    part_of_speech_tag_instance_ = new PartOfSpeechTagInstance();
-    hmm_pos_tagger_ = HMMPartOfSpeechTagger::Create(model_path.c_str(), index_path.c_str(), default_tag_path.c_str());
-    crf_pos_tagger_ = CRFPOSTagger::Create(crf_model_path.c_str());
-
-    mixed_pos_tagger_ = new MixedPartOfSpeechTagger(crf_pos_tagger_, hmm_pos_tagger_);
-
-    if (hmm_pos_tagger_ == NULL)
-      return false;
-
-    if (crf_pos_tagger_ == NULL)
-      return false;
-
-    return true;
-  }
-
-  ~BigramSegHMMPartOfSpeechTagProcessor() {
-    if (hmm_pos_tagger_ != NULL) {
-      delete hmm_pos_tagger_;
-      hmm_pos_tagger_ = NULL;
-    }
-
-    if (crf_pos_tagger_ != NULL) {
-      delete crf_pos_tagger_;
-      crf_pos_tagger_ = NULL;
-    }
-
-    if (mixed_pos_tagger_ != NULL) {
-      delete mixed_pos_tagger_;
-      mixed_pos_tagger_ = NULL;
-    }
-
-    if (part_of_speech_tag_instance_ != NULL) {
-      delete part_of_speech_tag_instance_;
-      part_of_speech_tag_instance_ = NULL;
-    }
-  }
-
-  int NextSentence() {
-    if (BigramSegProcessor::NextSentence() == 0) return 0;
-    mixed_pos_tagger_->Tag(part_of_speech_tag_instance_, next_term_instance_);
-
-    return 1;
-  }
-
-  const char *GetPartOfSpeechTag(int position) { 
-    return part_of_speech_tag_instance_->part_of_speech_tag_at(position); 
-  }
-
- protected:
-  CRFPOSTagger *crf_pos_tagger_;
-  HMMPartOfSpeechTagger *hmm_pos_tagger_;
-  MixedPartOfSpeechTagger *mixed_pos_tagger_;
-  PartOfSpeechTagInstance *part_of_speech_tag_instance_;
-};
+}
 
 struct milkcat_t {
   Processor *processor;
+  Tokenization *tokenizer;
+  Segmenter *segmenetr;
+  PartOfSpeechTagger *part_of_speech_tagger;
+
   int sentence_length;
   int current_position;
 };
@@ -395,21 +204,49 @@ milkcat_t *milkcat_init(int processor_type, const char *model_dir_path) {
   milkcat_t *milkcat = new milkcat_t;
   milkcat->sentence_length = 0;
   milkcat->current_position = 0;
-  if (model_dir_path == NULL)
-    model_dir_path = MODEL_PATH;
+
+  if (model_dir_path == NULL) model_dir_path = MODEL_PATH;
 
   switch (processor_type) {
-   case NORMAL_PROCESSOR:
-    milkcat->processor = BigramSegHMMPartOfSpeechTagProcessor::Create(model_dir_path);
+   case DEFAULT_PROCESSOR:
+    milkcat->tokenizer = TokenizerFactory(kDefaultTokenizer);
+    milkcat->segmenetr = SegmenterFactory(kMixedSegmenter, model_dir_path);
+    milkcat->part_of_speech_tagger = PartOfSpeechTaggerFactory(kMixedPartOfSpeechTagger, model_dir_path);
+    if (milkcat->tokenizer != NULL && milkcat->segmenetr != NULL && milkcat->part_of_speech_tagger != NULL)
+      milkcat->processor = new Processor(milkcat->tokenizer, milkcat->segmenetr, milkcat->part_of_speech_tagger);
+    else 
+      milkcat->processor = NULL;
     break;
 
    case CRF_SEGMENTER:
-    milkcat->processor = CRFSegProcessor::Create(model_dir_path);
+    milkcat->tokenizer = TokenizerFactory(kDefaultTokenizer);
+    milkcat->segmenetr = SegmenterFactory(kCrfSegmenter, model_dir_path);
+    milkcat->part_of_speech_tagger = NULL;
+    if (milkcat->tokenizer != NULL && milkcat->segmenetr != NULL)
+      milkcat->processor = new Processor(milkcat->tokenizer, milkcat->segmenetr, milkcat->part_of_speech_tagger);
+    else 
+      milkcat->processor = NULL;
     break;
 
    case CRF_PROCESSOR:
-    milkcat->processor = CRFSegPOSTagProcessor::Create(model_dir_path);
+    milkcat->tokenizer = TokenizerFactory(kDefaultTokenizer);
+    milkcat->segmenetr = SegmenterFactory(kCrfSegmenter, model_dir_path);
+    milkcat->part_of_speech_tagger = PartOfSpeechTaggerFactory(kCrfPartOfSpeechTagger, model_dir_path);
+    if (milkcat->tokenizer != NULL && milkcat->segmenetr != NULL && milkcat->part_of_speech_tagger != NULL)
+      milkcat->processor = new Processor(milkcat->tokenizer, milkcat->segmenetr, milkcat->part_of_speech_tagger);
+    else 
+      milkcat->processor = NULL;
     break;
+
+   case DEFAULT_SEGMENTER:
+    milkcat->tokenizer = TokenizerFactory(kDefaultTokenizer);
+    milkcat->segmenetr = SegmenterFactory(kMixedSegmenter, model_dir_path);
+    milkcat->part_of_speech_tagger = NULL;
+    if (milkcat->tokenizer != NULL && milkcat->segmenetr != NULL)
+      milkcat->processor = new Processor(milkcat->tokenizer, milkcat->segmenetr, milkcat->part_of_speech_tagger);
+    else 
+      milkcat->processor = NULL;
+    break;    
 
    default:
     milkcat->processor = NULL;
@@ -426,6 +263,17 @@ milkcat_t *milkcat_init(int processor_type, const char *model_dir_path) {
 
 void milkcat_delete(milkcat_t *milkcat) {
   delete milkcat->processor;
+  milkcat->processor = NULL;
+
+  delete milkcat->tokenizer;
+  milkcat->tokenizer = NULL;
+
+  delete milkcat->segmenetr;
+  milkcat->segmenetr = NULL;
+
+  delete milkcat->part_of_speech_tagger;
+  milkcat->part_of_speech_tagger = NULL;
+
   delete milkcat;
 }
 

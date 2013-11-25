@@ -30,11 +30,12 @@
 #include "milkcat_config.h"
 #include "static_hashtable.h"
 #include "darts.h"
+#include "segmenter.h"
 
 class TokenInstance;
 class TermInstance;
 
-class BigramSegmenter {
+class BigramSegmenter: public Segmenter {
  public:
 
   // A node in decode graph
@@ -53,7 +54,7 @@ class BigramSegmenter {
   ~BigramSegmenter();
 
   // Segment a token instance into term instance
-  void Process(TermInstance *term_instance, const TokenInstance *token_instance);
+  void Segment(TermInstance *term_instance, TokenInstance *token_instance);
 
  private:
   // Number of Node in each buckets_

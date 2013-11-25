@@ -265,7 +265,7 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   return self;
 }
 
-void BigramSegmenter::Process(TermInstance *term_instance, const TokenInstance *token_instance) {
+void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_instance) {
 
   // Add begin-of-sentence node
   buckets_[0]->AddArc(NULL, 0.0, 0);

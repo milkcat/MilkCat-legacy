@@ -11,10 +11,9 @@
 #include <string.h>
 #include "darts.h"
 #include "utils.h"
-#include "out_of_vocabulary_word_recognitioin.h"
+#include "out_of_vocabulary_word_recognition.h"
 #include "token_instance.h"
 #include "crf_segmenter.h"
-#include "crf_pos_tagger.h"
 
 OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::Create(const char *crf_segment_model_path, 
                                                                        const char *ner_filter_word_path) {
@@ -63,8 +62,8 @@ OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition(): term_instance_
 }
 
 void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
-                                             const TermInstance *in_term_instance, 
-                                             const TokenInstance *in_token_instance) {
+                                             TermInstance *in_term_instance, 
+                                             TokenInstance *in_token_instance) {
   int ner_begin_token = 0;
   int current_token = 0;
   int current_term = 0;
@@ -151,7 +150,7 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
 
 void OutOfVocabularyWordRecognition::CopyTermValue(TermInstance *dest_term_instance, 
                                                    int dest_postion, 
-                                                   const TermInstance *src_term_instance, 
+                                                   TermInstance *src_term_instance, 
                                                    int src_position)  {
 
   dest_term_instance->set_value_at(dest_postion,
@@ -161,6 +160,6 @@ void OutOfVocabularyWordRecognition::CopyTermValue(TermInstance *dest_term_insta
                                    src_term_instance->term_id_at(src_position));
 }
 
-void OutOfVocabularyWordRecognition::RecognizeRange(const TokenInstance *token_instance, int begin, int end) {
+void OutOfVocabularyWordRecognition::RecognizeRange(TokenInstance *token_instance, int begin, int end) {
   crf_segmenter_->SegmentRange(term_instance_, token_instance, begin, end);
 }

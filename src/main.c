@@ -30,7 +30,7 @@ const char *word_type_str(MC_WORD_TYPE word_type) {
 
 int main(int argc, char **argv) {
   char model_path[1024] = "";
-  int method = NORMAL_PROCESSOR;
+  int method = DEFAULT_PROCESSOR;
   char c;
   int errflag = 0;
   FILE *fp = NULL;
@@ -59,10 +59,7 @@ int main(int argc, char **argv) {
         method = CRF_PROCESSOR;
         display_tag = 1;
       } else if (strcmp(optarg, "hmm_crf") == 0) {
-        method = NORMAL_PROCESSOR;
-        display_tag = 1;
-      } else if (strcmp(optarg, "hmm") == 0) {
-        method = HMM_PROCESSOR;
+        method = DEFAULT_PROCESSOR;
         display_tag = 1;
       } else {
         errflag++;

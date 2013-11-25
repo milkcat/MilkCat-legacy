@@ -28,9 +28,9 @@ extern "C" {
 
 enum {
 
-  // NORMAL_PROCESSOR is the HMM-model segmenter and POS tagger with CRF-model for 
-  // Out-Of-Vocabulary Word & Named-Entity recognition.
-  NORMAL_PROCESSOR = 0,
+  // DEFAULT_PROCESSOR is the Mixed Bigram & CRF segmenter and Mixed HMM & CRF
+  // part-of-speech tagger
+  DEFAULT_PROCESSOR = 0,
 
   // CRF_SEGMENTER is a CRF-model chinese word segmenter using the character tagging algorithm
   // It is better for Out-Of-Vocabulary word but not good at the recall on In-Vocabulary words
@@ -41,8 +41,8 @@ enum {
   // segmention using CRF_SEGMENTER, and Part-of-Speech Tagging also using CRF model.
   CRF_PROCESSOR = 2,
 
-  // HMM_PROCESSOR is the HMM-model segmenter and POS tagger only
-  HMM_PROCESSOR = 3
+  // DEFAULT_SEGMENTER is the Mixed Bigram & CRF segmenter 
+  DEFAULT_SEGMENTER = 3,
 };
 
 typedef enum {
