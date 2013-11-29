@@ -43,7 +43,7 @@ CRFModel::~CRFModel() {
   // so it is unnecessary to delete them
 
   if (data_ != NULL) {
-    delete data_;
+    delete[] data_;
     data_ = NULL;
   }
 

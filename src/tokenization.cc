@@ -9,6 +9,7 @@ Tokenization::~Tokenization() {
   if (buffer_alloced_ == true) {
     yy_delete_buffer(yy_buffer_state_);
   }
+  yylex_destroy();
 }
 
 bool Tokenization::GetSentence(TokenInstance *token_instance) {

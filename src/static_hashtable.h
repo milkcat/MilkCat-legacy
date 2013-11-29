@@ -195,7 +195,7 @@ class StaticHashTable {
 
   ~StaticHashTable() {
     if (buckets_ != NULL) {
-      delete buckets_;
+      delete[] buckets_;
       buckets_ = NULL;
     }
   }

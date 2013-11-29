@@ -243,7 +243,7 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   record_number = file_size / sizeof(float);
 
   self->unigram_weight_ = new float[record_number];
-  if (record_number != fread(self->unigram_weight_, sizeof(float), self->unigram_trie_->size(), fd)) {
+  if (record_number != fread(self->unigram_weight_, sizeof(float), record_number, fd)) {
     sprintf(error_message, "unable to read from unigram data file %s", unigram_binary_path);
     set_error_message(error_message);
     delete self;
