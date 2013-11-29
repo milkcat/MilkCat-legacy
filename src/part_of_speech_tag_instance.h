@@ -20,9 +20,16 @@ class PartOfSpeechTagInstance {
   ~PartOfSpeechTagInstance();
 
   static const int kPOSTagS = 0;
+  static const int kOutOfVocabularyI = 0;
 
   const char *part_of_speech_tag_at(int position) const { 
     return instance_data_->string_at(position, kPOSTagS); 
+  }
+
+  // return true if it is a out-of-vocabulary word or it doesnt't have tag information
+  // in HMM data file 
+  bool is_out_of_vocabulary_word_at(int position) const {
+    return instance_data_->integer_at(position, kOutOfVocabularyI) != 0;
   }
 
   // Set the size of this instance
@@ -32,8 +39,9 @@ class PartOfSpeechTagInstance {
   int size() const { return instance_data_->size(); }
 
   // Set the value at position
-  void set_value_at(int position, const char *tag) {
-  	instance_data_->set_string_at(position, kPOSTagS, tag);
+  void set_value_at(int position, const char *tag, bool is_oov = true) {
+    instance_data_->set_string_at(position, kPOSTagS, tag);
+    instance_data_->set_integer_at(position, kOutOfVocabularyI, is_oov);
   }
  
  private:

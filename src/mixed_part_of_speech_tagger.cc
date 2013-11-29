@@ -75,7 +75,8 @@ void MixedPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_in
   for (int i = 0; i < term_instance->size(); ++i) {
 
     // if the word is a oov word and type is a word
-    if (term_instance->term_id_at(i) < 0 && term_instance->term_type_at(i) == TermInstance::kChineseWord) {
+    if (part_of_speech_tag_instance->is_out_of_vocabulary_word_at(i) == true) {
+      // puts(term_instance->term_text_at(i));
       crf_tagger_->TagRange(one_instance_, term_instance, i, i + 1);
       part_of_speech_tag_instance->set_value_at(i, one_instance_->part_of_speech_tag_at(0));
     }

@@ -52,6 +52,9 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   TermTagProbability *term_tags_[kMaxBucket];
   TermTagProbability **emit_matrix_;
 
+  // If the word of position has hmm emit data
+  bool has_data_[kMaxBucket];
+
   // The emit linklist with only oen tag
   TermTagProbability **one_tag_emit_;
 

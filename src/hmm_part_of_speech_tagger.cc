@@ -243,17 +243,19 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
     term_id = term_instance->term_id_at(i);
     if (term_id == TermInstance::kTermIdNone) {
       term_id = unigram_trie_.exactMatchSearch<Darts::DoubleArray::value_type>(term_instance->term_text_at(i));
-      term_instance->set_term_id_at(i, term_id >= 0? term_id: TermInstance::kTermIdOutOfVocabulary);
     }
     
     if (term_id > max_term_id_ || term_id < 0) {
       term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_instance->term_type_at(i)]];
+      has_data_[i] = false;
     } else {
       emit_node = emit_matrix_[term_id];
       if (emit_node == NULL) {
         term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_instance->term_type_at(i)]];
+        has_data_[i] = false; 
       } else {
         term_tags_[i] = emit_node;
+        has_data_[i] = true;
       }
     }
   }
@@ -289,7 +291,10 @@ void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_inst
 
   int tag_id = min_tag_id;
   for (int position = last_position; position >= 0; --position) {
-    part_of_speech_tag_instance->set_value_at(position, tag_str_[tag_id]);
+    part_of_speech_tag_instance->set_value_at(
+        position, 
+        tag_str_[tag_id], 
+        term_instance->term_type_at(position) == TermInstance::kChineseWord && has_data_[position] == false);
     tag_id = buckets_[position][tag_id].left_tag;
   }
 

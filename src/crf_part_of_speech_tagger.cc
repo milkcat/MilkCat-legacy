@@ -45,14 +45,13 @@ class PartOfSpeechFeatureExtractor: public FeatureExtractor {
     switch (term_type) {
      case TermInstance::kChineseWord:
       // term itself
-      strcpy(feature_list[0], term_text);     
+      strlcpy(feature_list[0], term_text, kFeatureLengthMax);     
 
       // first character of the term
-      strncpy(feature_list[1], term_text, 3);
-      feature_list[1][4] = 0;
+      strlcpy(feature_list[1], term_text, 4);
 
       // last character of the term
-      strcpy(feature_list[2], term_text + term_length - 3);
+      strlcpy(feature_list[2], term_text + term_length - 3, kFeatureLengthMax);
       break;
 
      case TermInstance::kEnglishWord:

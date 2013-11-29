@@ -9,7 +9,7 @@
 #include "milkcat_config.h"
 
 PartOfSpeechTagInstance::PartOfSpeechTagInstance() {
-  instance_data_ = new InstanceData(1, 0, kTokenMax);
+  instance_data_ = new InstanceData(1, 1, kTokenMax);
 }
 PartOfSpeechTagInstance::~PartOfSpeechTagInstance() {
   delete instance_data_;
