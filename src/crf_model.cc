@@ -34,6 +34,18 @@
 #include "crf_model.h"
 #include "utils.h"
 
+inline const char *read_data(const char **ptr, size_t size) {
+  const char *r = *ptr;
+  *ptr += size;
+  return r;
+}
+
+template <class T> 
+void read_value(const char **ptr, T *value) {
+  const char *r = read_data(ptr, sizeof(T));
+  memcpy(value, r, sizeof(T));
+}
+
 CRFModel::CRFModel(): data_(NULL), cost_num_(0), cost_data_(NULL),
                           double_array_(NULL), cost_factor_(0.0) {
 }

@@ -28,6 +28,7 @@
 #include <darts.h>
 #include "milkcat_config.h"
 #include "part_of_speech_tagger.h"
+#include "hmm_model.h"
 
 class PartOfSpeechTagInstance;
 class TermInstance;
@@ -45,26 +46,22 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
                                        const char *default_tag_path);
 
  private:
-  struct TermTagProbability;
   struct Node;
 
   Node *buckets_[kMaxBucket];
-  TermTagProbability *term_tags_[kMaxBucket];
-  TermTagProbability **emit_matrix_;
+  HMMModel::EmitRow *term_tags_[kMaxBucket];
+  const HMMModel *model_;
+  int tag_num_;
 
   // If the word of position has hmm emit data
   bool has_data_[kMaxBucket];
 
-  // The emit linklist with only oen tag
-  TermTagProbability **one_tag_emit_;
+  // The emit linklist with only one tag
+  HMMModel::EmitRow **one_tag_emit_;
 
   // the the default emit tag for term type
   int term_type_emit_tag_[6];
 
-  char (* tag_str_)[16];
-  int tag_num_;
-  int max_term_id_;
-  double *transition_matrix_;
   Darts::DoubleArray unigram_trie_;
 
   HMMPartOfSpeechTagger();

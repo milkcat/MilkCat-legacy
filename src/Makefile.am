@@ -47,7 +47,9 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         segmenter.h \
                         part_of_speech_tagger.h \
                         mixed_segmenter.h \
-                        mixed_segmenter.cc
+                        mixed_segmenter.cc \
+                        hmm_model.cc \
+                        hmm_model.h
 
 bin_PROGRAMS = mc_model
 mc_model_SOURCES = mk_model.cc 

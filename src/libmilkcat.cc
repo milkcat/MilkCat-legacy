@@ -23,6 +23,7 @@
 #include "hmm_part_of_speech_tagger.h"
 #include "mixed_part_of_speech_tagger.h"
 #include "crf_part_of_speech_tagger.h"
+#include "hmm_model.h"
 
 const int kDefaultTokenizer = 0;
 

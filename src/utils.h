@@ -26,16 +26,6 @@ size_t strlcpy(char *dst, const char *src, size_t siz);
 
 char *trim(char *str);
 
-inline const char *read_data(const char **ptr, size_t size) {
-  const char *r = *ptr;
-  *ptr += size;
-  return r;
-}
 
-template <class T> 
-void read_value(const char **ptr, T *value) {
-  const char *r = read_data(ptr, sizeof(T));
-  memcpy(value, r, sizeof(T));
-}
 
 #endif // UTILS_H
