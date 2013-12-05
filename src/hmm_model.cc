@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdexcept>
+#include <fstream>
 #include "utils.h"
 #include "hmm_model.h"
 
@@ -42,44 +43,41 @@ struct HMMEmitRecord {
 HMMModel *HMMModel::Create(const char *model_path) {
 
   HMMModel *self = new HMMModel();
-  FILE *fd = NULL;
 
   try {
-    fd = fopen(model_path, "r");
-    if (fd == NULL) 
-      throw std::runtime_error(std::string("unable to open HMM model file ") + model_path);
+    std::ifstream ifs;
+    ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit | std::ifstream::eofbit);
+    ifs.open(model_path, std::ios::binary);
+    
+    // Get file size
+    ifs.seekg(0, std::ios::end);
+    int file_size = ifs.tellg();
+    ifs.seekg(0, std::ios::beg);
 
-    // Read magic number
     int32_t magic_number;
-    if (1 != fread(&magic_number, sizeof(int32_t), 1, fd)) 
-      throw std::runtime_error(std::string("unable to read from file ") + model_path);
+    ifs.read(reinterpret_cast<char *>(&magic_number), sizeof(int32_t));
 
     if (magic_number != 0x3322)
       throw std::runtime_error(std::string("invalid HMM model file ") + model_path);
 
     int32_t tag_num;
-    if (1 != fread(&tag_num, sizeof(int32_t), 1, fd))
-      throw std::runtime_error(std::string("unable to read from file ") + model_path);
+    ifs.read(reinterpret_cast<char *>(&tag_num), sizeof(int32_t));
 
     int32_t max_term_id;
-    if (1 != fread(&max_term_id, sizeof(int32_t), 1, fd))
-      throw std::runtime_error(std::string("unable to read from file ") + model_path);
+    ifs.read(reinterpret_cast<char *>(&max_term_id), sizeof(int32_t));
 
     int32_t emit_num;
-    if (1 != fread(&emit_num, sizeof(int32_t), 1, fd))
-      throw std::runtime_error(std::string("unable to read from file ") + model_path);
+    ifs.read(reinterpret_cast<char *>(&emit_num), sizeof(int32_t));
 
     self->tag_str_ = reinterpret_cast<char (*)[16]>(new char[16 * tag_num]);
     for (int i = 0; i < tag_num; ++i) {
-      if (1 != fread(self->tag_str_[i], 16, 1, fd)) 
-        throw std::runtime_error(std::string("unable to read from file ") + model_path);
+      ifs.read(self->tag_str_[i], 16);
     }
 
     self->transition_matrix_ = new double[tag_num * tag_num];
     float f_weight;
     for (int i = 0; i < tag_num * tag_num; ++i) {
-      if (1 != fread(&f_weight, sizeof(float), 1, fd))
-        throw std::runtime_error(std::string("unable to read from file ") + model_path);
+      ifs.read(reinterpret_cast<char *>(&f_weight), sizeof(float));
       self->transition_matrix_[i] = f_weight;
     }
 
@@ -89,10 +87,7 @@ HMMModel *HMMModel::Create(const char *model_path) {
     HMMEmitRecord emit_record;
     EmitRow *emit_node;
     for (int i = 0; i < emit_num; ++i) {
-      if (1 != fread(&emit_record, sizeof(emit_record), 1, fd)) 
-        throw std::runtime_error(std::string("unable to read from file ") + model_path);
-      if (emit_record.term_id > max_term_id) 
-        throw std::runtime_error(std::string("unable to read from file ") + model_path);
+      ifs.read(reinterpret_cast<char *>(&emit_record), sizeof(emit_record));
       emit_node = new EmitRow();
       emit_node->tag = emit_record.tag_id;
       emit_node->cost = emit_record.cost;
@@ -100,22 +95,23 @@ HMMModel *HMMModel::Create(const char *model_path) {
       self->emit_matrix_[emit_record.term_id] = emit_node;
     }
 
-    // Get a char to reach EOF
-    fgetc(fd);
-    if (0 == feof(fd))
+    if (ifs.tellg() != file_size)
       throw std::runtime_error(std::string("invalid HMM model file ") + model_path); 
 
-    fclose(fd);
-    fd = NULL;
     self->tag_num_ = tag_num;
     self->max_term_id_ = max_term_id;
 
     return self;
 
+  } catch (std::ifstream::failure &ex) {
+    std::string errmsg = std::string("failed to read from ") + model_path;
+    set_error_message(errmsg.c_str());
+    delete self;
+    return NULL;
+
   } catch (std::exception &ex) {
     set_error_message(ex.what());
     delete self;
-    if (fd != NULL) fclose(fd);
     return NULL;
   }
 }
