@@ -127,13 +127,15 @@ HMMModel::~HMMModel() {
   tag_str_ = NULL;
 
   EmitRow *p, *q;
-  for (int i = 0; i < max_term_id_ + 1; ++i) {
-    p = emit_matrix_[i];
-    while (p) {
-      q = p->next;
-      delete p;
-      p = q;
-    } 
+  if (emit_matrix_ != NULL) {
+    for (int i = 0; i < max_term_id_ + 1; ++i) {
+      p = emit_matrix_[i];
+      while (p) {
+        q = p->next;
+        delete p;
+        p = q;
+      }
+    }
   }
   delete[] emit_matrix_;
 }
