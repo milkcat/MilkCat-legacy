@@ -1,5 +1,5 @@
 //
-// hmm_model.h --- Created at 2013-12-05
+// status.h --- Created at 2013-12-06
 //
 // The MIT License (MIT)
 //
@@ -24,52 +24,42 @@
 // THE SOFTWARE.
 //
 
-#ifndef HMM_MODEL_H
-#define HMM_MODEL_H
 
-#include "status.h"
+#ifndef STATUS_H
+#define STATUS_H
 
-class HMMModel {
- public:
-  struct EmitRow;
+#include <string>
 
-  static HMMModel *New(const char *model_path, Status &status);
-  ~HMMModel();
+class Status {
+ public:  
 
-  int tag_num() const { return tag_num_; }
+  enum {
+    kIOError = 1,
+    kCorruption = 2
+  };
 
-  // Get Tag's string by its id
-  const char *GetTagStr(int tag_id) const {
-    return tag_str_[tag_id];
+  Status(): code_(0), msg_("") {}
+  Status(int code, const char *msg): code_(code), msg_(msg) {}
+  Status(const Status &s): code_(s.code_), msg_(s.msg_) {}
+
+  static Status OK() { return Status(); }
+
+  static Status IOError(const char *msg) {
+    return Status(kIOError, msg);
   }
 
-  // Get the emit row (tag, cost) of a term, if no data return NULL
-  EmitRow *GetEmitRow(int term_id) const {
-    if (term_id > max_term_id_ || term_id < 0) 
-      return NULL;
-    else
-      return emit_matrix_[term_id];
+  static Status Corruption(const char *msg) {
+    return Status(kCorruption, msg);
   }
-  
-  // Get the transition cost from left_tag to right_tag
-  double GetTransCost(int left_tag, int right_tag) const {
-    return transition_matrix_[left_tag * tag_num_ + right_tag];
-  }
+
+  bool ok() { return code_ == 0; }
+
+  const char *what() { return msg_.c_str(); }
 
  private:
-  EmitRow **emit_matrix_;
-  int max_term_id_;
-  int tag_num_;
-  char (* tag_str_)[16];
-  double *transition_matrix_;
-
-  HMMModel();
+  int code_;
+  std::string msg_;
 };
 
-struct HMMModel::EmitRow {
-  int tag;
-  float cost;
-  EmitRow *next;
-};
 
 #endif

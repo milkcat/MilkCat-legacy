@@ -40,79 +40,65 @@ struct HMMEmitRecord {
 };
 #pragma pack(0)
 
-HMMModel *HMMModel::Create(const char *model_path) {
+HMMModel *HMMModel::New(const char *model_path, Status &status) {
 
   HMMModel *self = new HMMModel();
 
-  try {
-    std::ifstream ifs;
-    ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit | std::ifstream::eofbit);
-    ifs.open(model_path, std::ios::binary);
-    
-    // Get file size
-    ifs.seekg(0, std::ios::end);
-    int file_size = ifs.tellg();
-    ifs.seekg(0, std::ios::beg);
+  RandomAccessFile *fd = RandomAccessFile::New(model_path, status);
 
-    int32_t magic_number;
-    ifs.read(reinterpret_cast<char *>(&magic_number), sizeof(int32_t));
+  int32_t magic_number;
+  if (status.ok()) fd->ReadValue<int32_t>(magic_number, status);
 
-    if (magic_number != 0x3322)
-      throw std::runtime_error(std::string("invalid HMM model file ") + model_path);
+  if (magic_number != 0x3322)
+    status = Status::Corruption(model_path);
 
-    int32_t tag_num;
-    ifs.read(reinterpret_cast<char *>(&tag_num), sizeof(int32_t));
+  int32_t tag_num;
+  if (status.ok()) fd->ReadValue<int32_t>(tag_num, status);
 
-    int32_t max_term_id;
-    ifs.read(reinterpret_cast<char *>(&max_term_id), sizeof(int32_t));
+  int32_t max_term_id;
+  if (status.ok()) fd->ReadValue<int32_t>(max_term_id, status);
 
-    int32_t emit_num;
-    ifs.read(reinterpret_cast<char *>(&emit_num), sizeof(int32_t));
+  int32_t emit_num;
+  if (status.ok()) fd->ReadValue<int32_t>(emit_num, status);
 
-    self->tag_str_ = reinterpret_cast<char (*)[16]>(new char[16 * tag_num]);
-    for (int i = 0; i < tag_num; ++i) {
-      ifs.read(self->tag_str_[i], 16);
-    }
+  self->tag_str_ = reinterpret_cast<char (*)[16]>(new char[16 * tag_num]);
+  for (int i = 0; i < tag_num && status.ok(); ++i) {
+    fd->Read(self->tag_str_[i], 16, status);
+  }
 
-    self->transition_matrix_ = new double[tag_num * tag_num];
-    float f_weight;
-    for (int i = 0; i < tag_num * tag_num; ++i) {
-      ifs.read(reinterpret_cast<char *>(&f_weight), sizeof(float));
-      self->transition_matrix_[i] = f_weight;
-    }
+  self->transition_matrix_ = new double[tag_num * tag_num];
+  float f_weight;
+  for (int i = 0; i < tag_num * tag_num && status.ok(); ++i) {
+    fd->ReadValue<float>(f_weight, status);
+    self->transition_matrix_[i] = f_weight;
+  }
 
+  self->emit_matrix_ = new EmitRow *[max_term_id + 1];
+  memset(self->emit_matrix_, 0, sizeof(EmitRow *) * (max_term_id + 1));
+  HMMEmitRecord emit_record;
+  EmitRow *emit_node;
+  for (int i = 0; i < emit_num && status.ok(); ++i) {
+    fd->ReadValue<HMMEmitRecord>(emit_record, status);
+    emit_node = new EmitRow();
+    emit_node->tag = emit_record.tag_id;
+    emit_node->cost = emit_record.cost;
+    emit_node->next = self->emit_matrix_[emit_record.term_id];
+    self->emit_matrix_[emit_record.term_id] = emit_node;
+  }
 
-    self->emit_matrix_ = new EmitRow *[max_term_id + 1];
-    memset(self->emit_matrix_, 0, sizeof(EmitRow *) * (max_term_id + 1));
-    HMMEmitRecord emit_record;
-    EmitRow *emit_node;
-    for (int i = 0; i < emit_num; ++i) {
-      ifs.read(reinterpret_cast<char *>(&emit_record), sizeof(emit_record));
-      emit_node = new EmitRow();
-      emit_node->tag = emit_record.tag_id;
-      emit_node->cost = emit_record.cost;
-      emit_node->next = self->emit_matrix_[emit_record.term_id];
-      self->emit_matrix_[emit_record.term_id] = emit_node;
-    }
+  if (fd->Tell() != fd->Size())
+    status = Status::Corruption(model_path);
 
-    if (ifs.tellg() != file_size)
-      throw std::runtime_error(std::string("invalid HMM model file ") + model_path); 
+  self->tag_num_ = tag_num;
+  self->max_term_id_ = max_term_id;
 
-    self->tag_num_ = tag_num;
-    self->max_term_id_ = max_term_id;
+  delete fd;
+  if (!status.ok()) {
+    delete self;
+    return NULL;
 
+  } else {
     return self;
-
-  } catch (std::ifstream::failure &ex) {
-    std::string errmsg = std::string("failed to read from ") + model_path;
-    set_error_message(errmsg.c_str());
-    delete self;
-    return NULL;
-
-  } catch (std::exception &ex) {
-    set_error_message(ex.what());
-    delete self;
-    return NULL;
   }
 }
 

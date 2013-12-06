@@ -41,6 +41,8 @@ class OutOfVocabularyWordRecognition {
                      int dest_postion, 
                      TermInstance *src_term_instance, 
                      int src_position);
+
+  DISALLOW_COPY_AND_ASSIGN(OutOfVocabularyWordRecognition);
 };
 
 

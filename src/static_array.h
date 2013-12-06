@@ -71,6 +71,8 @@ class StaticArray {
     return self;
   }
 
+  StaticArray(): data_(NULL), size_(0) {}
+
   ~StaticArray() {
     delete data_;
     data_ = NULL;
@@ -86,6 +88,8 @@ class StaticArray {
  private:
   T *data_;
   int size_;
+
+  DISALLOW_COPY_AND_ASSIGN(StaticArray);
 };
 
 #endif

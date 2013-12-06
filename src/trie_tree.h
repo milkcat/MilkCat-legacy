@@ -28,6 +28,7 @@
 #define TRIE_TREE_H
 
 #include "darts.h"
+#include "utils.h"
 
 class TrieTree {
  public:
@@ -52,12 +53,15 @@ inline TrieTree::~TrieTree() {}
 class DoubleArrayTrieTree: public TrieTree {
  public:
   static DoubleArrayTrieTree *Create(const char *file_path);
+  DoubleArrayTrieTree() {}
 
   int Search(const char *text) const;
   int Traverse(const char *text, size_t &node) const;
 
  private:
   Darts::DoubleArray double_array_;
+
+  DISALLOW_COPY_AND_ASSIGN(DoubleArrayTrieTree);
 };
 
 #endif

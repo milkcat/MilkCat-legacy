@@ -52,7 +52,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         hmm_model.h \
                         trie_tree.h \
                         trie_tree.cc \
-                        static_array.h
+                        static_array.h \
+                        status.h
 
 bin_PROGRAMS = mc_model
 mc_model_SOURCES = mk_model.cc 

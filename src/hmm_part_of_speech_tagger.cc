@@ -32,14 +32,10 @@
 #include "utils.h"
 #include "hmm_model.h"
 
-
-
 struct HMMPartOfSpeechTagger::Node {
   int left_tag;
   double cost;
 };
-
-
 
 HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): model_(NULL),
                                                 one_tag_emit_(NULL) {
@@ -75,9 +71,10 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path,
   Configuration *default_tag_conf = NULL;
   char error_message[1024];
   FILE *fd = NULL;
+  Status status;
 
   try {
-    self->model_ = HMMModel::Create(model_path);
+    self->model_ = HMMModel::New(model_path, status);
     if (self->model_ == NULL) {
       throw std::runtime_error(std::string("load model file ") + model_path); 
     }

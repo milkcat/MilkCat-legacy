@@ -9,6 +9,7 @@
 #include <string>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
 #include <config.h>
 #include "milkcat.h"
 #include "crf_tagger.h"

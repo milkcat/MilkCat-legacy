@@ -29,6 +29,7 @@
 #include "milkcat_config.h"
 #include "part_of_speech_tagger.h"
 #include "hmm_model.h"
+#include "utils.h"
 
 class PartOfSpeechTagInstance;
 class TermInstance;
@@ -81,6 +82,7 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   // Get each term's emit tag and save it in term_tags_
   void BuildEmitTagfForNode(TermInstance *term_instance);
 
+  DISALLOW_COPY_AND_ASSIGN(HMMPartOfSpeechTagger);
 };
 
 

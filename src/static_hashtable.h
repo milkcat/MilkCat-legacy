@@ -35,6 +35,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <string>
+#include "utils.h"
 
 template <class K, class V>
 class StaticHashTable {
@@ -280,6 +281,9 @@ class StaticHashTable {
 
     return static_cast<int>(hash);
   }
+
+
+  DISALLOW_COPY_AND_ASSIGN(StaticHashTable);
 };
 
 

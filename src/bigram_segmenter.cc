@@ -53,12 +53,10 @@ struct BigramSegmenter::Node {
   int term_position;
 };
 
-
 // Compare two Node in weight
 static inline bool NodePtrCmp(const BigramSegmenter::Node *n1, const BigramSegmenter::Node *n2) {
   return n1->weight < n2->weight;
 }
-
 
 class BigramSegmenter::NodePool {
  public:
