@@ -31,7 +31,9 @@
 #include "static_hashtable.h"
 #include "darts.h"
 #include "segmenter.h"
+#include "static_array.h"
 
+class TrieTree;
 class TokenInstance;
 class TermInstance;
 
@@ -66,14 +68,18 @@ class BigramSegmenter: public Segmenter {
   // Index for words in dictionary
   Darts::DoubleArray *unigram_trie_;
 
-  // Weight for each unigram term (Index by term_id)
-  float *unigram_weight_;
+  // Cost for each unigram term (Index by term_id)
+  StaticArray<float> *unigram_cost_;
 
   // Weight for bigram term_id pair, key is left_id << 32 + right_id
   const StaticHashTable<int64_t, float> *bigram_weight_;
 
   // NodePool instance to alloc and release node
   NodePool *node_pool_;
+
+  TrieTree *index_;
+
+
 
   BigramSegmenter();
 

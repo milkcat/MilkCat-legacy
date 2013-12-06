@@ -49,7 +49,10 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         mixed_segmenter.h \
                         mixed_segmenter.cc \
                         hmm_model.cc \
-                        hmm_model.h
+                        hmm_model.h \
+                        trie_tree.h \
+                        trie_tree.cc \
+                        static_array.h
 
 bin_PROGRAMS = mc_model
 mc_model_SOURCES = mk_model.cc 

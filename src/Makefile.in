@@ -143,7 +143,8 @@ am_libmilkcat_la_OBJECTS = crf_segmenter.lo instance_data.lo \
 	tokenization.lo utils.lo libmilkcat.lo bigram_segmenter.lo \
 	crf_part_of_speech_tagger.lo strlcpy.lo crf_model.lo \
 	crf_tagger.lo configuration.lo hmm_part_of_speech_tagger.lo \
-	mixed_part_of_speech_tagger.lo mixed_segmenter.lo hmm_model.lo
+	mixed_part_of_speech_tagger.lo mixed_segmenter.lo hmm_model.lo \
+	trie_tree.lo
 libmilkcat_la_OBJECTS = $(am_libmilkcat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -408,7 +409,10 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         mixed_segmenter.h \
                         mixed_segmenter.cc \
                         hmm_model.cc \
-                        hmm_model.h
+                        hmm_model.h \
+                        trie_tree.h \
+                        trie_tree.cc \
+                        static_array.h
 
 mc_model_SOURCES = mk_model.cc 
 mc_model_LDADD = libmilkcat.la
@@ -574,6 +578,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/token_instance.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/token_lex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tokenization.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trie_tree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Plo@am__quote@
 
 .c.o:

@@ -34,6 +34,7 @@
 #include "token_instance.h"
 #include "term_instance.h"
 #include "utils.h"
+#include "trie_tree.h"
 
 struct BigramSegmenter::Node {
   // The bucket contains this node
@@ -155,18 +156,8 @@ class BigramSegmenter::Bucket {
   int size_;
 };
 
-
-// Record struct for bigram data
-#pragma pack(1)
-struct BigramRecord {
-  int32_t left_id;
-  int32_t right_id;
-  float weight;
-};
-#pragma pack(0)
-
 BigramSegmenter::BigramSegmenter(): unigram_trie_(NULL),
-                                    unigram_weight_(NULL),
+                                    unigram_cost_(NULL),
                                     node_pool_(NULL),
                                     bigram_weight_(NULL) {
   for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
@@ -175,31 +166,21 @@ BigramSegmenter::BigramSegmenter(): unigram_trie_(NULL),
 }
 
 BigramSegmenter::~BigramSegmenter() {
-  if (unigram_trie_ != NULL) {
-    delete unigram_trie_;
-    unigram_trie_ = NULL;
-  }
+  delete index_;
+  index_ = NULL;
 
-  if (unigram_weight_ != NULL) {
-    delete[] unigram_weight_;
-    unigram_weight_ = NULL;
-  }
+  delete unigram_cost_;
+  unigram_cost_ = NULL;
 
-  if (node_pool_ != NULL) {
-    delete node_pool_;
-    node_pool_ = NULL;
-  }
+  delete node_pool_;
+  node_pool_ = NULL;
 
-  if (bigram_weight_ != NULL) {
-    delete bigram_weight_;
-    bigram_weight_ = NULL; 
-  }
+  delete bigram_weight_;
+  bigram_weight_ = NULL; 
 
   for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
-    if (buckets_[i] != NULL) {
-      delete buckets_[i];
-      buckets_[i] = NULL;
-    }
+    delete buckets_[i];
+    buckets_[i] = NULL;
   }
 }
 
@@ -208,7 +189,6 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
                                          const char *bigram_binary_path) {
   char error_message[1024];
   BigramSegmenter *self = new BigramSegmenter();
-  FILE *fd;
   long file_size;
   int record_number;
 
@@ -220,38 +200,18 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
   }
 
   // Load unigram_trie file
-  self->unigram_trie_ = new Darts::DoubleArray();
-  if (-1 == self->unigram_trie_->open(trietree_path)) {
-    sprintf(error_message, "unable to open index file %s", trietree_path);
-    set_error_message(error_message);
+  self->index_ = DoubleArrayTrieTree::Create(trietree_path);
+  if (self->index_ == NULL) {
     delete self;
     return NULL;
   }
 
-  // Load unigram weight file
-  fd = fopen(unigram_binary_path, "r");
-  if (fd == NULL) { 
-    sprintf(error_message, "unable to open unigram data file %s", unigram_binary_path);
-    set_error_message(error_message);
+  // Load unigram cost file
+  self->unigram_cost_ = StaticArray<float>::Load(unigram_binary_path);
+  if (self->unigram_cost_ == NULL) {
     delete self;
-    return NULL;    
+    return NULL;     
   }
-
-  fseek(fd, 0L, SEEK_END);
-  file_size = ftell(fd);
-  fseek(fd, 0L, SEEK_SET);
-  record_number = file_size / sizeof(float);
-
-  self->unigram_weight_ = new float[record_number];
-  if (record_number != fread(self->unigram_weight_, sizeof(float), record_number, fd)) {
-    sprintf(error_message, "unable to read from unigram data file %s", unigram_binary_path);
-    set_error_message(error_message);
-    delete self;
-    fclose(fd);
-    return NULL;      
-  }
-
-  fclose(fd);
 
   // Load bigram weight file
   self->bigram_weight_ = StaticHashTable<int64_t, float>::Load(bigram_binary_path);
@@ -259,7 +219,7 @@ BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
     sprintf(error_message, "unable to read from bigram data file %s", bigram_binary_path);
     set_error_message(error_message);
     delete self;
-    return NULL;     
+    return NULL;
   }
 
   return self;
@@ -286,10 +246,7 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
     trie_node = 0;
     for (int bucket_count = 0; bucket_count + bucket_id < token_instance->size(); ++bucket_count) {
       // printf("%d %d\n", bucket_id, bucket_count);
-      key_position = 0;
-      int term_id = unigram_trie_->traverse(token_instance->token_text_at(bucket_id + bucket_count), 
-                                            trie_node, 
-                                            key_position);
+      int term_id = index_->Traverse(token_instance->token_text_at(bucket_id + bucket_count), trie_node);
 
       double min_weight = 100000000;
       const Node *min_node = NULL;
@@ -310,13 +267,13 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
           if (bigram_map_iter != NULL) {
 
             // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)
-            weight = node->weight + 0.7 * (*bigram_map_iter - unigram_weight_[left_term_id]) + 
-                                    0.3 * unigram_weight_[right_term_id];
+            weight = node->weight + 0.7 * (*bigram_map_iter - unigram_cost_->get(left_term_id)) + 
+                                    0.3 * unigram_cost_->get(right_term_id);
             // printf("bigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           } else {
 
             // if np bigram data use p(x_n+1|x_n) = p(x_n+1)
-            weight = node->weight + unigram_weight_[right_term_id];
+            weight = node->weight + unigram_cost_->get(right_term_id);
             // printf("unigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           }
 
@@ -347,7 +304,7 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
           buckets_[bucket_id + 1]->AddArc(min_node, min_weight, 0);
         } // end if node count == 0
 
-        if (term_id == -2) break;
+        if (term_id == TrieTree::kNone) break;
       } // end if term_id >= 0
     } // end for bucket_count
   } // end for decode_start
