@@ -21,7 +21,8 @@
 #endif
 
 typedef struct milkcat_t milkcat_t;
-typedef struct milkcat_processor_t milkcat_processor_t;
+typedef struct milkcat_parser_t milkcat_parser_t;
+typedef struct milkcat_cursor_t milkcat_cursor_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,32 +56,34 @@ typedef enum {
   MC_OTHER = 5
 } MC_WORD_TYPE;
 
-// Initialize the MilkCat Process Instance, 
-// processor_type is the type of processor, such as NORMAL_PROCESSOR ...
-// model_dir_path is the path of model files with the trailing slash
-EXPORT_API milkcat_t *milkcat_init(const char *model_dir_path);
+
+EXPORT_API milkcat_t *milkcat_new(const char *model_path);
 
 // Delete the MilkCat Process Instance and release its resources
 EXPORT_API void milkcat_destroy(milkcat_t *milkcat);
 
-EXPORT_API milkcat_processor_t *milkcat_processor_new(milkcat_t *milkcat, int processor_type);
+EXPORT_API milkcat_parser_t *milkcat_parser_new(milkcat_t *milkcat, int parser_type);
 
-EXPORT_API void milkcat_processor_delete(milkcat_processor_t *proc);
+EXPORT_API void milkcat_parser_destroy(milkcat_parser_t *parser);
+
+EXPORT_API milkcat_cursor_t *milkcat_cursor_new();
+
+EXPORT_API void milkcat_cursor_destroy(milkcat_cursor_t *cursor);
 
 // Start to Process a text
-EXPORT_API void milkcat_process(milkcat_processor_t *proc, const char *text);
+EXPORT_API void milkcat_parse(milkcat_parser_t *parser, milkcat_cursor_t *cursor, const char *text);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
-EXPORT_API int milkcat_next(milkcat_processor_t *proc);
+EXPORT_API int milkcat_cursor_next(milkcat_cursor_t *cursor);
 
 // Get a term from current position
-EXPORT_API const char *milkcat_get_word(milkcat_processor_t *proc);
+EXPORT_API const char *milkcat_cursor_word(milkcat_cursor_t *cursor);
 
 // Get the Part-Of-Speech Tag from current position
-EXPORT_API const char *milkcat_get_part_of_speech_tag(milkcat_processor_t *proc);
+EXPORT_API const char *milkcat_cursor_pos_tag(milkcat_cursor_t *cursor);
 
 // Get the type of word, such as a number, a chinese word or an english word ...
-EXPORT_API MC_WORD_TYPE milkcat_get_word_type(milkcat_processor_t *proc);
+EXPORT_API MC_WORD_TYPE milkcat_cursor_word_type(milkcat_cursor_t *cursor);
 
 // Get the error message if an error occurred
 EXPORT_API const char *milkcat_get_error_message(milkcat_t *milkcat);

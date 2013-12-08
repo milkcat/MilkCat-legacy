@@ -100,39 +100,40 @@ int main(int argc, char **argv) {
   }
 
   char *input_buffer = (char *)malloc(1048576);
-  milkcat_t *milkcat = milkcat_init(*model_path == '\0'? NULL: model_path);
-  milkcat_processor_t *proc = milkcat_processor_new(milkcat, method);
+  milkcat_t *milkcat = milkcat_new(*model_path == '\0'? NULL: model_path);
+  milkcat_parser_t *parser = milkcat_parser_new(milkcat, method);
+  milkcat_cursor_t *cursor = milkcat_cursor_new();
   size_t sentence_length;
   int i;
   char ch;
 
-  if (proc == NULL) {
+  if (parser == NULL) {
     fputs(milkcat_get_error_message(milkcat), stderr);
     fputs("\n", stderr);
     return 1;
   }
 
   while (NULL != fgets(input_buffer, 1048576, fp)) {
-    milkcat_process(proc, input_buffer);
-    while (milkcat_next(proc) != 0) {
+    milkcat_parse(parser, cursor, input_buffer);
+    while (milkcat_cursor_next(cursor) != 0) {
       // printf("22222222\n");
-      switch (milkcat_get_word(proc)[0]) {
+      switch (milkcat_cursor_word(cursor)[0]) {
        case '\r':
        case '\n':
        case ' ':
         continue;
       }
 
-      fputs(milkcat_get_word(proc), stdout);
+      fputs(milkcat_cursor_word(cursor), stdout);
 
       if (display_type == 1) {
         fputs("_", stdout);
-        fputs(word_type_str(milkcat_get_word_type(proc)), stdout);
+        fputs(word_type_str(milkcat_cursor_word_type(cursor)), stdout);
       }
 
       if (display_tag == 1) {
         fputs("/", stdout);
-        fputs(milkcat_get_part_of_speech_tag(proc), stdout);
+        fputs(milkcat_cursor_pos_tag(cursor), stdout);
       }
 
       fputs("  ", stdout);
@@ -140,7 +141,8 @@ int main(int argc, char **argv) {
     printf("\n");
   }
 
-  milkcat_processor_delete(proc);
+  milkcat_cursor_destroy(cursor);
+  milkcat_parser_destroy(parser);
   milkcat_destroy(milkcat);
   free(input_buffer);
   if (use_stdin_flag == 0)
