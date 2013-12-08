@@ -29,6 +29,7 @@
 #include "crf_part_of_speech_tagger.h"
 #include "feature_extractor.h"
 #include "milkcat_config.h"
+#include "utils.h"
 
 class PartOfSpeechFeatureExtractor: public FeatureExtractor {
  public:
@@ -80,41 +81,21 @@ class PartOfSpeechFeatureExtractor: public FeatureExtractor {
 
 
 
-CRFPartOfSpeechTagger *CRFPartOfSpeechTagger::Create(const char *model_path) {
-  CRFPartOfSpeechTagger *self = new CRFPartOfSpeechTagger();
-
-  self->feature_extractor_ = new PartOfSpeechFeatureExtractor();
-  self->crf_model_ = CRFModel::Create(model_path);
-  if (self->crf_model_ == NULL) {
-    delete self;
-    return NULL;
-  }
-
-  self->crf_tagger_ = new CRFTagger(self->crf_model_);
-
-  return self;
+CRFPartOfSpeechTagger::CRFPartOfSpeechTagger(const CRFModel *model) {
+  feature_extractor_ = new PartOfSpeechFeatureExtractor();
+  crf_tagger_ = new CRFTagger(model);
 }
 
 CRFPartOfSpeechTagger::CRFPartOfSpeechTagger(): crf_tagger_(NULL), 
-                                                crf_model_(NULL),
                                                 feature_extractor_(NULL) {
 }
 
 CRFPartOfSpeechTagger::~CRFPartOfSpeechTagger() {
-  if (feature_extractor_ != NULL) {
-    delete feature_extractor_;
-    feature_extractor_ = NULL;
-  }
+  delete feature_extractor_;
+  feature_extractor_ = NULL;
 
-  if (crf_tagger_ != NULL) {
-    delete crf_tagger_;
-    crf_tagger_ = NULL;
-  }
-
-  if (crf_model_ != NULL) {
-    delete crf_model_;
-    crf_model_ = NULL;
-  }
+  delete crf_tagger_;
+  crf_tagger_ = NULL;
 }
 
 void CRFPartOfSpeechTagger::TagRange(PartOfSpeechTagInstance *part_of_speech_tag_instance, 

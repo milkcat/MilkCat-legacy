@@ -58,66 +58,47 @@ HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
     }
     delete[] one_tag_emit_;
   }
-
-  delete model_;
-  model_ = NULL;
 }
 
-HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::Create(const char *model_path, 
-                                                     const char *index_path,
-                                                     const char *default_tag_path) {
+HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(const HMMModel *model, 
+                                                  const TrieTree *index,
+                                                  const Configuration *default_tag,
+                                                  Status &status) {
   HMMPartOfSpeechTagger *self = new HMMPartOfSpeechTagger();
   
   Configuration *default_tag_conf = NULL;
   char error_message[1024];
   FILE *fd = NULL;
-  Status status;
 
-  try {
-    self->model_ = HMMModel::New(model_path, status);
-    if (self->model_ == NULL) {
-      throw std::runtime_error(std::string("load model file ") + model_path); 
-    }
+  self->model_ = model;
+  self->tag_num_ = self->model_->tag_num();
+  self->index_ = index;
 
-    self->tag_num_ = self->model_->tag_num();
+  for (int i = 0; i < kMaxBucket; ++i) {
+    self->buckets_[i] = new Node[self->tag_num_];
+  }
 
-    for (int i = 0; i < kMaxBucket; ++i) {
-      self->buckets_[i] = new Node[self->tag_num_];
-    }
+  self->one_tag_emit_ = new HMMModel::EmitRow *[self->tag_num_];
+  for (int i = 0; i < self->tag_num_; ++i) {
+    self->one_tag_emit_[i] = new HMMModel::EmitRow();
+    self->one_tag_emit_[i]->tag = i;
+    self->one_tag_emit_[i]->cost = 20;
+    self->one_tag_emit_[i]->next = NULL;
+  }
 
-    if (0 != self->unigram_trie_.open(index_path))
-      throw std::runtime_error(std::string("unable to open index file  ") + index_path); 
+  // Note that LoadDefaultTags will throw runtime_error
+  int *p = self->term_type_emit_tag_;
+  if (status.ok()) self->LoadDefaultTags(default_tag, "word", p + TermInstance::kChineseWord, status);
+  if (status.ok()) self->LoadDefaultTags(default_tag, "english", p + TermInstance::kEnglishWord, status);
+  if (status.ok()) self->LoadDefaultTags(default_tag, "number", p + TermInstance::kNumber, status);
+  if (status.ok()) self->LoadDefaultTags(default_tag, "symbol", p + TermInstance::kSymbol, status);
+  if (status.ok()) self->LoadDefaultTags(default_tag, "punction", p + TermInstance::kPunction, status);
+  if (status.ok()) self->LoadDefaultTags(default_tag, "other", p + TermInstance::kOther, status);
 
-    // Get default tags
-    default_tag_conf = Configuration::LoadFromPath(default_tag_path);
-    if (default_tag_conf == NULL) {
-      throw std::runtime_error(std::string("unable to open default tag configuration file ") + default_tag_path); 
-    }
-
-    self->one_tag_emit_ = new HMMModel::EmitRow *[self->tag_num_];
-    for (int i = 0; i < self->tag_num_; ++i) {
-      self->one_tag_emit_[i] = new HMMModel::EmitRow();
-      self->one_tag_emit_[i]->tag = i;
-      self->one_tag_emit_[i]->cost = 20;
-      self->one_tag_emit_[i]->next = NULL;
-    }
-
-    // Note that LoadDefaultTags will throw runtime_error
-    self->LoadDefaultTags(default_tag_conf, "word", self->term_type_emit_tag_ + TermInstance::kChineseWord);
-    self->LoadDefaultTags(default_tag_conf, "english", self->term_type_emit_tag_ + TermInstance::kEnglishWord);
-    self->LoadDefaultTags(default_tag_conf, "number", self->term_type_emit_tag_ + TermInstance::kNumber);
-    self->LoadDefaultTags(default_tag_conf, "symbol", self->term_type_emit_tag_ + TermInstance::kSymbol);
-    self->LoadDefaultTags(default_tag_conf, "punction", self->term_type_emit_tag_ + TermInstance::kPunction);
-    self->LoadDefaultTags(default_tag_conf, "other", self->term_type_emit_tag_ + TermInstance::kOther);
-
-    delete default_tag_conf;
+  if (status.ok()) {
     return self;
-
-  } catch (std::exception &ex) {
-    set_error_message(ex.what());
+  } else {
     delete self;
-    if (fd != NULL) fclose(fd);
-    if (default_tag_conf != NULL) delete default_tag_conf;
     return NULL;
   }
 }
@@ -132,17 +113,25 @@ int HMMPartOfSpeechTagger::GetTagIdByStr(const char *tag_str) {
   return -1;
 }
 
-void HMMPartOfSpeechTagger::LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag) {
+void HMMPartOfSpeechTagger::LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag, Status &status) {
+  std::string msg;
+  int tag;
 
-  if (conf->HasKey(key) == false) 
-    throw std::runtime_error(std::string("unable to find key '") + key + "' in default tag configuration file");
+  if (conf->HasKey(key) == false) {
+    msg = std::string("unable to find key '") + key + "' in default tag configuration file";
+    status = Status::Corruption(msg.c_str());
+  }
   
-  const char *tag_str = conf->GetString(key);
-  int tag = GetTagIdByStr(tag_str);
-  if (tag < 0) 
-    throw std::runtime_error(std::string(tag_str) + " not exists in tag set");
+  if (status.ok()) {
+    const char *tag_str = conf->GetString(key);
+    tag = GetTagIdByStr(tag_str);
+    if (tag < 0) {
+      msg = std::string(tag_str) + " not exists in tag set";
+      status = Status::Corruption(msg.c_str());
+    }
+  }
 
-  *emit_tag = tag;
+  if (status.ok()) *emit_tag = tag;
 }
 
 void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
@@ -152,7 +141,7 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
   for (int i = 0; i < term_instance->size(); ++i) {
     term_id = term_instance->term_id_at(i);
     if (term_id == TermInstance::kTermIdNone) {
-      term_id = unigram_trie_.exactMatchSearch<Darts::DoubleArray::value_type>(term_instance->term_text_at(i));
+      term_id = index_->Search(term_instance->term_text_at(i));
     }
 
     emit_node = model_->GetEmitRow(term_id);

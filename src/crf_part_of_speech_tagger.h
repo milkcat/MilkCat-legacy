@@ -40,7 +40,7 @@ class PartOfSpeechFeatureExtractor;
 
 class CRFPartOfSpeechTagger: public PartOfSpeechTagger {
  public:
-  static CRFPartOfSpeechTagger *Create(const char *model_path);
+  CRFPartOfSpeechTagger(const CRFModel *model);
   ~CRFPartOfSpeechTagger();
 
   // Tag the TermInstance and put the result to PartOfSpeechTagInstance
@@ -53,7 +53,6 @@ class CRFPartOfSpeechTagger: public PartOfSpeechTagger {
 
  private:
   CRFTagger *crf_tagger_;
-  CRFModel *crf_model_;
 
   CRFPartOfSpeechTagger();
 

@@ -32,27 +32,26 @@
 
 MixedSegmenter::MixedSegmenter(): bigram_(NULL), oov_recognizer_(NULL), bigram_result_(NULL) {}
 
-MixedSegmenter *MixedSegmenter::Create(const char *unigram_index_path,
-                                       const char *unigram_data_path,
-                                       const char *bigram_data_path,
-                                       const char *character_property_path,
-                                       const char *crf_seg_model_path) {
+MixedSegmenter *MixedSegmenter::New(
+    const TrieTree *index,
+    const StaticArray<float> *unigram_cost,
+    const StaticHashTable<int64_t, float> *bigram_cost,
+    const CRFModel *seg_model,
+    const TrieTree *oov_property,
+    Status &status) {
 
   MixedSegmenter *self = new MixedSegmenter();
-  self->bigram_ = BigramSegmenter::Create(unigram_index_path, unigram_data_path, bigram_data_path);
-  if (self->bigram_ == NULL) {
+  self->bigram_ = new BigramSegmenter(index, unigram_cost, bigram_cost);
+  self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(seg_model, oov_property, status);
+  if (status.ok()) self->bigram_result_ = new TermInstance();
+
+  if (status.ok()) {
+    return self;
+  } else {
     delete self;
     return NULL;
   }
-
-  self->oov_recognizer_ = OutOfVocabularyWordRecognition::Create(crf_seg_model_path, character_property_path);
-  if (self->oov_recognizer_ == NULL) {
-    delete self;
-    return NULL;
-  }
-
-  self->bigram_result_ = new TermInstance();
-  return self;
+  
 }
 
 MixedSegmenter::~MixedSegmenter() {

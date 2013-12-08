@@ -28,22 +28,28 @@
 #define MIXED_PART_OF_SPEECH_TAGGER_H
 
 #include "part_of_speech_tagger.h"
+#include "utils.h"
 
 class CRFPartOfSpeechTagger;
 class HMMPartOfSpeechTagger;
 class PartOfSpeechTagInstance;
 class TermInstance;
+class HMMModel;
+class TrieTree;
+class Configuration;
+class CRFModel;
 
 // Mixed HMM and CRF part-of-speech tagger
 class MixedPartOfSpeechTagger: public PartOfSpeechTagger {
  public:
   ~MixedPartOfSpeechTagger();
 
-  static MixedPartOfSpeechTagger *Create(
-      const char *hmm_pos_model_path,
-      const char *unigram_index_path,
-      const char *default_tag_path,
-      const char *crf_pos_model_path);
+  static MixedPartOfSpeechTagger *New(
+      const HMMModel *hmm_model,
+      const TrieTree *index,
+      const Configuration *default_tag,
+      const CRFModel *crf_model,
+      Status &status);
 
   void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance);
 

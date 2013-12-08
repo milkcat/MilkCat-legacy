@@ -18,7 +18,7 @@ class TermInstance;
 
 class CRFSegmenter: public Segmenter {
  public:
-  static CRFSegmenter *Create(const char *model_path);
+  static CRFSegmenter *New(const CRFModel *model, Status &status);
   ~CRFSegmenter();
 
   // Segment a range [begin, end) of token 
@@ -30,7 +30,6 @@ class CRFSegmenter: public Segmenter {
  
  private:
   CRFTagger *crf_tagger_;
-  CRFModel *crf_model_;
 
   SegmentFeatureExtractor *feature_extractor_;
 

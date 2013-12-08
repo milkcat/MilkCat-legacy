@@ -30,32 +30,32 @@
 #include "hmm_part_of_speech_tagger.h"
 #include "term_instance.h"
 #include "part_of_speech_tag_instance.h"
+#include "hmm_model.h"
+#include "trie_tree.h"
+#include "configuration.h"
+#include "crf_model.h"
+#include "utils.h"
 
 MixedPartOfSpeechTagger::MixedPartOfSpeechTagger(): crf_tagger_(NULL), hmm_tagger_(NULL), one_instance_(NULL) {}
 
-MixedPartOfSpeechTagger *MixedPartOfSpeechTagger::Create(
-    const char *hmm_pos_model_path,
-    const char *unigram_index_path,
-    const char *default_tag_path,
-    const char *crf_pos_model_path) {
+MixedPartOfSpeechTagger *MixedPartOfSpeechTagger::New(
+    const HMMModel *hmm_model,
+    const TrieTree *index,
+    const Configuration *default_tag,
+    const CRFModel *crf_model,
+    Status &status) {
 
   MixedPartOfSpeechTagger *self = new MixedPartOfSpeechTagger();
-  self->crf_tagger_ = CRFPartOfSpeechTagger::Create(crf_pos_model_path);
-  if (self->crf_tagger_ == NULL) {
-    delete self;
-    return NULL;
-  }
-
-  self->hmm_tagger_ = HMMPartOfSpeechTagger::Create(hmm_pos_model_path,
-                                                    unigram_index_path,
-                                                    default_tag_path);
-  if (self->hmm_tagger_ == NULL) {
-    delete self;
-    return NULL;
-  }
-
   self->one_instance_ = new PartOfSpeechTagInstance();
-  return self;
+  self->crf_tagger_ = new CRFPartOfSpeechTagger(crf_model);
+  self->hmm_tagger_ = HMMPartOfSpeechTagger::New(hmm_model, index, default_tag, status);
+  
+  if (status.ok()) {
+    return self;
+  } else {
+    delete self;
+    return NULL;
+  }
 }
 
 MixedPartOfSpeechTagger::~MixedPartOfSpeechTagger() {

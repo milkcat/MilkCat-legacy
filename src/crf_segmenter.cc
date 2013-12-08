@@ -32,16 +32,11 @@ class SegmentFeatureExtractor: public FeatureExtractor {
   const TokenInstance *token_instance_;
 };
 
-CRFSegmenter *CRFSegmenter::Create(const char *model_path) {
+CRFSegmenter *CRFSegmenter::New(const CRFModel *model, Status &status) {
   char error_message[1024];
   CRFSegmenter *self = new CRFSegmenter();
-  self->crf_model_ = CRFModel::Create(model_path);
-  if (self->crf_model_ == NULL) {
-    delete self;
-    return NULL;
-  }
 
-  self->crf_tagger_ = new CRFTagger(self->crf_model_);
+  self->crf_tagger_ = new CRFTagger(model);
   self->feature_extractor_ = new SegmentFeatureExtractor();
 
   // Get the tag's value in CRF++ model
@@ -54,34 +49,26 @@ CRFSegmenter *CRFSegmenter::Create(const char *model_path) {
 
   if (self->S < 0 || self->B < 0 || self->B1 < 0 || self->B2 < 0 || 
       self->M < 0 || self->E < 0) {
-    delete self;
-    sprintf(error_message, "bad CRF++ segmenter model %s, unable to find S, B, B1, B2, M, E tag.", model_path);
-    set_error_message(error_message);
-    return NULL;
+    status = Status::Corruption("bad CRF++ segmenter model, unable to find S, B, B1, B2, M, E tag.");
   }
 
-  return self;
+  if (status.ok()) {
+    return self;
+  } else {
+    delete self;
+    return NULL;
+  }
 }
 
 CRFSegmenter::~CRFSegmenter() {
-  if (feature_extractor_ != NULL) {
-    delete feature_extractor_;
-    feature_extractor_ = NULL;
-  }
+  delete feature_extractor_;
+  feature_extractor_ = NULL;
   
-  if (crf_tagger_ != NULL) {
-    delete crf_tagger_;
-    crf_tagger_ = NULL;
-  }
-
-  if (crf_model_ != NULL) {
-    delete crf_model_;
-    crf_model_ = NULL;
-  }
+  delete crf_tagger_;
+  crf_tagger_ = NULL;
 }
 
 CRFSegmenter::CRFSegmenter(): crf_tagger_(NULL), 
-                              crf_model_(NULL),
                               feature_extractor_(NULL) {}
 
 void CRFSegmenter::SegmentRange(TermInstance *term_instance, TokenInstance *token_instance, int begin, int end) {

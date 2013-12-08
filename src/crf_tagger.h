@@ -38,7 +38,7 @@
 
 class CRFTagger {
  public:
-  CRFTagger(CRFModel *model);
+  CRFTagger(const CRFModel *model);
   ~CRFTagger();
   static const int kMaxBucket = kTokenMax;
   static const int kMaxFeature = 24;
@@ -79,7 +79,7 @@ class CRFTagger {
  private:
   struct Node;
   
-  CRFModel *model_;
+  const CRFModel *model_;
   Node *buckets_[kMaxBucket];
   int result_[kMaxBucket];
   FeatureExtractor *feature_extractor_;

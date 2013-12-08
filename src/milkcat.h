@@ -21,6 +21,7 @@
 #endif
 
 typedef struct milkcat_t milkcat_t;
+typedef struct milkcat_processor_t milkcat_processor_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,28 +58,32 @@ typedef enum {
 // Initialize the MilkCat Process Instance, 
 // processor_type is the type of processor, such as NORMAL_PROCESSOR ...
 // model_dir_path is the path of model files with the trailing slash
-EXPORT_API milkcat_t *milkcat_init(int processor_type, const char *model_dir_path);
+EXPORT_API milkcat_t *milkcat_init(const char *model_dir_path);
 
 // Delete the MilkCat Process Instance and release its resources
-EXPORT_API void milkcat_delete(milkcat_t *processor);
+EXPORT_API void milkcat_destroy(milkcat_t *milkcat);
+
+EXPORT_API milkcat_processor_t *milkcat_processor_new(milkcat_t *milkcat, int processor_type);
+
+EXPORT_API void milkcat_processor_delete(milkcat_processor_t *proc);
 
 // Start to Process a text
-EXPORT_API void milkcat_process(milkcat_t *processor, const char *text);
+EXPORT_API void milkcat_process(milkcat_processor_t *proc, const char *text);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
-EXPORT_API int milkcat_next(milkcat_t *processor);
+EXPORT_API int milkcat_next(milkcat_processor_t *proc);
 
 // Get a term from current position
-EXPORT_API const char *milkcat_get_word(milkcat_t *processor);
+EXPORT_API const char *milkcat_get_word(milkcat_processor_t *proc);
 
 // Get the Part-Of-Speech Tag from current position
-EXPORT_API const char *milkcat_get_part_of_speech_tag(milkcat_t *processor);
+EXPORT_API const char *milkcat_get_part_of_speech_tag(milkcat_processor_t *proc);
 
 // Get the type of word, such as a number, a chinese word or an english word ...
-EXPORT_API MC_WORD_TYPE milkcat_get_word_type(milkcat_t *processor);
+EXPORT_API MC_WORD_TYPE milkcat_get_word_type(milkcat_processor_t *proc);
 
 // Get the error message if an error occurred
-EXPORT_API const char *milkcat_get_error_message();
+EXPORT_API const char *milkcat_get_error_message(milkcat_t *milkcat);
 
 #ifdef __cplusplus
 }

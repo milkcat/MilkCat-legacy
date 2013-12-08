@@ -49,9 +49,9 @@ class BigramSegmenter: public Segmenter {
   // A pool to alloc and release nodes 
   class NodePool;
 
-  static BigramSegmenter *Create(const char *trietree_path,
-                                 const char *unigram_binary_path,
-                                 const char *bigram_binary_path);
+  BigramSegmenter(const TrieTree *index_,
+                  const StaticArray<float> *unigram_cost_,
+                  const StaticHashTable<int64_t, float> *bigram_cost_);
 
   ~BigramSegmenter();
 
@@ -65,23 +65,18 @@ class BigramSegmenter: public Segmenter {
   // Buckets contain nodes for viterbi decoding
   Bucket *buckets_[kTokenMax + 1];
 
-  // Index for words in dictionary
-  Darts::DoubleArray *unigram_trie_;
-
   // Cost for each unigram term (Index by term_id)
-  StaticArray<float> *unigram_cost_;
+  const StaticArray<float> *unigram_cost_;
 
   // Weight for bigram term_id pair, key is left_id << 32 + right_id
-  const StaticHashTable<int64_t, float> *bigram_weight_;
+  const StaticHashTable<int64_t, float> *bigram_cost_;
 
   // NodePool instance to alloc and release node
   NodePool *node_pool_;
 
-  TrieTree *index_;
+  // Index for words in dictionary
+  const TrieTree *index_;
 
-
-
-  BigramSegmenter();
 
   // Add an arc to the decode graph with the weight and term_id
   void AddArcToDecodeGraph(int from_position, int from_index, int to_position, double weight, int term_id);

@@ -29,6 +29,8 @@
 #include "milkcat_config.h"
 #include "part_of_speech_tagger.h"
 #include "hmm_model.h"
+#include "trie_tree.h"
+#include "configuration.h"
 #include "utils.h"
 
 class PartOfSpeechTagInstance;
@@ -42,9 +44,10 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   ~HMMPartOfSpeechTagger();
   void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance);
 
-  static HMMPartOfSpeechTagger *Create(const char *model_path, 
-                                       const char *index_path,
-                                       const char *default_tag_path);
+  static HMMPartOfSpeechTagger *New(const HMMModel *model, 
+                                    const TrieTree *index,
+                                    const Configuration *default_tag,
+                                    Status &status);
 
  private:
   struct Node;
@@ -63,7 +66,7 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   // the the default emit tag for term type
   int term_type_emit_tag_[6];
 
-  Darts::DoubleArray unigram_trie_;
+  const TrieTree *index_;
 
   HMMPartOfSpeechTagger();
 
@@ -77,7 +80,7 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   int GetTagIdByStr(const char *tag_str);
 
   // Load the default tag key from configuration file and put in term_type_emit_tag_
-  void LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag);
+  void LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag, Status &status);
 
   // Get each term's emit tag and save it in term_tags_
   void BuildEmitTagfForNode(TermInstance *term_instance);

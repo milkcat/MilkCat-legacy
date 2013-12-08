@@ -28,18 +28,16 @@
 #include "trie_tree.h"
 #include "utils.h"
 
-DoubleArrayTrieTree *DoubleArrayTrieTree::Create(const char *file_path) {
-  char error_message[1024];
+DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &status) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
 
   if (-1 == self->double_array_.open(file_path)) {
-    sprintf(error_message, "unable to open index file %s", file_path);
-    set_error_message(error_message);
+    status = Status::IOError(file_path);
     delete self;
     return NULL;
+  } else {
+    return self;
   }
-
-  return self;
 }
 
 int DoubleArrayTrieTree::Search(const char *text) const {

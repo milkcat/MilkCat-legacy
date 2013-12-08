@@ -28,6 +28,11 @@
 #define MIXED_SEGMENTER_H
 
 #include "segmenter.h"
+#include "trie_tree.h"
+#include "static_array.h"
+#include "static_hashtable.h"
+#include "crf_model.h"
+#include "utils.h"
 
 class OutOfVocabularyWordRecognition;
 class BigramSegmenter;
@@ -39,12 +44,13 @@ class MixedSegmenter: public Segmenter {
  public:
   ~MixedSegmenter();
 
-  static MixedSegmenter *Create(
-      const char *unigram_index_path,
-      const char *unigram_data_path,
-      const char *bigram_data_path,
-      const char *character_property_path,
-      const char *crf_seg_model_path);
+  static MixedSegmenter *New(
+      const TrieTree *index,
+      const StaticArray<float> *unigram_cost,
+      const StaticHashTable<int64_t, float> *bigram_cost,
+      const CRFModel *seg_model,
+      const TrieTree *oov_property,
+      Status &status);
 
   // Segment a token instance into term instance
   void Segment(TermInstance *term_instance, TokenInstance *token_instance);

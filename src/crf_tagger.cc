@@ -48,9 +48,9 @@ const char *BOS[kMaxContextSize] = { "_B-1", "_B-2", "_B-3", "_B-4",
 const char *EOS[kMaxContextSize] = { "_B+1", "_B+2", "_B+3", "_B+4",
                                      "_B+5", "_B+6", "_B+7", "_B+8" };
 
-CRFTagger::CRFTagger(CRFModel *model): model_(model),
-                                       feature_cache_left_(INT_MAX),
-                                       feature_cache_right_(INT_MIN) {
+CRFTagger::CRFTagger(const CRFModel *model): model_(model),
+                                             feature_cache_left_(INT_MAX),
+                                             feature_cache_right_(INT_MIN) {
   for (int i = 0; i < kMaxBucket; ++i) {
     buckets_[i] = new Node[model_->GetTagNumber()];
     feature_cache_flag_[i] = false;

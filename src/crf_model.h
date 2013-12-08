@@ -32,11 +32,12 @@
 
 #include <vector>
 #include "darts.h"
+#include "utils.h"
 
 class CRFModel {
  public:
   // Open a CRF++ model file
-  static CRFModel *Create(const char *model_path);
+  static CRFModel *New(const char *model_path, Status &status);
 
   ~CRFModel();
 

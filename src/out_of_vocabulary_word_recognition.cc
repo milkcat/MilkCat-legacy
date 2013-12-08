@@ -15,50 +15,39 @@
 #include "token_instance.h"
 #include "crf_segmenter.h"
 
-OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::Create(const char *crf_segment_model_path, 
-                                                                       const char *ner_filter_word_path) {
-  char error_message[2048];
+OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::New(
+    const CRFModel *crf_model, 
+    const TrieTree *oov_property,
+    Status &status) {
+
   OutOfVocabularyWordRecognition *self = new OutOfVocabularyWordRecognition();
 
-  self->crf_segmenter_ = CRFSegmenter::Create(crf_segment_model_path);
-  if (self->crf_segmenter_ == NULL) {
+  self->crf_segmenter_ = CRFSegmenter::New(crf_model, status);
+
+  if (status.ok()) {
+    self->term_instance_ = new TermInstance();
+    self->oov_property_ = oov_property;
+  }
+
+  if (status.ok()) {
+    return self;
+  } else {
     delete self;
     return NULL;
   }
-
-  self->term_instance_ = new TermInstance();
-  self->double_array_ = new Darts::DoubleArray();
   
-  if (-1 == self->double_array_->open(ner_filter_word_path)) {
-    delete self;
-    sprintf(error_message, "unable to open OOV filter word double array file %s", ner_filter_word_path);
-    set_error_message(error_message);
-    return NULL;
-  }
-
-  return self;
 }
 
 OutOfVocabularyWordRecognition::~OutOfVocabularyWordRecognition() {
-  if (crf_segmenter_ != NULL) {
-    delete crf_segmenter_;
-    crf_segmenter_ = NULL;
-  }
+  delete crf_segmenter_;
+  crf_segmenter_ = NULL;
 
-  if (term_instance_ != NULL) {
-    delete term_instance_;
-    term_instance_ = NULL;
-  }
-
-  if (double_array_ != NULL) {
-    delete double_array_;
-    double_array_ = NULL;
-  }
+  delete term_instance_;
+  term_instance_ = NULL;
 }
 
 OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition(): term_instance_(NULL),
-                                                                  crf_segmenter_(NULL),
-                                                                  double_array_(NULL) {
+                                                                  crf_segmenter_(NULL) {
 }
 
 void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
@@ -92,7 +81,7 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
       oov_flag = false;
       next_oov_flag = false;
     } else {
-      int oov_property = double_array_->exactMatchSearch<int>(term_str);
+      int oov_property = oov_property_->Search(term_str);
       if (oov_property == kOOVBeginOfWord) {
         next_oov_flag = true;
         oov_flag = true;

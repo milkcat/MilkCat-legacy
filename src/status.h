@@ -35,11 +35,32 @@ class Status {
 
   enum {
     kIOError = 1,
-    kCorruption = 2
+    kCorruption = 2,
+    kNotImplemented = 3
   };
 
   Status(): code_(0), msg_("") {}
-  Status(int code, const char *msg): code_(code), msg_(msg) {}
+
+  Status(int code, const char *msg): code_(code) {
+    std::string m;
+    switch (code) {
+     case kIOError:
+      m = "IOError: ";
+      break;
+
+     case kCorruption:
+      m = "Corruption: ";
+      break;
+
+     case kNotImplemented:
+      m = "NotImplemented: ";
+      break;
+    }
+
+    m += msg;
+    msg_ = m;
+  }
+
   Status(const Status &s): code_(s.code_), msg_(s.msg_) {}
 
   static Status OK() { return Status(); }
@@ -51,6 +72,10 @@ class Status {
   static Status Corruption(const char *msg) {
     return Status(kCorruption, msg);
   }
+
+  static Status NotImplemented(const char *msg) {
+    return Status(kNotImplemented, msg);
+  } 
 
   bool ok() { return code_ == 0; }
 

@@ -30,45 +30,35 @@
 #include <fstream>
 #include <stdexcept>
 #include <assert.h>
+#include <stdio.h>
 #include "utils.h"
 
 template<class T>
 class StaticArray {
  public:
-  static StaticArray *Load(const char *file_path) {
+  static StaticArray *New(const char *file_path, Status &status) {
     int type_size = sizeof(T);
     StaticArray *self = new StaticArray();
-    try {
-      std::ifstream ifs;
-      ifs.exceptions(std::ifstream::failbit | std::ifstream::badbit | std::ifstream::eofbit);
-      ifs.open(file_path, std::ios::binary);
-      
-      // Get file size
-      ifs.seekg(0, std::ios::end);
-      int file_size = ifs.tellg();
-      ifs.seekg(0, std::ios::beg);
+    RandomAccessFile *fd = RandomAccessFile::New(file_path, status);
 
-      if (file_size % type_size != 0) 
-        throw std::runtime_error(std::string("invalid static-array file ") + file_path);
+    if (status.ok()) {
+      if (fd->Size() % type_size != 0) status = Status::Corruption(file_path);
+    }
+    
+    if (status.ok()) {
+      self->data_ = new T[fd->Size() / type_size];
+      self->size_ = fd->Size() / type_size;      
+    }
 
-      self->data_ = new T[file_size / type_size];
-      self->size_ = file_size / type_size;
+    if (status.ok()) fd->Read(self->data_, fd->Size(), status);
 
-      ifs.read(reinterpret_cast<char *>(self->data_), file_size);
-
-    } catch (std::ifstream::failure &ex) {
-      std::string errmsg = std::string("failed to read from ") + file_path;
-      set_error_message(errmsg.c_str());
-      delete self;
-      return NULL;
-
-    } catch (std::exception &ex) {
-      set_error_message(ex.what());
+    if (fd != NULL) delete fd;
+    if (status.ok()) {
+      return self;
+    } else {
       delete self;
       return NULL;
     }
-
-    return self;
   }
 
   StaticArray(): data_(NULL), size_(0) {}
@@ -78,12 +68,12 @@ class StaticArray {
     data_ = NULL;
   }
 
-  T get(int position) {
+  T get(int position) const {
     assert(position < size_);
     return data_[position];
   }
 
-  int size() { return size_; }
+  int size() const { return size_; }
 
  private:
   T *data_;

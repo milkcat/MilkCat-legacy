@@ -52,7 +52,7 @@ inline TrieTree::~TrieTree() {}
 
 class DoubleArrayTrieTree: public TrieTree {
  public:
-  static DoubleArrayTrieTree *Create(const char *file_path);
+  static DoubleArrayTrieTree *New(const char *file_path, Status &status);
   DoubleArrayTrieTree() {}
 
   int Search(const char *text) const;

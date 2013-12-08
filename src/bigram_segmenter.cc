@@ -154,27 +154,9 @@ class BigramSegmenter::Bucket {
   int size_;
 };
 
-BigramSegmenter::BigramSegmenter(): unigram_trie_(NULL),
-                                    unigram_cost_(NULL),
-                                    node_pool_(NULL),
-                                    bigram_weight_(NULL) {
-  for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
-    buckets_[i] = NULL;
-  }
-}
-
 BigramSegmenter::~BigramSegmenter() {
-  delete index_;
-  index_ = NULL;
-
-  delete unigram_cost_;
-  unigram_cost_ = NULL;
-
   delete node_pool_;
   node_pool_ = NULL;
-
-  delete bigram_weight_;
-  bigram_weight_ = NULL; 
 
   for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
     delete buckets_[i];
@@ -182,45 +164,23 @@ BigramSegmenter::~BigramSegmenter() {
   }
 }
 
-BigramSegmenter *BigramSegmenter::Create(const char *trietree_path,
-                                         const char *unigram_binary_path,
-                                         const char *bigram_binary_path) {
-  char error_message[1024];
-  BigramSegmenter *self = new BigramSegmenter();
+BigramSegmenter::BigramSegmenter(const TrieTree *index,
+                                 const StaticArray<float> *unigram_cost,
+                                 const StaticHashTable<int64_t, float> *bigram_cost) {
+
   long file_size;
   int record_number;
 
-  self->node_pool_ = new NodePool(kNBest * kTokenMax);
+  node_pool_ = new NodePool(kNBest * kTokenMax);
 
   // Initialize the buckets_
-  for (int i = 0; i < sizeof(self->buckets_) / sizeof(Bucket *); ++i) {
-    self->buckets_[i] = new Bucket(kNBest, self->node_pool_, i);
+  for (int i = 0; i < sizeof(buckets_) / sizeof(Bucket *); ++i) {
+    buckets_[i] = new Bucket(kNBest, node_pool_, i);
   }
 
-  // Load unigram_trie file
-  self->index_ = DoubleArrayTrieTree::Create(trietree_path);
-  if (self->index_ == NULL) {
-    delete self;
-    return NULL;
-  }
-
-  // Load unigram cost file
-  self->unigram_cost_ = StaticArray<float>::Load(unigram_binary_path);
-  if (self->unigram_cost_ == NULL) {
-    delete self;
-    return NULL;     
-  }
-
-  // Load bigram weight file
-  self->bigram_weight_ = StaticHashTable<int64_t, float>::Load(bigram_binary_path);
-  if (self->bigram_weight_ == NULL) {
-    sprintf(error_message, "unable to read from bigram data file %s", bigram_binary_path);
-    set_error_message(error_message);
-    delete self;
-    return NULL;
-  }
-
-  return self;
+  index_ = index;
+  unigram_cost_ = unigram_cost;
+  bigram_cost_ = bigram_cost;
 }
 
 void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_instance) {
@@ -261,7 +221,7 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
           right_term_id = term_id;
           left_right_id = (left_term_id << 32) + right_term_id;
 
-          bigram_map_iter = bigram_weight_->Find(left_right_id); 
+          bigram_map_iter = bigram_cost_->Find(left_right_id); 
           if (bigram_map_iter != NULL) {
 
             // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)

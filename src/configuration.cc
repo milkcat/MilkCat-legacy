@@ -31,7 +31,7 @@
 
 Configuration::Configuration() {}
 
-Configuration *Configuration::LoadFromPath(const char *path) {
+Configuration *Configuration::New(const char *path, Status &status) {
   char line[2048], 
        key[2048],
        value[2048],
@@ -42,14 +42,10 @@ Configuration *Configuration::LoadFromPath(const char *path) {
   Configuration *self = new Configuration();
 
   if (fp == NULL) {
-    sprintf(error_messge, "unable to open configuration file %s", path);
-    set_error_message(error_messge);
-    fclose(fp);
-    delete self;
-    return NULL;
+    status = Status::IOError(path);
   }
 
-  while (NULL != fgets(line, 2048, fp)) {
+  while (status.ok() && NULL != fgets(line, 2048, fp)) {
     line_number++;
     trim(line);
     if (line[0] == '#') continue;
@@ -57,23 +53,28 @@ Configuration *Configuration::LoadFromPath(const char *path) {
     p = line;
     while (*p != '=' && *p != '\0') p++;
     if (*p == '\0') {
-      sprintf(error_messge, "missing '=' in %s line %d.\n", path, line_number);
-      set_error_message(error_messge);
-      fclose(fp);
-      delete self;
-      return NULL;
+      sprintf(error_messge, "missing '=' in %s line %d.", path, line_number);
+      status = Status::Corruption(error_messge);
     }
 
-    strlcpy(key, line, p - line + 1);
-    strlcpy(value, p + 1, 1024);
-    trim(key);
-    trim(value);
+    if (status.ok()) {
+      strlcpy(key, line, p - line + 1);
+      strlcpy(value, p + 1, 1024);
+      trim(key);
+      trim(value);
 
-    self->data_[key] = value;
+      self->data_[key] = value;      
+    }
   }
   
-  fclose(fp);
-  return self;
+  if (fp != NULL) fclose(fp);
+
+  if (status.ok()) {
+    return self;
+  } else {
+    delete self;
+    return NULL;
+  }
 }
 
 bool Configuration::SaveToPath(const char *path) {

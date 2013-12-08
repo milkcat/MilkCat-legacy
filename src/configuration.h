@@ -27,13 +27,14 @@
 
 #include <string>
 #include <map>
+#include "utils.h"
 
 class Configuration {
  public:
   Configuration();
 
   // Load the configuration file of path
-  static Configuration *LoadFromPath(const char *path);
+  static Configuration *New(const char *path, Status &status);
 
   // Get integer value by key, default is 0
   int GetInteger(const char *key) const;

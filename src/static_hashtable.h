@@ -62,47 +62,42 @@ class StaticHashTable {
   }
 
   // Load hash table from file
-  static const StaticHashTable *Load(const char *file_path) {
+  static const StaticHashTable *New(const char *file_path, Status &status) {
     StaticHashTable *self = new StaticHashTable();
     char *buffer = NULL; 
-    FILE *fd;
+    
+    RandomAccessFile *fd = RandomAccessFile::New(file_path, status);
 
-    try {
-      fd = fopen(file_path, "rb");
-      if (fd == NULL) throw std::runtime_error(std::string("unable to open file ") + file_path);
+    int32_t magic_number;
+    if (status.ok()) fd->ReadValue(magic_number, status);
+    if (status.ok()) {
+      if (magic_number != 0x3321) status = Status::Corruption(file_path);
+    }
 
-      fseek(fd, 0, SEEK_END);
-      int file_size = ftell(fd);
-      fseek(fd, 0, SEEK_SET);
+    int32_t bucket_size;
+    if (status.ok()) fd->ReadValue(bucket_size, status);
 
-      int32_t magic_number;
-      if (1 != fread(&magic_number, sizeof(int32_t), 1, fd)) 
-        throw std::runtime_error(std::string("unable to read from file ") + file_path);
-      if (magic_number != 0x3321) throw std::runtime_error(std::string("invaild hash table file ") + file_path);
+    int32_t data_size;
+    if (status.ok()) fd->ReadValue(data_size, status);
 
-      int32_t bucket_size;
-      if (1 != fread(&bucket_size, sizeof(int32_t), 1, fd)) 
-        throw std::runtime_error(std::string("unable to read from file ") + file_path);
+    int32_t serialize_size;
+    if (status.ok()) fd->ReadValue(serialize_size, status);
 
-      int32_t data_size;
-      if (1 != fread(&data_size, sizeof(int32_t), 1, fd)) 
-        throw std::runtime_error(std::string("unable to read from file ") + file_path);
-
-      int32_t serialize_size;
-      if (1 != fread(&serialize_size, sizeof(int32_t), 1, fd))
-        throw std::runtime_error(std::string("unable to read from file ") + file_path);
-
+    if (status.ok()) {
       if (kSerializeBukcetSize != serialize_size)
-        throw std::runtime_error(std::string("invaild hash table file ") + file_path);
+        status = Status::Corruption(file_path);     
+    }
 
+    if (status.ok()) {
       buffer = new char[kSerializeBukcetSize * data_size];
-      if (data_size != fread(buffer, kSerializeBukcetSize, data_size, fd)) 
-        throw std::runtime_error(std::string("invaild hash table file ") + file_path);
-      
-      // Get a char to reach EOF
-      fgetc(fd);
-      if (!feof(fd)) throw std::runtime_error(std::string("invaild hash table file ") + file_path);
+      fd->Read(buffer, kSerializeBukcetSize * data_size, status);  
+    }
 
+    if (status.ok()) {
+      if (fd->Tell() != fd->Size()) status = Status::Corruption(file_path); 
+    }
+    
+    if (status.ok()) {
       self->buckets_ = new Bucket[bucket_size];
       self->bucket_size_ = bucket_size;
       self->data_size_ = data_size;
@@ -121,22 +116,19 @@ class StaticHashTable {
         self->buckets_[position].value = value;
         self->buckets_[position].empty = false;
         p += kSerializeBukcetSize;
-      }
+      }     
+    }
 
-      delete[] buffer;
-      buffer = NULL;
-      fclose(fd);
+    delete[] buffer;
+    delete fd;
+    fd = NULL;
+
+    if (status.ok()) {
       return self;
-
-    } catch (std::exception &ex) {
-      puts(ex.what());
-
-      if (buffer != NULL) delete[] buffer;
-      if (fd != NULL) fclose(fd);
+    } else {
       delete self;
       return NULL;
-    } 
-
+    }
   }
 
   // Save the hash table into file

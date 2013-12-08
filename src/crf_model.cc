@@ -65,91 +65,77 @@ CRFModel::~CRFModel() {
   }
 }
 
-CRFModel *CRFModel::Create(const char *model_path) {
-  char error_message[1024];
+CRFModel *CRFModel::New(const char *model_path, Status &status) {
   CRFModel *self = new CRFModel();
 
-  FILE *fd = fopen(model_path, "rb");
-  if (fd == NULL) {
-    sprintf(error_message, "unable to open CRF++ model file %s", model_path);
-    set_error_message(error_message);
-    delete self;
-    return NULL;
+  RandomAccessFile *fd = RandomAccessFile::New(model_path, status);
+  if (status.ok()) {
+    self->data_ = new char[fd->Size()];
+    fd->Read(self->data_, fd->Size(), status);
   }
-
-  fseek(fd, 0L, SEEK_END);
-  int file_size = ftell(fd);
-  fseek(fd, 0L, SEEK_SET);
-  self->data_ = new char[file_size];
-  if (file_size != fread(self->data_, sizeof(char), file_size, fd)) {
-    sprintf(error_message, "unable to read from CRF++ model file %s", model_path);
-    set_error_message(error_message);
-    delete self;
-    return NULL;
-  }
-  fclose(fd);
 
   const char *ptr = self->data_,
-             *end = ptr + file_size;
+             *end = ptr + fd->Size();
 
-  int32_t version = 0;
-  read_value<int32_t>(&ptr, &version);
-  if (version != 100) {
-    sprintf(error_message, "invalid model version %d", version);
-    set_error_message(error_message);
-    delete self;
-    return NULL;    
+  if (status.ok()) {
+    int32_t version = 0;
+    read_value<int32_t>(&ptr, &version);
+    if (version != 100) status = Status::Corruption(model_path);
   }
 
-  int32_t type = 0;
-  read_value<int32_t>(&ptr, &type);
-  read_value<double>(&ptr, &(self->cost_factor_));
-  read_value<int32_t>(&ptr, &(self->cost_num_));
-  read_value<int32_t>(&ptr, &(self->xsize_));
+  if (status.ok()) {
+    int32_t type = 0;
+    read_value<int32_t>(&ptr, &type);
+    read_value<double>(&ptr, &(self->cost_factor_));
+    read_value<int32_t>(&ptr, &(self->cost_num_));
+    read_value<int32_t>(&ptr, &(self->xsize_));
 
-  int32_t dsize = 0;
-  read_value<int32_t>(&ptr, &dsize);
+    int32_t dsize = 0;
+    read_value<int32_t>(&ptr, &dsize);
 
-  int32_t y_str_size;
-  read_value<int32_t>(&ptr, &y_str_size);
-  const char *y_str = read_data(&ptr, y_str_size);
-  int pos = 0;
-  while (pos < y_str_size) {
-    self->y_.push_back(y_str + pos);
-    while (y_str[pos++] != '\0') {}
-  }
-
-  int32_t tmpl_str_size;
-  read_value<int32_t>(&ptr, &tmpl_str_size);
-  const char *tmpl_str = read_data(&ptr, tmpl_str_size);
-  pos = 0;
-  while (pos < tmpl_str_size) {
-    const char *v = tmpl_str + pos;
-    if (v[0] == '\0') {
-      ++pos;
-    } else if (v[0] == 'U') {
-      self->unigram_templs_.push_back(v);
-    } else if (v[0] == 'B') {
-      self->bigram_templs_.push_back(v);
-    } else {
-      assert(false);
+    int32_t y_str_size;
+    read_value<int32_t>(&ptr, &y_str_size);
+    const char *y_str = read_data(&ptr, y_str_size);
+    int pos = 0;
+    while (pos < y_str_size) {
+      self->y_.push_back(y_str + pos);
+      while (y_str[pos++] != '\0') {}
     }
-    while (tmpl_str[pos++] != '\0') {}
-  }
-  
-  self->double_array_ = new Darts::DoubleArray();
-  self->double_array_->set_array(const_cast<char *>(ptr));
-  ptr += dsize;
 
-  self->cost_data_ = reinterpret_cast<const float *>(ptr);
-  ptr += sizeof(float) * self->cost_num_;
+    int32_t tmpl_str_size;
+    read_value<int32_t>(&ptr, &tmpl_str_size);
+    const char *tmpl_str = read_data(&ptr, tmpl_str_size);
+    pos = 0;
+    while (pos < tmpl_str_size) {
+      const char *v = tmpl_str + pos;
+      if (v[0] == '\0') {
+        ++pos;
+      } else if (v[0] == 'U') {
+        self->unigram_templs_.push_back(v);
+      } else if (v[0] == 'B') {
+        self->bigram_templs_.push_back(v);
+      } else {
+        assert(false);
+      }
+      while (tmpl_str[pos++] != '\0') {}
+    }
+    
+    self->double_array_ = new Darts::DoubleArray();
+    self->double_array_->set_array(const_cast<char *>(ptr));
+    ptr += dsize;
+
+    self->cost_data_ = reinterpret_cast<const float *>(ptr);
+    ptr += sizeof(float) * self->cost_num_;    
+  }
 
   if (ptr != end) {
-    sprintf(error_message, "CRF++ model file %s is broken", model_path);
-    set_error_message(error_message);
-    delete self;
-    return NULL;    
+    status = Status::Corruption(model_path);  
   }
 
-  return self;
+  if (status.ok()) {
+    return self;
+  } else {
+    delete self;
+    return NULL;
+  }
 }

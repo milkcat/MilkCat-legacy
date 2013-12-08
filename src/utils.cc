@@ -14,15 +14,6 @@
 #include "token_instance.h"
 #include "utils.h"
 
-static char error_message_[2048] = "null";
-void set_error_message(const char *message) {
-  strcpy(error_message_, message);
-}
-
-const char *get_error_message() {
-  return error_message_;
-}
-
 int token_type_to_word_type(int token_type) {
   switch (token_type) {
    case TokenInstance::kChineseChar:

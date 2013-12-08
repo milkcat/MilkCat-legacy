@@ -14,12 +14,16 @@
 #include "darts.h"
 #include "crf_segmenter.h"
 #include "part_of_speech_tag_instance.h"
+#include "crf_model.h"
+#include "trie_tree.h"
 #include "token_instance.h"
+#include "utils.h"
 
 class OutOfVocabularyWordRecognition {
  public:
-  static OutOfVocabularyWordRecognition *Create(const char *crf_segment_model_path, 
-                                                const char *ner_filter_word_path);
+  static OutOfVocabularyWordRecognition *New(const CRFModel *crf_model, 
+                                             const TrieTree *oov_property,
+                                             Status &status);
   ~OutOfVocabularyWordRecognition();
   void Process(TermInstance *term_instance,
                TermInstance *in_term_instance, 
@@ -31,7 +35,7 @@ class OutOfVocabularyWordRecognition {
  private:
   TermInstance *term_instance_;
   CRFSegmenter *crf_segmenter_;
-  Darts::DoubleArray *double_array_;
+  const TrieTree *oov_property_;
 
   OutOfVocabularyWordRecognition();
 
