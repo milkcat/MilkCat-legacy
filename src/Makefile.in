@@ -359,7 +359,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -O0 -I$(top_srcdir)/include -DMODEL_PATH=\"$(pkgdatadir)/\"
+AM_CPPFLAGS = -I$(top_srcdir)/include -DMODEL_PATH=\"$(pkgdatadir)/\"
 ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = milkcat.h
 noinst_LIBRARIES = libmain.a

@@ -24,8 +24,10 @@
 // THE SOFTWARE.
 //
 
+#include <vector>
 #include "darts.h"
 #include "trie_tree.h"
+#include "milkcat_config.h"
 #include "utils.h"
 
 DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &status) {
@@ -33,6 +35,50 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &sta
 
   if (-1 == self->double_array_.open(file_path)) {
     status = Status::IOError(file_path);
+    delete self;
+    return NULL;
+  } else {
+    return self;
+  }
+}
+
+bool WordStrCmp(const char *w1, const char *w2) {
+  return strcmp(w1, w2) < 0;
+}
+
+DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromText(const char *file_path, Status &status) {
+  DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
+  RandomAccessFile *fd = RandomAccessFile::New(file_path, status);
+  std::vector<const char *> word_list;
+  std::vector<int> user_id;
+  char *p;
+
+  while ((!fd->Eof()) && status.ok()) {
+    p = new char[48];
+    fd->ReadLine(p, 48, status);
+    trim(p);
+    // printf("%d\n", fd->Eof());
+
+    if (status.ok()) {
+      word_list.push_back(p);
+      user_id.push_back(kUserTermId);     
+    } else {
+      delete p;
+    }
+  }
+
+  // Sort the word_list before build double array
+  if (status.ok()) std::sort(word_list.begin(), word_list.end(), WordStrCmp);
+
+  // Not start to build the double array trietree, it should take some times if the 
+  // file is big
+  if (status.ok()) self->double_array_.build(word_list.size(), &word_list[0], NULL, &user_id[0]);
+
+  for (std::vector<const char *>::iterator it = word_list.begin(); it != word_list.end(); ++it) {
+    delete *it;
+  }
+
+  if (!status.ok()) {
     delete self;
     return NULL;
   } else {
@@ -48,3 +94,4 @@ int DoubleArrayTrieTree::Traverse(const char *text, size_t &node) const {
   size_t key_pos = 0;
   return double_array_.traverse(text, node, key_pos);
 }
+

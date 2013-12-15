@@ -165,6 +165,7 @@ BigramSegmenter::~BigramSegmenter() {
 }
 
 BigramSegmenter::BigramSegmenter(const TrieTree *index,
+                                 const TrieTree *user_index,
                                  const StaticArray<float> *unigram_cost,
                                  const StaticHashTable<int64_t, float> *bigram_cost) {
 
@@ -179,8 +180,11 @@ BigramSegmenter::BigramSegmenter(const TrieTree *index,
   }
 
   index_ = index;
+  user_index_ = user_index;
   unigram_cost_ = unigram_cost;
   bigram_cost_ = bigram_cost;
+
+  has_user_index_ = (user_index_ != NULL);
 }
 
 void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_instance) {
@@ -189,8 +193,10 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
   buckets_[0]->AddArc(NULL, 0.0, 0);
 
   // Strat decoding
-  size_t trie_node,
-         key_position;
+  size_t index_node, user_node;
+  int term_id, 
+      user_term_id = TrieTree::kNone;
+  bool index_flag, user_flag;
   int64_t left_term_id,
           right_term_id,
           left_right_id;
@@ -201,10 +207,28 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
     // Shrink current bucket to ensure node number < n_best
     buckets_[bucket_id]->Shrink();
 
-    trie_node = 0;
+    index_node = 0;
+    user_node = 0;
+    index_flag = true;
+    user_flag = has_user_index_;
     for (int bucket_count = 0; bucket_count + bucket_id < token_instance->size(); ++bucket_count) {
+      term_id = TrieTree::kNone;
       // printf("%d %d\n", bucket_id, bucket_count);
-      int term_id = index_->Traverse(token_instance->token_text_at(bucket_id + bucket_count), trie_node);
+      if (index_flag) {
+        term_id = index_->Traverse(token_instance->token_text_at(bucket_id + bucket_count), index_node);
+        if (term_id == TrieTree::kNone) index_flag = false;
+      }
+
+      if (user_flag) {
+        user_term_id = user_index_->Traverse(token_instance->token_text_at(bucket_id + bucket_count), user_node);
+        // printf(">>>%d  %d  %d  %d\n", bucket_id, bucket_count, user_term_id, user_node);
+        if (user_term_id == TrieTree::kNone) user_flag = false;
+
+        if ((term_id == TrieTree::kExist && user_term_id >= 0) || term_id == TrieTree::kNone)
+          term_id = user_term_id;
+      }
+
+      // printf("%d %d\n", bucket_count, term_id);
 
       double min_weight = 100000000;
       const Node *min_node = NULL;
@@ -231,7 +255,11 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
           } else {
 
             // if np bigram data use p(x_n+1|x_n) = p(x_n+1)
-            weight = node->weight + unigram_cost_->get(right_term_id);
+            if (term_id != kUserTermId) {
+              weight = node->weight + unigram_cost_->get(right_term_id);
+            } else {
+              weight = 16.0;
+            }
             // printf("unigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           }
 
@@ -262,8 +290,9 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
           buckets_[bucket_id + 1]->AddArc(min_node, min_weight, 0);
         } // end if node count == 0
 
-        if (term_id == TrieTree::kNone) break;
       } // end if term_id >= 0
+
+      if (index_flag == false && user_flag == false) break;
     } // end for bucket_count
   } // end for decode_start
 

@@ -50,6 +50,7 @@ class BigramSegmenter: public Segmenter {
   class NodePool;
 
   BigramSegmenter(const TrieTree *index_,
+                  const TrieTree *user_index_,
                   const StaticArray<float> *unigram_cost_,
                   const StaticHashTable<int64_t, float> *bigram_cost_);
 
@@ -76,6 +77,10 @@ class BigramSegmenter: public Segmenter {
 
   // Index for words in dictionary
   const TrieTree *index_;
+
+  const TrieTree *user_index_;
+
+  bool has_user_index_;
 
 
   // Add an arc to the decode graph with the weight and term_id

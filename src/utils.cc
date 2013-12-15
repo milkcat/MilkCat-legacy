@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include "term_instance.h"
 #include "token_instance.h"
+#include "milkcat_config.h"
 #include "utils.h"
 
 int token_type_to_word_type(int token_type) {
@@ -71,6 +72,17 @@ RandomAccessFile::RandomAccessFile(): fd_(NULL), size_(0) {}
 
 bool RandomAccessFile::Read(void *ptr, int size, Status &status) {
   if (1 != fread(ptr, size, 1, fd_)) {
+    std::string msg("failed to read from ");
+    msg += file_path_;
+    status = Status::IOError(msg.c_str());
+    return false;    
+  } else {
+    return true;
+  }
+}
+
+bool RandomAccessFile::ReadLine(char *ptr, int size, Status &status) {
+  if (NULL == fgets(ptr, size, fd_)) {
     std::string msg("failed to read from ");
     msg += file_path_;
     status = Status::IOError(msg.c_str());

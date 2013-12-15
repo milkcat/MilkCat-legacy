@@ -37,8 +37,9 @@ int main(int argc, char **argv) {
   int use_stdin_flag = 0;
   int display_tag = 1;
   int display_type = 0;
+  char user_dict[1024] = "";
 
-  while ((c = getopt (argc, argv, "itd:m:")) != -1) {
+  while ((c = getopt (argc, argv, "iu:td:m:")) != -1) {
     switch (c) {
      case 'i':
       fp = stdin;
@@ -49,6 +50,10 @@ int main(int argc, char **argv) {
       strcpy(model_path, optarg);
       if (model_path[strlen(model_path) - 1] != '/') 
         strcat(model_path, "/");
+      break;
+
+     case 'u':
+      strcpy(user_dict, optarg);
       break;
 
      case 'm':
@@ -101,6 +106,11 @@ int main(int argc, char **argv) {
 
   char *input_buffer = (char *)malloc(1048576);
   milkcat_t *milkcat = milkcat_new(*model_path == '\0'? NULL: model_path);
+
+  if (*user_dict) {
+    milkcat_set_user_dictionary(milkcat, user_dict);
+  }
+
   milkcat_parser_t *parser = milkcat_parser_new(milkcat, method);
   milkcat_cursor_t *cursor = milkcat_cursor_new();
   size_t sentence_length;

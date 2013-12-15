@@ -46,6 +46,7 @@ class MixedSegmenter: public Segmenter {
 
   static MixedSegmenter *New(
       const TrieTree *index,
+      const TrieTree *user_index,
       const StaticArray<float> *unigram_cost,
       const StaticHashTable<int64_t, float> *bigram_cost,
       const CRFModel *seg_model,

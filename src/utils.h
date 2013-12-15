@@ -41,6 +41,11 @@ class RandomAccessFile {
     return Read(&data, sizeof(T), status);
   }
 
+  // Read a line from file, if failed return false
+  bool ReadLine(char *buf, int size, Status &status);
+
+  bool Eof() { return ftell(fd_) == size_; }
+
   // Get current position in file
   int Tell();
 

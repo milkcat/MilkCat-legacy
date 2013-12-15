@@ -66,6 +66,9 @@ class ModelFactory {
   ~ModelFactory() {
     pthread_mutex_destroy(&mutex);
 
+    delete user_index_;
+    user_index_ = NULL;
+
     delete unigram_index_;
     unigram_index_ = NULL;
 
@@ -101,6 +104,23 @@ class ModelFactory {
     pthread_mutex_unlock(&mutex);
     return unigram_index_;
   }
+
+  void SetUserDictionaryPath(const char *path) {
+    user_dictionary_path_ = path;
+  }
+
+  bool HasUserDictionary() {
+    return user_dictionary_path_.size() != 0;
+  }
+
+  const TrieTree *GetUserWordIndex(Status &status) {
+    pthread_mutex_lock(&mutex);
+    if (user_index_ == NULL) {
+      user_index_ = DoubleArrayTrieTree::NewFromText(user_dictionary_path_.c_str(), status);
+    }
+    pthread_mutex_unlock(&mutex);
+    return user_index_;
+  } 
 
   const StaticArray<float> *GetUnigramCostData(Status &status) {
     pthread_mutex_lock(&mutex);
@@ -171,9 +191,11 @@ class ModelFactory {
 
  private:
   std::string model_dir_path_;
+  std::string user_dictionary_path_;;
   pthread_mutex_t mutex;
 
   const TrieTree *unigram_index_;
+  const TrieTree *user_index_;
   const StaticArray<float> *unigram_cost_;
   const StaticHashTable<int64_t, float> *bigram_cost_;
   const CRFModel *seg_model_;
@@ -194,20 +216,22 @@ Tokenization *TokenizerFactory(int tokenizer_id) {
 }
 
 Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status &status) {
-  const TrieTree *index;
-  const StaticArray<float> *unigram_cost;
-  const StaticHashTable<int64_t, float> *bigram_cost;
-  const CRFModel *seg_model;
-  const TrieTree *oov_property;
+  const TrieTree *index = NULL;
+  const TrieTree *user_index = NULL;
+  const StaticArray<float> *unigram_cost = NULL;
+  const StaticHashTable<int64_t, float> *bigram_cost = NULL;
+  const CRFModel *seg_model = NULL;
+  const TrieTree *oov_property = NULL;
 
   switch (segmenter_id) {
    case kBigramSegmenter:
     if (status.ok()) index = factory->GetWordIndex(status);
+    if (status.ok() && factory->HasUserDictionary()) user_index = factory->GetUserWordIndex(status);
     if (status.ok()) unigram_cost = factory->GetUnigramCostData(status);
     if (status.ok()) bigram_cost = factory->GetBigramCostData(status);
 
     if (status.ok()) {
-      return new BigramSegmenter(index, unigram_cost, bigram_cost);
+      return new BigramSegmenter(index, user_index, unigram_cost, bigram_cost);
     } else {
       return NULL;
     }
@@ -223,6 +247,7 @@ Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status &sta
 
    case kMixedSegmenter:
     if (status.ok()) index = factory->GetWordIndex(status);
+    if (status.ok() && factory->HasUserDictionary()) user_index = factory->GetUserWordIndex(status);
     if (status.ok()) unigram_cost = factory->GetUnigramCostData(status);
     if (status.ok()) bigram_cost = factory->GetBigramCostData(status);
     if (status.ok()) seg_model = factory->GetCRFSegModel(status);
@@ -231,6 +256,7 @@ Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status &sta
     if (status.ok()) {
       return MixedSegmenter::New(
         index,
+        user_index,
         unigram_cost,
         bigram_cost,
         seg_model,
@@ -335,6 +361,10 @@ void milkcat_destroy(milkcat_t *milkcat) {
   milkcat->model_factory = NULL;
 
   delete milkcat;
+}
+
+void milkcat_set_user_dictionary(milkcat_t *milkcat, const char *path) {
+  milkcat->model_factory->SetUserDictionaryPath(path);
 }
 
 milkcat_parser_t *milkcat_parser_new(milkcat_t *milkcat, int parser_type) {

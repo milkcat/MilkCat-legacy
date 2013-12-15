@@ -53,6 +53,10 @@ inline TrieTree::~TrieTree() {}
 class DoubleArrayTrieTree: public TrieTree {
  public:
   static DoubleArrayTrieTree *New(const char *file_path, Status &status);
+
+  // Load the double array trietree from text file, the format of text file is
+  // one word per line
+  static DoubleArrayTrieTree *NewFromText(const char *file_path, Status &status);
   DoubleArrayTrieTree() {}
 
   int Search(const char *text) const;
@@ -63,5 +67,6 @@ class DoubleArrayTrieTree: public TrieTree {
 
   DISALLOW_COPY_AND_ASSIGN(DoubleArrayTrieTree);
 };
+
 
 #endif

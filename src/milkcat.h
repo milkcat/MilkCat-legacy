@@ -88,6 +88,8 @@ EXPORT_API MC_WORD_TYPE milkcat_cursor_word_type(milkcat_cursor_t *cursor);
 // Get the error message if an error occurred
 EXPORT_API const char *milkcat_get_error_message(milkcat_t *milkcat);
 
+EXPORT_API void milkcat_set_user_dictionary(milkcat_t *milkcat, const char *path);
+
 #ifdef __cplusplus
 }
 #endif
