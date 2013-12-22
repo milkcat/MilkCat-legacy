@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include "token_instance.h"
-#include "tokenization.h"
+#include "tokenizer.h"
 #include "token_lex.h"
 #include "milkcat_config.h"
 

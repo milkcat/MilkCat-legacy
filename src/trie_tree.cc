@@ -25,6 +25,7 @@
 //
 
 #include <vector>
+#include <algorithm>
 #include "darts.h"
 #include "trie_tree.h"
 #include "milkcat_config.h"

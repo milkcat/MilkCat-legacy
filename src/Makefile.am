@@ -20,8 +20,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         token_instance.cc \
                         token_lex.cc \
                         token_lex.h \
-                        tokenization.cc \
-                        tokenization.h \
+                        tokenizer.cc \
+                        tokenizer.h \
                         utils.cc \
                         utils.h \
                         libmilkcat.cc \

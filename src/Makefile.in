@@ -140,7 +140,7 @@ libmilkcat_la_LIBADD =
 am_libmilkcat_la_OBJECTS = crf_segmenter.lo instance_data.lo \
 	out_of_vocabulary_word_recognition.lo term_instance.lo \
 	part_of_speech_tag_instance.lo token_instance.lo token_lex.lo \
-	tokenization.lo utils.lo libmilkcat.lo bigram_segmenter.lo \
+	tokenizer.lo utils.lo libmilkcat.lo bigram_segmenter.lo \
 	crf_part_of_speech_tagger.lo strlcpy.lo crf_model.lo \
 	crf_tagger.lo configuration.lo hmm_part_of_speech_tagger.lo \
 	mixed_part_of_speech_tagger.lo mixed_segmenter.lo hmm_model.lo \
@@ -380,8 +380,8 @@ libmilkcat_la_SOURCES = milkcat_config.h \
                         token_instance.cc \
                         token_lex.cc \
                         token_lex.h \
-                        tokenization.cc \
-                        tokenization.h \
+                        tokenizer.cc \
+                        tokenizer.h \
                         utils.cc \
                         utils.h \
                         libmilkcat.cc \
@@ -578,7 +578,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/term_instance.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/token_instance.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/token_lex.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tokenization.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tokenizer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trie_tree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Plo@am__quote@
 

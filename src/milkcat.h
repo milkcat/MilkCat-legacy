@@ -21,8 +21,6 @@
 #endif
 
 typedef struct milkcat_t milkcat_t;
-typedef struct milkcat_parser_t milkcat_parser_t;
-typedef struct milkcat_cursor_t milkcat_cursor_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,38 +55,30 @@ typedef enum {
 } MC_WORD_TYPE;
 
 
-EXPORT_API milkcat_t *milkcat_new(const char *model_path);
+EXPORT_API milkcat_t *milkcat_new(const char *model_path, int analyzer_type);
 
 // Delete the MilkCat Process Instance and release its resources
-EXPORT_API void milkcat_destroy(milkcat_t *milkcat);
-
-EXPORT_API milkcat_parser_t *milkcat_parser_new(milkcat_t *milkcat, int parser_type);
-
-EXPORT_API void milkcat_parser_destroy(milkcat_parser_t *parser);
-
-EXPORT_API milkcat_cursor_t *milkcat_cursor_new();
-
-EXPORT_API void milkcat_cursor_destroy(milkcat_cursor_t *cursor);
+EXPORT_API void milkcat_destroy(milkcat_t *m);
 
 // Start to Process a text
-EXPORT_API void milkcat_parse(milkcat_parser_t *parser, milkcat_cursor_t *cursor, const char *text);
+EXPORT_API void milkcat_analyze(milkcat_t *m, const char *text);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
-EXPORT_API int milkcat_cursor_next(milkcat_cursor_t *cursor);
+EXPORT_API int milkcat_next_word(milkcat_t *m);
 
 // Get a term from current position
-EXPORT_API const char *milkcat_cursor_word(milkcat_cursor_t *cursor);
+EXPORT_API const char *milkcat_get_word(milkcat_t *m);
 
 // Get the Part-Of-Speech Tag from current position
-EXPORT_API const char *milkcat_cursor_pos_tag(milkcat_cursor_t *cursor);
+EXPORT_API const char *milkcat_get_postag(milkcat_t *m);
 
 // Get the type of word, such as a number, a chinese word or an english word ...
-EXPORT_API MC_WORD_TYPE milkcat_cursor_word_type(milkcat_cursor_t *cursor);
+EXPORT_API MC_WORD_TYPE milkcat_get_wordtype(milkcat_t *m);
 
 // Get the error message if an error occurred
-EXPORT_API const char *milkcat_get_error_message(milkcat_t *milkcat);
+EXPORT_API const char *milkcat_last_error();
 
-EXPORT_API void milkcat_set_user_dictionary(milkcat_t *milkcat, const char *path);
+EXPORT_API void milkcat_set_userdict(milkcat_t *m, const char *path);
 
 #ifdef __cplusplus
 }

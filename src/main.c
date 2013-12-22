@@ -105,45 +105,45 @@ int main(int argc, char **argv) {
   }
 
   char *input_buffer = (char *)malloc(1048576);
-  milkcat_t *milkcat = milkcat_new(*model_path == '\0'? NULL: model_path);
+  milkcat_t *m = milkcat_new(*model_path == '\0'? NULL: model_path, method);
 
-  if (*user_dict) {
-    milkcat_set_user_dictionary(milkcat, user_dict);
-  }
-
-  milkcat_parser_t *parser = milkcat_parser_new(milkcat, method);
-  milkcat_cursor_t *cursor = milkcat_cursor_new();
-  size_t sentence_length;
-  int i;
-  char ch;
-
-  if (parser == NULL) {
-    fputs(milkcat_get_error_message(milkcat), stderr);
+  if (m == NULL) {
+    fputs(milkcat_last_error(), stderr);
     fputs("\n", stderr);
     return 1;
   }
 
+  if (*user_dict) {
+    milkcat_set_userdict(m, user_dict);
+  }
+
+  size_t sentence_length;
+  int i;
+  char ch;
+
+
+
   while (NULL != fgets(input_buffer, 1048576, fp)) {
-    milkcat_parse(parser, cursor, input_buffer);
-    while (milkcat_cursor_next(cursor) != 0) {
+    milkcat_analyze(m, input_buffer);
+    while (milkcat_next_word(m) != 0) {
       // printf("22222222\n");
-      switch (milkcat_cursor_word(cursor)[0]) {
+      switch (milkcat_get_word(m)[0]) {
        case '\r':
        case '\n':
        case ' ':
         continue;
       }
 
-      fputs(milkcat_cursor_word(cursor), stdout);
+      fputs(milkcat_get_word(m), stdout);
 
       if (display_type == 1) {
         fputs("_", stdout);
-        fputs(word_type_str(milkcat_cursor_word_type(cursor)), stdout);
+        fputs(word_type_str(milkcat_get_wordtype(m)), stdout);
       }
 
       if (display_tag == 1) {
         fputs("/", stdout);
-        fputs(milkcat_cursor_pos_tag(cursor), stdout);
+        fputs(milkcat_get_postag(m), stdout);
       }
 
       fputs("  ", stdout);
@@ -151,9 +151,7 @@ int main(int argc, char **argv) {
     printf("\n");
   }
 
-  milkcat_cursor_destroy(cursor);
-  milkcat_parser_destroy(parser);
-  milkcat_destroy(milkcat);
+  milkcat_destroy(m);
   free(input_buffer);
   if (use_stdin_flag == 0)
     fclose(fp);
