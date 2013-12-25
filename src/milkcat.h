@@ -10,6 +10,8 @@
 #ifndef MILKCAT_H
 #define MILKCAT_H
 
+#include <stdbool.h>
+
 #ifdef _WIN32
 #ifdef MILKCAT_EXPORTS
 #define EXPORT_API __declspec(dllexport)
@@ -21,6 +23,7 @@
 #endif
 
 typedef struct milkcat_t milkcat_t;
+typedef struct milkcat_cursor_t milkcat_cursor_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +57,11 @@ typedef enum {
   MC_OTHER = 5
 } MC_WORD_TYPE;
 
+typedef struct {
+  const char *word;
+  const char *part_of_speech_tag;
+  MC_WORD_TYPE word_type;
+} milkcat_item_t;
 
 EXPORT_API milkcat_t *milkcat_new(const char *model_path, int analyzer_type);
 
@@ -61,19 +69,14 @@ EXPORT_API milkcat_t *milkcat_new(const char *model_path, int analyzer_type);
 EXPORT_API void milkcat_destroy(milkcat_t *m);
 
 // Start to Process a text
-EXPORT_API void milkcat_analyze(milkcat_t *m, const char *text);
+EXPORT_API milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text);
+
+EXPORT_API void milkcat_cursor_release(milkcat_cursor_t *c);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
-EXPORT_API int milkcat_next_word(milkcat_t *m);
+EXPORT_API milkcat_item_t milkcat_cursor_get_next(milkcat_cursor_t *c);
 
-// Get a term from current position
-EXPORT_API const char *milkcat_get_word(milkcat_t *m);
-
-// Get the Part-Of-Speech Tag from current position
-EXPORT_API const char *milkcat_get_postag(milkcat_t *m);
-
-// Get the type of word, such as a number, a chinese word or an english word ...
-EXPORT_API MC_WORD_TYPE milkcat_get_wordtype(milkcat_t *m);
+EXPORT_API bool milkcat_cursor_has_next(milkcat_cursor_t *c);
 
 // Get the error message if an error occurred
 EXPORT_API const char *milkcat_last_error();

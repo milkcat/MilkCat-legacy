@@ -7,6 +7,7 @@
 
 
 #include <string>
+#include <vector>
 #include <string.h>
 #include <stdio.h>
 #include <config.h>
@@ -328,21 +329,50 @@ PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
 
 Status global_status;
 
+struct milkcat_cursor_t;
+
 struct milkcat_t {
   ModelFactory *model_factory;
   bool owned_model_factory;
 
   Segmenter *segmenter;
   PartOfSpeechTagger *part_of_speech_tagger;
-  Tokenization *tokenizer;
+  
+  std::vector<milkcat_cursor_t *> cursor_pool;
+};
 
+struct milkcat_cursor_t {
+  milkcat_t *milkcat;
+
+  Tokenization *tokenizer;
   TokenInstance *token_instance;
   TermInstance *term_instance;
   PartOfSpeechTagInstance *part_of_speech_tag_instance;
 
   int sentence_length;
   int current_position;
+  bool end;
 };
+
+void CursorMoveToNext(milkcat_cursor_t *c) {
+  c->current_position++;
+  if (c->current_position > c->sentence_length - 1) {
+    // If reached the end of current sentence
+
+    if (c->tokenizer->GetSentence(c->token_instance) == false) {
+      c->end = true;
+      return ;
+    }
+
+    c->milkcat->segmenter->Segment(c->term_instance, c->token_instance);
+    if (c->milkcat->part_of_speech_tagger) {
+      c->milkcat->part_of_speech_tagger->Tag(c->part_of_speech_tag_instance, c->term_instance);
+    }
+    
+    c->sentence_length = c->term_instance->size();
+    c->current_position = 0;
+  } 
+}
 
 milkcat_t *milkcat_new(const char *model_path, int analyzer_type) {
   // Clear the global status's failed state
@@ -397,19 +427,28 @@ milkcat_t *milkcat_new(const char *model_path, int analyzer_type) {
     break;
   }
 
-  m->tokenizer = TokenizerFactory(kDefaultTokenizer);
-  m->token_instance = new TokenInstance();
-  m->term_instance = new TermInstance();
-  m->part_of_speech_tag_instance = new PartOfSpeechTagInstance();
-  m->current_position = 0;
-  m->sentence_length = 0;
-
   if (!global_status.ok()) {
     milkcat_destroy(m);
     return NULL;  
   } else {
     return m;
   }
+}
+
+void milkcat_destory_cursor(milkcat_cursor_t *c) {
+  delete c->tokenizer;
+  c->tokenizer = NULL;
+
+  delete c->token_instance;
+  c->token_instance = NULL;
+
+  delete c->term_instance;
+  c->term_instance = NULL;
+
+  delete c->part_of_speech_tag_instance;
+  c->part_of_speech_tag_instance = NULL;
+
+  delete c;
 }
 
 void milkcat_destroy(milkcat_t *m) {
@@ -424,17 +463,9 @@ void milkcat_destroy(milkcat_t *m) {
   delete m->part_of_speech_tagger;
   m->part_of_speech_tagger = NULL;
 
-  delete m->tokenizer;
-  m->tokenizer = NULL;
-
-  delete m->token_instance;
-  m->token_instance = NULL;
-
-  delete m->term_instance;
-  m->term_instance = NULL;
-
-  delete m->part_of_speech_tag_instance;
-  m->part_of_speech_tag_instance = NULL;
+  // Clear the cursor pool
+  for (std::vector<milkcat_cursor_t *>::iterator it = m->cursor_pool.begin(); it != m->cursor_pool.end(); ++it) 
+    milkcat_destory_cursor(*it);
 
   delete m;
 }
@@ -444,46 +475,49 @@ void milkcat_set_userdict(milkcat_t *m, const char *path) {
 }
 
 
-void milkcat_analyze(milkcat_t *m, const char *text) {
-  m->tokenizer->Scan(text);
-  m->sentence_length = 0;
-  m->current_position = 0;
-}
-
-int milkcat_next_word(milkcat_t *m) {
-  if (m->current_position >= m->sentence_length - 1) {
-    // If reached the end of current sentence
-
-    if (m->tokenizer->GetSentence(m->token_instance) == false)
-      return false;
-
-    m->segmenter->Segment(m->term_instance, m->token_instance);
-    if (m->part_of_speech_tagger) {
-      m->part_of_speech_tagger->Tag(m->part_of_speech_tag_instance, m->term_instance);
-    }
-
-    m->sentence_length = m->term_instance->size();
-    m->current_position = 0;
+milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text) {
+  milkcat_cursor_t *cursor;
+  if (m->cursor_pool.empty()) {
+    cursor = new milkcat_cursor_t;
+    cursor->milkcat = m;
+    cursor->tokenizer = TokenizerFactory(kDefaultTokenizer);
+    cursor->token_instance = new TokenInstance();
+    cursor->term_instance = new TermInstance();
+    cursor->part_of_speech_tag_instance = new PartOfSpeechTagInstance();
+    cursor->end = false;
   } else {
-    m->current_position++;
+    cursor = m->cursor_pool.back();
+    m->cursor_pool.pop_back();
   }
-  
-  return true;
+
+  cursor->tokenizer->Scan(text);
+  cursor->sentence_length = 0;
+  cursor->current_position = 0;
+
+  CursorMoveToNext(cursor);
+  return cursor;
 }
 
-const char *milkcat_get_word(milkcat_t *m) {
-  return m->term_instance->term_text_at(m->current_position);
+void milkcat_cursor_release(milkcat_cursor_t *c) {
+  c->milkcat->cursor_pool.push_back(c);
 }
 
-const char *milkcat_get_postag(milkcat_t *m) {
-  if (m->part_of_speech_tagger != NULL)
-    return m->part_of_speech_tag_instance->part_of_speech_tag_at(m->current_position);
+milkcat_item_t milkcat_cursor_get_next(milkcat_cursor_t *c) {
+  milkcat_item_t item;
+
+  item.word = c->term_instance->term_text_at(c->current_position);
+  if (c->milkcat->part_of_speech_tagger != NULL)
+    item.part_of_speech_tag = c->part_of_speech_tag_instance->part_of_speech_tag_at(c->current_position);
   else
-    return NULL;
+    item.part_of_speech_tag = NULL;
+  item.word_type = static_cast<MC_WORD_TYPE>(c->term_instance->term_type_at(c->current_position));
+
+  CursorMoveToNext(c);
+  return item;
 }
 
-MC_WORD_TYPE milkcat_get_wordtype(milkcat_t *m) {
-  return static_cast<MC_WORD_TYPE>(m->term_instance->term_type_at(m->current_position));
+bool milkcat_cursor_has_next(milkcat_cursor_t *c) {
+  return c->end != true;
 }
 
 const char *milkcat_last_error() {

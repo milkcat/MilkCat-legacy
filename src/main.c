@@ -124,31 +124,33 @@ int main(int argc, char **argv) {
 
 
   while (NULL != fgets(input_buffer, 1048576, fp)) {
-    milkcat_analyze(m, input_buffer);
-    while (milkcat_next_word(m) != 0) {
+    milkcat_cursor_t *c = milkcat_process(m, input_buffer);
+    while (milkcat_cursor_has_next(c)) {
+      milkcat_item_t item = milkcat_cursor_get_next(c);
       // printf("22222222\n");
-      switch (milkcat_get_word(m)[0]) {
+      switch (item.word[0]) {
        case '\r':
        case '\n':
        case ' ':
         continue;
       }
 
-      fputs(milkcat_get_word(m), stdout);
+      fputs(item.word, stdout);
 
       if (display_type == 1) {
         fputs("_", stdout);
-        fputs(word_type_str(milkcat_get_wordtype(m)), stdout);
+        fputs(word_type_str(item.word_type), stdout);
       }
 
       if (display_tag == 1) {
         fputs("/", stdout);
-        fputs(milkcat_get_postag(m), stdout);
+        fputs(item.part_of_speech_tag, stdout);
       }
 
       fputs("  ", stdout);
     }
     printf("\n");
+    milkcat_cursor_release(c);
   }
 
   milkcat_destroy(m);
