@@ -493,8 +493,7 @@ milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text) {
   cursor->tokenizer->Scan(text);
   cursor->sentence_length = 0;
   cursor->current_position = 0;
-
-  CursorMoveToNext(cursor);
+  
   return cursor;
 }
 
@@ -502,22 +501,18 @@ void milkcat_cursor_release(milkcat_cursor_t *c) {
   c->milkcat->cursor_pool.push_back(c);
 }
 
-milkcat_item_t milkcat_cursor_get_next(milkcat_cursor_t *c) {
-  milkcat_item_t item;
-
-  item.word = c->term_instance->term_text_at(c->current_position);
-  if (c->milkcat->part_of_speech_tagger != NULL)
-    item.part_of_speech_tag = c->part_of_speech_tag_instance->part_of_speech_tag_at(c->current_position);
-  else
-    item.part_of_speech_tag = NULL;
-  item.word_type = static_cast<MC_WORD_TYPE>(c->term_instance->term_type_at(c->current_position));
-
+bool milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item) {
   CursorMoveToNext(c);
-  return item;
-}
+  if (c->end == true) return false;
 
-bool milkcat_cursor_has_next(milkcat_cursor_t *c) {
-  return c->end != true;
+  next_item->word = c->term_instance->term_text_at(c->current_position);
+  if (c->milkcat->part_of_speech_tagger != NULL)
+    next_item->part_of_speech_tag = c->part_of_speech_tag_instance->part_of_speech_tag_at(c->current_position);
+  else
+    next_item->part_of_speech_tag = NULL;
+  next_item->word_type = static_cast<MC_WORD_TYPE>(c->term_instance->term_type_at(c->current_position));
+  
+  return true;
 }
 
 const char *milkcat_last_error() {

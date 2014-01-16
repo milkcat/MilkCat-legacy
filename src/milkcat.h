@@ -74,9 +74,7 @@ EXPORT_API milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text);
 EXPORT_API void milkcat_cursor_release(milkcat_cursor_t *c);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
-EXPORT_API milkcat_item_t milkcat_cursor_get_next(milkcat_cursor_t *c);
-
-EXPORT_API bool milkcat_cursor_has_next(milkcat_cursor_t *c);
+EXPORT_API bool milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item);
 
 // Get the error message if an error occurred
 EXPORT_API const char *milkcat_last_error();

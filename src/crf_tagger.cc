@@ -188,6 +188,7 @@ void CRFTagger::CalculateArcCost(int position) {
       for (int i = 0; i < feature_num; ++i) {
         feature_id = feature_ids[i];
         cost += model_->GetBigramCost(feature_id, left_tag_id, tag_id);
+        // printf("Arc Cost: %s %s %lf\n", model_->GetTagText(left_tag_id), model_->GetTagText(tag_id), model_->GetBigramCost(feature_id, left_tag_id, tag_id));
       }
       if (cost > best_cost) {
         best_tag_id = left_tag_id;

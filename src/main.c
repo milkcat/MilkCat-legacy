@@ -122,11 +122,10 @@ int main(int argc, char **argv) {
   char ch;
 
 
-
+  milkcat_item_t item;
   while (NULL != fgets(input_buffer, 1048576, fp)) {
     milkcat_cursor_t *c = milkcat_process(m, input_buffer);
-    while (milkcat_cursor_has_next(c)) {
-      milkcat_item_t item = milkcat_cursor_get_next(c);
+    while (milkcat_cursor_get_next(c, &item)) {
       // printf("22222222\n");
       switch (item.word[0]) {
        case '\r':
