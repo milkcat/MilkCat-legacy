@@ -484,7 +484,6 @@ milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text) {
     cursor->token_instance = new TokenInstance();
     cursor->term_instance = new TermInstance();
     cursor->part_of_speech_tag_instance = new PartOfSpeechTagInstance();
-    cursor->end = false;
   } else {
     cursor = m->cursor_pool.back();
     m->cursor_pool.pop_back();
@@ -493,6 +492,7 @@ milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text) {
   cursor->tokenizer->Scan(text);
   cursor->sentence_length = 0;
   cursor->current_position = 0;
+  cursor->end = false;
   
   return cursor;
 }
@@ -503,6 +503,7 @@ void milkcat_cursor_release(milkcat_cursor_t *c) {
 
 bool milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item) {
   CursorMoveToNext(c);
+  // printf("cursor: %d %d %d\n", c->current_position, c->sentence_length, c->end);
   if (c->end == true) return false;
 
   next_item->word = c->term_instance->term_text_at(c->current_position);
