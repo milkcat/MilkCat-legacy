@@ -331,9 +331,13 @@ Status global_status;
 
 struct milkcat_cursor_t;
 
-struct milkcat_t {
+struct milkcat_model_t {
   ModelFactory *model_factory;
-  bool owned_model_factory;
+};
+
+struct milkcat_t {
+  milkcat_model_t *model;
+  bool own_model;
 
   Segmenter *segmenter;
   PartOfSpeechTagger *part_of_speech_tagger;
@@ -376,50 +380,67 @@ void CursorMoveToNext(milkcat_cursor_t *c) {
 
 milkcat_t *milkcat_new(const char *model_path, int analyzer_type) {
   // Clear the global status's failed state
+  milkcat_model_t *model = milkcat_model_new(model_path);
+  milkcat_t *analyzer = milkcat_new_with_model(model, analyzer_type);
+  analyzer->own_model = true;
+
+  return analyzer;
+}
+
+milkcat_model_t *milkcat_model_new(const char *model_path) {
+  if (model_path == NULL) model_path = MODEL_PATH;
+
+  milkcat_model_t *model = new milkcat_model_t;
+  model->model_factory = new ModelFactory(model_path);
+
+  return model;
+}
+
+milkcat_t *milkcat_new_with_model(milkcat_model_t *model, int analyzer_type) {
   global_status = Status::OK();
 
-  if (model_path == NULL) model_path = MODEL_PATH;
-  milkcat_t *m = new milkcat_t;
-  m->model_factory = new ModelFactory(model_path);
-  m->owned_model_factory = true;
+  milkcat_t *analyzer = new milkcat_t;
+  memset(analyzer, 0, sizeof(milkcat_t));
+
+  analyzer->model = model;
 
   switch (analyzer_type) {
    case DEFAULT_PROCESSOR:
-    if (global_status.ok()) m->segmenter = SegmenterFactory(
-        m->model_factory, 
+    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
+        analyzer->model->model_factory, 
         kMixedSegmenter, 
         global_status);
-    if (global_status.ok()) m->part_of_speech_tagger = PartOfSpeechTaggerFactory(
-        m->model_factory,
+    if (global_status.ok()) analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
+        analyzer->model->model_factory,
         kMixedPartOfSpeechTagger, 
         global_status);
     break;
 
    case CRF_SEGMENTER:
-    if (global_status.ok()) m->segmenter = SegmenterFactory(
-        m->model_factory, 
+    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
+        analyzer->model->model_factory, 
         kCrfSegmenter, 
         global_status);
-    m->part_of_speech_tagger = NULL;
+    analyzer->part_of_speech_tagger = NULL;
     break;
 
    case CRF_PROCESSOR:
-    if (global_status.ok()) m->segmenter = SegmenterFactory(
-        m->model_factory, 
+    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
+        analyzer->model->model_factory, 
         kCrfSegmenter, 
         global_status);
-    if (global_status.ok()) m->part_of_speech_tagger = PartOfSpeechTaggerFactory(
-        m->model_factory, 
+    if (global_status.ok()) analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
+        analyzer->model->model_factory, 
         kCrfPartOfSpeechTagger, 
         global_status);
     break;
 
    case DEFAULT_SEGMENTER:
-    if (global_status.ok()) m->segmenter = SegmenterFactory(
-        m->model_factory, 
+    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
+        analyzer->model->model_factory, 
         kMixedSegmenter, 
         global_status);
-    m->part_of_speech_tagger = NULL;
+    analyzer->part_of_speech_tagger = NULL;
     break;    
 
    default:
@@ -428,10 +449,10 @@ milkcat_t *milkcat_new(const char *model_path, int analyzer_type) {
   }
 
   if (!global_status.ok()) {
-    milkcat_destroy(m);
+    milkcat_destroy(analyzer);
     return NULL;  
   } else {
-    return m;
+    return analyzer;
   }
 }
 
@@ -451,11 +472,18 @@ void milkcat_destory_cursor(milkcat_cursor_t *c) {
   delete c;
 }
 
+void milkcat_model_destory(milkcat_model_t *model) {
+  delete model->model_factory;
+  model->model_factory = NULL;
+
+  delete model;
+}
+
 void milkcat_destroy(milkcat_t *m) {
-  if (m->owned_model_factory) {
-    delete m->model_factory;
+  if (m->own_model) {
+    milkcat_model_destory(m->model);
   }
-  m->model_factory = NULL;
+  m->model = NULL;
 
   delete m->segmenter;
   m->segmenter = NULL;
@@ -470,12 +498,12 @@ void milkcat_destroy(milkcat_t *m) {
   delete m;
 }
 
-void milkcat_set_userdict(milkcat_t *m, const char *path) {
-  m->model_factory->SetUserDictionaryPath(path);
+void milkcat_model_set_userdict(milkcat_model_t *model, const char *path) {
+  model->model_factory->SetUserDictionaryPath(path);
 }
 
 
-milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text) {
+milkcat_cursor_t *milkcat_analyze(milkcat_t *m, const char *text) {
   milkcat_cursor_t *cursor;
   if (m->cursor_pool.empty()) {
     cursor = new milkcat_cursor_t;

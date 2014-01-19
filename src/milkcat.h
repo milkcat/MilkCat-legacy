@@ -23,6 +23,7 @@
 #endif
 
 typedef struct milkcat_t milkcat_t;
+typedef struct milkcat_model_t milkcat_model_t;
 typedef struct milkcat_cursor_t milkcat_cursor_t;
 
 #ifdef __cplusplus
@@ -65,21 +66,27 @@ typedef struct {
 
 EXPORT_API milkcat_t *milkcat_new(const char *model_path, int analyzer_type);
 
+EXPORT_API milkcat_t *milkcat_new_with_model(milkcat_model_t *model, int analyzer_type);
+
 // Delete the MilkCat Process Instance and release its resources
 EXPORT_API void milkcat_destroy(milkcat_t *m);
 
 // Start to Process a text
-EXPORT_API milkcat_cursor_t *milkcat_process(milkcat_t *m, const char *text);
+EXPORT_API milkcat_cursor_t *milkcat_analyze(milkcat_t *m, const char *text);
 
 EXPORT_API void milkcat_cursor_release(milkcat_cursor_t *c);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
 EXPORT_API bool milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item);
 
+EXPORT_API milkcat_model_t *milkcat_model_new(const char *model_path);
+
+EXPORT_API void milkcat_model_destory(milkcat_model_t *model);
+
+EXPORT_API void milkcat_model_set_userdict(milkcat_model_t *model, const char *path);
+
 // Get the error message if an error occurred
 EXPORT_API const char *milkcat_last_error();
-
-EXPORT_API void milkcat_set_userdict(milkcat_t *m, const char *path);
 
 #ifdef __cplusplus
 }
