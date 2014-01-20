@@ -3,6 +3,8 @@
 // (with) mkdict.cc --- Created at 2013-06-08
 // mk_model.cc -- Created at 2013-11-08
 //
+// The MIT License (MIT)
+//
 // Copyright (c) 2013 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy

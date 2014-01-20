@@ -2,6 +2,8 @@
 // hmm_segment_and_pos_tagger.cc --- Created at 2013-08-15
 // bigram_segmenter.cc --- Created at 2013-10-23
 //
+// The MIT License (MIT)
+//
 // Copyright (c) 2013 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
