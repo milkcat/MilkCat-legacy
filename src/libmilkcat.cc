@@ -357,7 +357,6 @@ struct milkcat_model_t {
 
 struct milkcat_t {
   milkcat_model_t *model;
-  bool own_model;
 
   Segmenter *segmenter;
   PartOfSpeechTagger *part_of_speech_tagger;
@@ -398,15 +397,6 @@ void CursorMoveToNext(milkcat_cursor_t *c) {
   } 
 }
 
-milkcat_t *milkcat_new(const char *model_path, int analyzer_type) {
-  // Clear the global status's failed state
-  milkcat_model_t *model = milkcat_model_new(model_path);
-  milkcat_t *analyzer = milkcat_new_with_model(model, analyzer_type);
-  analyzer->own_model = true;
-
-  return analyzer;
-}
-
 milkcat_model_t *milkcat_model_new(const char *model_path) {
   if (model_path == NULL) model_path = MODEL_PATH;
 
@@ -416,7 +406,7 @@ milkcat_model_t *milkcat_model_new(const char *model_path) {
   return model;
 }
 
-milkcat_t *milkcat_new_with_model(milkcat_model_t *model, int analyzer_type) {
+milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
   global_status = Status::OK();
 
   milkcat_t *analyzer = new milkcat_t;
@@ -500,9 +490,6 @@ void milkcat_model_destory(milkcat_model_t *model) {
 }
 
 void milkcat_destroy(milkcat_t *m) {
-  if (m->own_model) {
-    milkcat_model_destory(m->model);
-  }
   m->model = NULL;
 
   delete m->segmenter;
@@ -549,10 +536,10 @@ void milkcat_cursor_release(milkcat_cursor_t *c) {
   c->milkcat->cursor_pool.push_back(c);
 }
 
-bool milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item) {
+int milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item) {
   CursorMoveToNext(c);
   // printf("cursor: %d %d %d\n", c->current_position, c->sentence_length, c->end);
-  if (c->end == true) return false;
+  if (c->end == true) return MC_NONE;
 
   next_item->word = c->term_instance->term_text_at(c->current_position);
   if (c->milkcat->part_of_speech_tagger != NULL)
@@ -561,7 +548,7 @@ bool milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item) {
     next_item->part_of_speech_tag = NULL;
   next_item->word_type = static_cast<MC_WORD_TYPE>(c->term_instance->term_type_at(c->current_position));
   
-  return true;
+  return MC_OK;
 }
 
 const char *milkcat_last_error() {

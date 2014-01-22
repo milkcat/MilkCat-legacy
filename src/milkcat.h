@@ -77,15 +77,16 @@ typedef enum {
   MC_OTHER = 5
 } MC_WORD_TYPE;
 
+#define MC_OK 1
+#define MC_NONE 0
+
 typedef struct {
   const char *word;
   const char *part_of_speech_tag;
   MC_WORD_TYPE word_type;
 } milkcat_item_t;
 
-EXPORT_API milkcat_t *milkcat_new(const char *model_path, int analyzer_type);
-
-EXPORT_API milkcat_t *milkcat_new_with_model(milkcat_model_t *model, int analyzer_type);
+EXPORT_API milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type);
 
 // Delete the MilkCat Process Instance and release its resources
 EXPORT_API void milkcat_destroy(milkcat_t *m);
@@ -96,7 +97,7 @@ EXPORT_API milkcat_cursor_t *milkcat_analyze(milkcat_t *m, const char *text);
 EXPORT_API void milkcat_cursor_release(milkcat_cursor_t *c);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
-EXPORT_API bool milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item);
+EXPORT_API int milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item);
 
 EXPORT_API milkcat_model_t *milkcat_model_new(const char *model_path);
 
