@@ -86,7 +86,7 @@ HMMModel *HMMModel::New(const char *model_path, Status &status) {
     self->emit_matrix_[emit_record.term_id] = emit_node;
   }
 
-  if (fd->Tell() != fd->Size())
+  if (status.ok() && fd->Tell() != fd->Size())
     status = Status::Corruption(model_path);
 
   self->tag_num_ = tag_num;

@@ -55,6 +55,7 @@ const char *word_type_str(MC_WORD_TYPE word_type) {
 }
 
 int main(int argc, char **argv) {
+
   char model_path[1024] = "";
   int method = DEFAULT_PROCESSOR;
   char c;
@@ -183,6 +184,7 @@ int main(int argc, char **argv) {
   }
 
   milkcat_destroy(m);
+  milkcat_model_destory(model);
   free(input_buffer);
   if (use_stdin_flag == 0)
     fclose(fp);

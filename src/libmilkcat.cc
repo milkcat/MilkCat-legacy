@@ -78,6 +78,7 @@ class ModelFactory {
       crf_pos_model_(NULL),
       hmm_pos_model_(NULL),
       oov_property_(NULL),
+      user_index_(NULL),
       default_tag_(NULL) {
 
     pthread_mutex_init(&mutex, NULL);
