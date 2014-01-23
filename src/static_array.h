@@ -64,7 +64,7 @@ class StaticArray {
   StaticArray(): data_(NULL), size_(0) {}
 
   ~StaticArray() {
-    delete data_;
+    delete[] data_;
     data_ = NULL;
   }
 

@@ -135,6 +135,7 @@ CRFModel *CRFModel::New(const char *model_path, Status &status) {
     status = Status::Corruption(model_path);  
   }
 
+  delete fd;
   if (status.ok()) {
     return self;
   } else {
