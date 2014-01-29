@@ -43,7 +43,6 @@
 
 typedef struct milkcat_t milkcat_t;
 typedef struct milkcat_model_t milkcat_model_t;
-typedef struct milkcat_cursor_t milkcat_cursor_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,23 +67,28 @@ enum {
   DEFAULT_SEGMENTER = 3,
 };
 
-typedef enum {
-  MC_CHINESE_WORD = 0,
-  MC_ENGLISH_WORD = 1,
-  MC_NUMBER = 2,
-  MC_SYMBOL = 3,
-  MC_PUNCTION = 4,
-  MC_OTHER = 5
-} MC_WORD_TYPE;
+// Word types
+#define MC_CHINESE_WORD 0
+#define MC_ENGLISH_WORD 1
+#define MC_NUMBER 2
+#define MC_SYMBOL 3
+#define MC_PUNCTION 4
+#define MC_OTHER 5
 
+// MilkCat cursor return state
 #define MC_OK 1
 #define MC_NONE 0
 
 typedef struct {
+  void *internal_cursor;
+} milkcat_cursor_t;
+
+typedef struct {
   const char *word;
   const char *part_of_speech_tag;
-  MC_WORD_TYPE word_type;
+  int word_type;
 } milkcat_item_t;
+
 
 EXPORT_API milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type);
 
@@ -92,9 +96,7 @@ EXPORT_API milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type);
 EXPORT_API void milkcat_destroy(milkcat_t *m);
 
 // Start to Process a text
-EXPORT_API milkcat_cursor_t *milkcat_analyze(milkcat_t *m, const char *text);
-
-EXPORT_API void milkcat_cursor_release(milkcat_cursor_t *c);
+EXPORT_API milkcat_cursor_t milkcat_analyze(milkcat_t *m, const char *text);
 
 // goto the next word in the text, if end of the text reached return 0 else return 1
 EXPORT_API int milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item);

@@ -35,7 +35,7 @@ int print_usage() {
   return 0;
 }
 
-const char *word_type_str(MC_WORD_TYPE word_type) {
+const char *word_type_str(int word_type) {
   switch (word_type) {
    case MC_CHINESE_WORD:
     return "ZH";
@@ -146,17 +146,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-
-
   size_t sentence_length;
   int i;
   char ch;
 
-
   milkcat_item_t item;
+  milkcat_cursor_t cursor;
   while (NULL != fgets(input_buffer, 1048576, fp)) {
-    milkcat_cursor_t *c = milkcat_analyze(m, input_buffer);
-    while (MC_OK == milkcat_cursor_get_next(c, &item)) {
+    cursor = milkcat_analyze(m, input_buffer);
+    while (MC_OK == milkcat_cursor_get_next(&cursor, &item)) {
       // printf("22222222\n");
       switch (item.word[0]) {
        case '\r':
@@ -180,7 +178,6 @@ int main(int argc, char **argv) {
       fputs("  ", stdout);
     }
     printf("\n");
-    milkcat_cursor_release(c);
   }
 
   milkcat_destroy(m);
