@@ -251,18 +251,20 @@ void BigramSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_
           if (bigram_map_iter != NULL) {
 
             // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)
-            weight = node->weight + 0.7 * (*bigram_map_iter - unigram_cost_->get(left_term_id)) + 
-                                    0.3 * unigram_cost_->get(right_term_id);
-            // printf("bigram find %d %d %lf\n", bucket_id, bucket_count, weight);
+            printf("p(x_n+1, x_n) = %lf\n", *bigram_map_iter);
+            weight = node->weight + (*bigram_map_iter - unigram_cost_->get(left_term_id));
+            printf("bigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           } else {
 
-            // if np bigram data use p(x_n+1|x_n) = p(x_n+1)
+            // if no bigram data use p(x_n+1|x_n) = p(x_n+1)
             if (term_id != kUserTermId) {
               weight = node->weight + unigram_cost_->get(right_term_id);
             } else {
-              weight = 16.0;
+
+              // For user dictionary word
+              weight = node->weight + 16.0;
             }
-            // printf("unigram find %d %d %lf\n", bucket_id, bucket_count, weight);
+            printf("unigram find %d %d %lf\n", bucket_id, bucket_count, weight);
           }
 
           if (weight < min_weight) {

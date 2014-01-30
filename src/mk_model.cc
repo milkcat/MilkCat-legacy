@@ -88,11 +88,13 @@ int LoadUnigramFile(const char *unigram_file, std::map<std::string, double> &uni
 // Load bigram data from unigram_file, returns the number of entries successfully loaded
 // if an error occured return -1
 int LoadBigramFile(const char *bigram_file, 
-                   std::map<std::pair<std::string, std::string>, double> &bigram_data) {
+                   std::map<std::pair<std::string, std::string>, int> &bigram_data,
+                   int &total_count) {
   FILE *fp = fopen(bigram_file, "r");
   char left[100], right[100];
-  double count,
-         sum = 0;
+  int count; 
+
+  total_count = 0;
 
   if (fp == NULL) {
     fprintf(stderr, "\nerror: unable to open bigram file %s\n", bigram_file);
@@ -100,15 +102,9 @@ int LoadBigramFile(const char *bigram_file,
     return -1;
   }
   
-  while (EOF != fscanf(fp, "%s %s %lf", left, right, &count)) {
+  while (EOF != fscanf(fp, "%s %s %d", left, right, &count)) {
     bigram_data[std::pair<std::string, std::string>(left, right)] += count;
-    sum += count;
-  }
-
-  for (std::map<std::pair<std::string, std::string>, double>::iterator it = bigram_data.begin();
-       it != bigram_data.end(); 
-       ++it) {
-    it->second = -log(it->second / sum);
+    total_count += count;
   }
 
   fclose(fp);  
@@ -163,8 +159,10 @@ int BuildAndSaveUnigramData(const std::map<std::string, double> &unigram_data,
   return result;
 }
 
-// Save unigram data into binary file UNIGRAM_FILE, returns 0 if successfully saved
-int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, double> &bigram_data, 
+// Save unigram data into binary file UNIGRAM_FILE. On success, return the number of 
+// bigram word pairs successfully writed. On failed, return -1
+int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, int> &bigram_data, 
+                      int total_count,
                       const Darts::DoubleArray &double_array) {
   FILE *fp = fopen(BIGRAM_FILE, "wb");
   if (fp == NULL) {
@@ -176,25 +174,23 @@ int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, double
   BigramRecord bigram_record;
   const char *left_word, *right_word;
   int32_t left_id, right_id;
-  double weight;
+  int count;
   std::vector<int64_t> keys;
   std::vector<float> values;
-  for (std::map<std::pair<std::string, std::string>, double>::const_iterator it = bigram_data.begin(); 
+
+  int write_num = 0;
+  for (std::map<std::pair<std::string, std::string>, int>::const_iterator it = bigram_data.begin(); 
        it != bigram_data.end();  
        ++it) {
     left_word = it->first.first.c_str();
     right_word = it->first.second.c_str();
-    weight = it->second;
+    count = it->second;
     left_id = double_array.exactMatchSearch<Darts::DoubleArray::value_type>(left_word);
     right_id = double_array.exactMatchSearch<Darts::DoubleArray::value_type>(right_word);
-    if (left_id < 0 || right_id < 0) {
-      fprintf(stderr, "\nerror: unable to get word_id of %s and %s.\n", left_word, right_word);
-      fflush(stderr);
-      return -1;
+    if (left_id > 0 && right_id > 0) {
+      keys.push_back((static_cast<int64_t>(left_id) << 32) + right_id);
+      values.push_back(static_cast<float>(-log(static_cast<double>(count) / total_count)));
     }
-
-    keys.push_back((static_cast<int64_t>(left_id) << 32) + right_id);
-    values.push_back(static_cast<float>(weight));
   }
 
   const StaticHashTable<int64_t, float> *hashtable = StaticHashTable<int64_t, float>::Build(&keys[0], &values[0], keys.size());
@@ -209,13 +205,13 @@ int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, double
 
   delete hashtable;
   fclose(fp);
-  return 0;
+  return keys.size();
 }
 
 int MakeGramModel(int argc, char **argv) {
   Darts::DoubleArray double_array;
   std::map<std::string, double> unigram_data;
-  std::map<std::pair<std::string, std::string>, double> bigram_data;
+  std::map<std::pair<std::string, std::string>, int> bigram_data;
   
   if (argc != 4) {
     fprintf(stderr, "Usage: mc_model gram [UNIGRAM FILE] [BIGRAM FILE]\n");
@@ -236,7 +232,8 @@ int MakeGramModel(int argc, char **argv) {
 
   printf("Loading bigram data ...");
   fflush(stdout);
-  count = LoadBigramFile(bigram_file, bigram_data);
+  int total_count;
+  count = LoadBigramFile(bigram_file, bigram_data, total_count);
   if (count == -1) {
     return 3;
   }
@@ -251,10 +248,12 @@ int MakeGramModel(int argc, char **argv) {
   printf(" OK\n");
 
   printf("Saving Bigram Binary File ...");
-  if (0 != SaveBigramBinFile(bigram_data, double_array)) {
+  count = SaveBigramBinFile(bigram_data, total_count, double_array);
+  if (count < 0) {
     return 7;
   }
-  printf(" OK\nSuccess!");
+  printf(" OK, %d entries saved.\n", count);
+  printf("Success!");
 
   return 0;
 }

@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   int display_type = 0;
   char user_dict[1024] = "";
 
-  while ((c = getopt (argc, argv, "iu:td:m:")) != -1) {
+  while ((c = getopt(argc, argv, "iu:td:m:")) != -1) {
     switch (c) {
      case 'i':
       fp = stdin;
@@ -93,6 +93,9 @@ int main(int argc, char **argv) {
       } else if (strcmp(optarg, "hmm_crf") == 0) {
         method = DEFAULT_PROCESSOR;
         display_tag = 1;
+      } else if (strcmp(optarg, "bigram_seg") == 0) {
+        method = BIGRAM_SEGMENTER;
+        display_tag = 0;
       } else {
         errflag++;
       }

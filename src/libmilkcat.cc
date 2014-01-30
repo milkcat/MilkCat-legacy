@@ -518,6 +518,14 @@ milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
         kMixedSegmenter, 
         global_status);
     analyzer->part_of_speech_tagger = NULL;
+    break;
+
+   case BIGRAM_SEGMENTER:
+    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
+        analyzer->model->model_factory, 
+        kBigramSegmenter, 
+        global_status);
+    analyzer->part_of_speech_tagger = NULL;
     break;    
 
    default:
