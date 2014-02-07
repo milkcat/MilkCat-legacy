@@ -3,7 +3,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2013-2014 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -105,7 +105,7 @@ EXPORT_API int milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next
 
 EXPORT_API milkcat_model_t *milkcat_model_new(const char *model_path);
 
-EXPORT_API void milkcat_model_destory(milkcat_model_t *model);
+EXPORT_API void milkcat_model_destroy(milkcat_model_t *model);
 
 EXPORT_API void milkcat_model_set_userdict(milkcat_model_t *model, const char *path);
 

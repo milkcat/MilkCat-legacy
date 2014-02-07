@@ -28,62 +28,65 @@
 #ifndef STATUS_H
 #define STATUS_H
 
+#include <stdio.h>
 #include <string>
 
 class Status {
  public:  
+  Status(): code_(0) {}
+
+  static Status OK() { return Status(); }
+  static Status IOError(const char *message) {
+    return Status(kIOError, message);
+  }
+  static Status Corruption(const char *message) {
+    return Status(kCorruption, message);
+  }
+  static Status NotImplemented(const char *message) {
+    return Status(kNotImplemented, message);
+  } 
+  static Status RuntimeError(const char *message) {
+    return Status(kRuntimeError, message);
+  } 
+
+  // Return true if the state is success
+  bool ok() { return code_ == 0; }
+
+  // Return a string representation of what has happened. If the status
+  // is success return a string with length 0
+  const char *what() { return message_.c_str(); }
+
+ private:
+  int code_;
+  std::string message_;
 
   enum {
     kIOError = 1,
     kCorruption = 2,
-    kNotImplemented = 3
+    kRuntimeError = 3,
+    kNotImplemented = 4
   };
 
-  Status(): code_(0), msg_("") {}
-
-  Status(int code, const char *msg): code_(code) {
-    std::string m;
+  Status(int code, const char *error_message): code_(code) {
+    std::string message;
     switch (code) {
      case kIOError:
-      m = "IOError: ";
+      message = "IOError: ";
       break;
-
      case kCorruption:
-      m = "Corruption: ";
+      message = "Corruption: ";
       break;
-
+     case kRuntimeError:
+      message = "RuntimeError: ";
+      break;
      case kNotImplemented:
-      m = "NotImplemented: ";
+      message = "NotImplemented: ";
       break;
     }
 
-    m += msg;
-    msg_ = m;
+    message += error_message;
+    message_ = message;
   }
-
-  Status(const Status &s): code_(s.code_), msg_(s.msg_) {}
-
-  static Status OK() { return Status(); }
-
-  static Status IOError(const char *msg) {
-    return Status(kIOError, msg);
-  }
-
-  static Status Corruption(const char *msg) {
-    return Status(kCorruption, msg);
-  }
-
-  static Status NotImplemented(const char *msg) {
-    return Status(kNotImplemented, msg);
-  } 
-
-  bool ok() { return code_ == 0; }
-
-  const char *what() { return msg_.c_str(); }
-
- private:
-  int code_;
-  std::string msg_;
 };
 
 

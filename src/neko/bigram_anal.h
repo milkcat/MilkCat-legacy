@@ -1,10 +1,9 @@
 //
-// config.h
-// milkcat_config.h --- Created at 2013-09-17
+// bigram_anal.h --- Created at 2014-02-03
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2014 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,17 +24,23 @@
 // THE SOFTWARE.
 //
 
-#ifndef MILKCAT_CONFIG_H
-#define MILKCAT_CONFIG_H
+#ifndef BIGRAM_ANAL_H
+#define BIGRAM_ANAL_H
 
-#include <stdlib.h>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include "utils/status.h"
 
-const int kTokenMax = 1000;
-const int kFeatureLengthMax = 100;
-const int kTermLengthMax = kFeatureLengthMax;
-const int kPOSTagLengthMax = 10;
-const int kHMMSegmentAndPOSTaggingNBest = 3;
-const int kUserTermIdStart = 0x40000000;
-const double kDefaultCost = 16.0;
+// Use bigram segmentation to analyze a corpus. Candidate to analyze is specified by 
+// candidate, and the corpus is specified by corpus_path. It would use a temporary file
+// called 'candidate_cost.txt' as user dictionary file for MilkCat.
+// On success, stores the adjecent entropy in adjacent_entropy, and stores the vocabulary
+// of segmentation's result in vocab. On failed set status != Status::OK()
+void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
+                   const char *corpus_path,
+                   std::unordered_map<std::string, double> &adjacent_entropy,
+                   std::unordered_map<std::string, int> &vocab,
+                   Status &status);
 
 #endif

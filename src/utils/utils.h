@@ -39,40 +39,5 @@
 size_t strlcpy(char *dst, const char *src, size_t siz);
 char *trim(char *str);
 
-// open a random access file for read
-class RandomAccessFile {
- public:
-  static RandomAccessFile *New(const char *file_path, Status &status);
-
-  ~RandomAccessFile();
-
-  // Read n bytes from file
-  bool Read(void *ptr, int size, Status &status);
-
-  // Read an type T from file
-  template<typename T>
-  bool ReadValue(T &data, Status &status) {
-    return Read(&data, sizeof(T), status);
-  }
-
-  // Read a line from file, if failed return false
-  bool ReadLine(char *buf, int size, Status &status);
-
-  bool Eof() { return ftell(fd_) == size_; }
-
-  // Get current position in file
-  int Tell();
-
-  // Get the file size
-  int Size() { return size_; }
-
- private:
-  FILE *fd_;
-  int size_;
-  std::string file_path_;
-
-  RandomAccessFile();
-};
-
 
 #endif // UTILS_H

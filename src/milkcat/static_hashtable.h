@@ -36,6 +36,7 @@
 #include <iostream>
 #include <string>
 #include "utils/utils.h"
+#include "utils/readable_file.h"
 
 template <class K, class V>
 class StaticHashTable {
@@ -66,7 +67,7 @@ class StaticHashTable {
     StaticHashTable *self = new StaticHashTable();
     char *buffer = NULL; 
     
-    RandomAccessFile *fd = RandomAccessFile::New(file_path, status);
+    ReadableFile *fd = ReadableFile::New(file_path, status);
 
     int32_t magic_number;
     if (status.ok()) fd->ReadValue(magic_number, status);

@@ -1,10 +1,9 @@
 //
-// config.h
-// milkcat_config.h --- Created at 2013-09-17
+// candidate.h --- Created at 2014-02-03
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2014 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,17 +24,22 @@
 // THE SOFTWARE.
 //
 
-#ifndef MILKCAT_CONFIG_H
-#define MILKCAT_CONFIG_H
+#ifndef CANDIDATE_H
+#define CANDIDATE_H
 
-#include <stdlib.h>
+#include <vector>
+#include <unordered_map>
+#include <string>
+#include "utils/status.h"
 
-const int kTokenMax = 1000;
-const int kFeatureLengthMax = 100;
-const int kTermLengthMax = kFeatureLengthMax;
-const int kPOSTagLengthMax = 10;
-const int kHMMSegmentAndPOSTaggingNBest = 3;
-const int kUserTermIdStart = 0x40000000;
-const double kDefaultCost = 16.0;
+// Get the candidate from crf segmentation vocabulary specified by crf_vocab.
+// Returns a map the key is the word, and the value is its cost in unigram, which is
+// used for bigram segmentation
+std::unordered_map<std::string, float> GetCandidate(const char *model_path,
+                                                    const char *dict_path,
+                                                    const std::unordered_map<std::string, int> &crf_vocab, 
+                                                    int total_count,
+                                                    int thres_freq,
+                                                    Status &status);
 
 #endif

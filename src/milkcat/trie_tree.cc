@@ -24,9 +24,13 @@
 // THE SOFTWARE.
 //
 
+#include <stdio.h>
 #include <vector>
 #include <algorithm>
+#include <map>
+#include <unordered_map>
 #include "utils/utils.h"
+#include "utils/readable_file.h"
 #include "darts.h"
 #include "trie_tree.h"
 #include "milkcat_config.h"
@@ -43,48 +47,19 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &sta
   }
 }
 
-bool WordStrCmp(const char *w1, const char *w2) {
-  return strcmp(w1, w2) < 0;
-}
-
-DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromText(const char *file_path, Status &status) {
+DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(const std::map<std::string, int> &src_map) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
-  RandomAccessFile *fd = RandomAccessFile::New(file_path, status);
-  std::vector<const char *> word_list;
-  std::vector<int> user_id;
-  char *p;
+  std::vector<const char *> word_strs;
+  std::vector<int> word_ids;
 
-  while ((!fd->Eof()) && status.ok()) {
-    p = new char[48];
-    fd->ReadLine(p, 48, status);
-    trim(p);
-    // printf("%d\n", fd->Eof());
-
-    if (status.ok()) {
-      word_list.push_back(p);
-      user_id.push_back(kUserTermId);     
-    } else {
-      delete p;
-    }
+  // Note: the std::map is sorted by key, so it is unnecessary to sort the word
+  for (auto &x: src_map) {
+    word_strs.push_back(x.first.c_str());
+    word_ids.push_back(x.second);
   }
 
-  // Sort the word_list before build double array
-  if (status.ok()) std::sort(word_list.begin(), word_list.end(), WordStrCmp);
-
-  // Not start to build the double array trietree, it should take some times if the 
-  // file is big
-  if (status.ok()) self->double_array_.build(word_list.size(), &word_list[0], NULL, &user_id[0]);
-
-  for (std::vector<const char *>::iterator it = word_list.begin(); it != word_list.end(); ++it) {
-    delete *it;
-  }
-
-  if (!status.ok()) {
-    delete self;
-    return NULL;
-  } else {
-    return self;
-  }
+  self->double_array_.build(word_strs.size(), word_strs.data(), NULL, word_ids.data());
+  return self;
 }
 
 int DoubleArrayTrieTree::Search(const char *text) const {

@@ -42,6 +42,7 @@
         'src/milkcat/token_lex.h',
         'src/milkcat/tokenizer.cc',
         'src/milkcat/tokenizer.h',
+        'src/milkcat/libmilkcat.h',
         'src/milkcat/libmilkcat.cc',
         'src/milkcat/darts.h',
         'src/milkcat/milkcat.h',
@@ -75,6 +76,24 @@
         'src/utils/utils.cc',
         'src/utils/utils.h',
         'src/utils/strlcpy.cc',
+        'src/utils/readable_file.cc',
+        'src/utils/readable_file.h',
+        'src/utils/writable_file.cc',
+        'src/utils/writable_file.h',
+
+        'src/neko/crf_vocab.h',      
+        'src/neko/crf_vocab.cc',
+        'src/neko/candidate.cc',
+        'src/neko/candidate.h',
+        'src/neko/maxent_classifier.cc',
+        'src/neko/maxent_classifier.h',
+        'src/neko/mutual_information.cc',
+        'src/neko/mutual_information.h',
+        'src/neko/final_rank.cc',
+        'src/neko/final_rank.h',
+        'src/neko/bigram_anal.cc',
+        'src/neko/bigram_anal.h',
+        'src/neko/utf8.h',
       ],
     },
     {
@@ -85,6 +104,26 @@
       ],
       'sources': [
         'src/main.c', 
+      ],
+    },
+    {
+      'target_name': 'mk_model',
+      'type': 'executable',
+      'dependencies': [
+        'libmilkcat',
+      ],
+      'sources': [
+        'src/mk_model.cc', 
+      ],
+    },
+    {
+      'target_name': 'neko',
+      'type': 'executable',
+      'dependencies': [
+        'libmilkcat',
+      ],
+      'sources': [
+        'src/neko_main.cc', 
       ],
     },
   ],

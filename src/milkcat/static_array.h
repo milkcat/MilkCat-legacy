@@ -32,6 +32,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include "utils/utils.h"
+#include "utils/readable_file.h"
 
 template<class T>
 class StaticArray {
@@ -39,7 +40,7 @@ class StaticArray {
   static StaticArray *New(const char *file_path, Status &status) {
     int type_size = sizeof(T);
     StaticArray *self = new StaticArray();
-    RandomAccessFile *fd = RandomAccessFile::New(file_path, status);
+    ReadableFile *fd = ReadableFile::New(file_path, status);
 
     if (status.ok()) {
       if (fd->Size() % type_size != 0) status = Status::Corruption(file_path);
@@ -59,6 +60,17 @@ class StaticArray {
       delete self;
       return NULL;
     }
+  }
+
+  // Create a StaticArray<T> from an array specified by ptr, this function
+  // will copy the data of ptr into this->data_
+  static StaticArray *NewFromArray(T *ptr, int size) {
+    StaticArray *self = new StaticArray();
+    self->size_ = size;
+    self->data_ = new T[size];
+    memcpy(self->data_, ptr, sizeof(T) * size);
+
+    return self;
   }
 
   StaticArray(): data_(NULL), size_(0) {}

@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include "utils/utils.h"
+#include "utils/readable_file.h"
 #include "crf_model.h"
 
 inline const char *read_data(const char **ptr, size_t size) {
@@ -71,16 +72,18 @@ CRFModel::~CRFModel() {
 CRFModel *CRFModel::New(const char *model_path, Status &status) {
   CRFModel *self = new CRFModel();
 
-  RandomAccessFile *fd = RandomAccessFile::New(model_path, status);
+  ReadableFile *fd = ReadableFile::New(model_path, status);
   if (status.ok()) {
     self->data_ = new char[fd->Size()];
     fd->Read(self->data_, fd->Size(), status);
   }
 
-  const char *ptr = self->data_,
-             *end = ptr + fd->Size();
+  const char *ptr, *end;
 
   if (status.ok()) {
+    ptr = self->data_;
+    end = ptr + fd->Size();
+
     int32_t version = 0;
     read_value<int32_t>(&ptr, &version);
     if (version != 100) status = Status::Corruption(model_path);
@@ -131,7 +134,7 @@ CRFModel *CRFModel::New(const char *model_path, Status &status) {
     ptr += sizeof(float) * self->cost_num_;    
   }
 
-  if (ptr != end) {
+  if (status.ok() && ptr != end) {
     status = Status::Corruption(model_path);  
   }
 

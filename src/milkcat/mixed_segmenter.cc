@@ -36,13 +36,14 @@ MixedSegmenter *MixedSegmenter::New(
     const TrieTree *index,
     const TrieTree *user_index,
     const StaticArray<float> *unigram_cost,
+    const StaticArray<float> *user_unigram_cost,
     const StaticHashTable<int64_t, float> *bigram_cost,
     const CRFModel *seg_model,
     const TrieTree *oov_property,
     Status &status) {
 
   MixedSegmenter *self = new MixedSegmenter();
-  self->bigram_ = new BigramSegmenter(index, user_index, unigram_cost, bigram_cost);
+  self->bigram_ = new BigramSegmenter(index, user_index, unigram_cost, user_unigram_cost, bigram_cost);
   self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(seg_model, oov_property, status);
   if (status.ok()) self->bigram_result_ = new TermInstance();
 

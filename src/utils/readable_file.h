@@ -1,5 +1,6 @@
 //
-// mixed_segmenter.h --- Created at 2013-11-25
+// random_access_file.h --- Created at 2014-01-28
+// readable_file.h --- Created at 2014-02-03
 //
 // The MIT License (MIT)
 //
@@ -24,45 +25,45 @@
 // THE SOFTWARE.
 //
 
-#ifndef MIXED_SEGMENTER_H
-#define MIXED_SEGMENTER_H
+#ifndef READABLE_FILE_H
+#define READABLE_FILE_H 
 
-#include "utils/utils.h"
-#include "segmenter.h"
-#include "trie_tree.h"
-#include "static_array.h"
-#include "static_hashtable.h"
-#include "crf_model.h"
+#include <stdio.h>
+#include "status.h"
 
-class OutOfVocabularyWordRecognition;
-class BigramSegmenter;
-class TermInstance;
-class TokenInstance;
-
-// Mixed Bigram segmenter and CRF Segmenter of OOV recognition
-class MixedSegmenter: public Segmenter {
+// open a random access file for read
+class ReadableFile {
  public:
-  ~MixedSegmenter();
+  static ReadableFile *New(const char *file_path, Status &status);
+  ~ReadableFile();
 
-  static MixedSegmenter *New(
-      const TrieTree *index,
-      const TrieTree *user_index,
-      const StaticArray<float> *unigram_cost,
-      const StaticArray<float> *user_unigram_cost,
-      const StaticHashTable<int64_t, float> *bigram_cost,
-      const CRFModel *seg_model,
-      const TrieTree *oov_property,
-      Status &status);
+  // Read n bytes (size) from file and put to *ptr
+  bool Read(void *ptr, int size, Status &status);
 
-  // Segment a token instance into term instance
-  void Segment(TermInstance *term_instance, TokenInstance *token_instance);
+  // Read an type T from file
+  template<typename T>
+  bool ReadValue(T &data, Status &status) {
+    return Read(&data, sizeof(T), status);
+  }
+
+  // Read a line from file, if failed return false
+  bool ReadLine(char *buf, int size, Status &status);
+
+  bool Eof() { return ftell(fd_) == size_; }
+
+  // Get current position in file
+  int Tell();
+
+  // Get the file size
+  int Size() { return size_; }
 
  private:
-  TermInstance *bigram_result_;
-  BigramSegmenter *bigram_;
-  OutOfVocabularyWordRecognition *oov_recognizer_;
+  FILE *fd_;
+  int size_;
+  std::string file_path_;
 
-  MixedSegmenter();
+  ReadableFile();
 };
 
-#endif
+
+#endif // RANDOM_ACCESS_FILE_H

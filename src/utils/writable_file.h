@@ -1,9 +1,9 @@
 //
-// mixed_segmenter.h --- Created at 2013-11-25
+// writable_file.h --- Created at 2014-02-03
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2014 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,45 +24,28 @@
 // THE SOFTWARE.
 //
 
-#ifndef MIXED_SEGMENTER_H
-#define MIXED_SEGMENTER_H
+#ifndef WRITABLE_FILE_H
+#define WRITABLE_FILE_H
 
-#include "utils/utils.h"
-#include "segmenter.h"
-#include "trie_tree.h"
-#include "static_array.h"
-#include "static_hashtable.h"
-#include "crf_model.h"
+#include <stdio.h>
+#include <string>
+#include "utils/status.h"
 
-class OutOfVocabularyWordRecognition;
-class BigramSegmenter;
-class TermInstance;
-class TokenInstance;
-
-// Mixed Bigram segmenter and CRF Segmenter of OOV recognition
-class MixedSegmenter: public Segmenter {
+class WritableFile {
  public:
-  ~MixedSegmenter();
+  // Open a file for write. On success, return an instance of WritableFile.
+  // On failed, set status != Status::OK()
+  static WritableFile *New(const char *path, Status &status);
+  ~WritableFile();
 
-  static MixedSegmenter *New(
-      const TrieTree *index,
-      const TrieTree *user_index,
-      const StaticArray<float> *unigram_cost,
-      const StaticArray<float> *user_unigram_cost,
-      const StaticHashTable<int64_t, float> *bigram_cost,
-      const CRFModel *seg_model,
-      const TrieTree *oov_property,
-      Status &status);
-
-  // Segment a token instance into term instance
-  void Segment(TermInstance *term_instance, TokenInstance *token_instance);
+  // Writes a line to file
+  void WriteLine(const char *line, Status &status);
 
  private:
-  TermInstance *bigram_result_;
-  BigramSegmenter *bigram_;
-  OutOfVocabularyWordRecognition *oov_recognizer_;
+  FILE *fd_;
+  std::string file_path_;
 
-  MixedSegmenter();
+  WritableFile();
 };
 
 #endif

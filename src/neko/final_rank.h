@@ -1,10 +1,9 @@
 //
-// config.h
-// milkcat_config.h --- Created at 2013-09-17
+// final_rank.h --- Created at 2014-02-07
 //
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2014 ling0322 <ling032x@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,17 +24,17 @@
 // THE SOFTWARE.
 //
 
-#ifndef MILKCAT_CONFIG_H
-#define MILKCAT_CONFIG_H
+#ifndef FINAL_RANK_H
+#define FINAL_RANK_H
 
-#include <stdlib.h>
+#include <vector>
+#include <unordered_map>
+#include <string>
 
-const int kTokenMax = 1000;
-const int kFeatureLengthMax = 100;
-const int kTermLengthMax = kFeatureLengthMax;
-const int kPOSTagLengthMax = 10;
-const int kHMMSegmentAndPOSTaggingNBest = 3;
-const int kUserTermIdStart = 0x40000000;
-const double kDefaultCost = 16.0;
+std::vector<std::pair<std::string, double>> FinalRank(
+    const std::unordered_map<std::string, double> &adjecent_entropy,
+    const std::unordered_map<std::string, double> &mutual_information,
+    double remove_ratio = 0.1,
+    double alpha = 0.6);
 
 #endif

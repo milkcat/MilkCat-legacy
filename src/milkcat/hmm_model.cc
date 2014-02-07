@@ -30,6 +30,7 @@
 #include <stdexcept>
 #include <fstream>
 #include "utils/utils.h"
+#include "utils/readable_file.h"
 #include "hmm_model.h"
 
 #pragma pack(1)
@@ -44,7 +45,7 @@ HMMModel *HMMModel::New(const char *model_path, Status &status) {
 
   HMMModel *self = new HMMModel();
 
-  RandomAccessFile *fd = RandomAccessFile::New(model_path, status);
+  ReadableFile *fd = ReadableFile::New(model_path, status);
 
   int32_t magic_number;
   if (status.ok()) fd->ReadValue<int32_t>(magic_number, status);

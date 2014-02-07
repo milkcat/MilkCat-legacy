@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
   }
 
   milkcat_destroy(m);
-  milkcat_model_destory(model);
+  milkcat_model_destroy(model);
   free(input_buffer);
   if (use_stdin_flag == 0)
     fclose(fp);

@@ -27,6 +27,8 @@
 #ifndef TRIE_TREE_H
 #define TRIE_TREE_H
 
+#include <map>
+#include <string>
 #include "utils/utils.h"
 #include "darts.h"
 
@@ -53,10 +55,10 @@ inline TrieTree::~TrieTree() {}
 class DoubleArrayTrieTree: public TrieTree {
  public:
   static DoubleArrayTrieTree *New(const char *file_path, Status &status);
-
-  // Load the double array trietree from text file, the format of text file is
-  // one word per line
-  static DoubleArrayTrieTree *NewFromText(const char *file_path, Status &status);
+  
+  // Create the double array from the unordered_map data. The key of map is the word
+  // itself, and the value of map is the id of word
+  static DoubleArrayTrieTree *NewFromMap(const std::map<std::string, int> &src_map);
   DoubleArrayTrieTree() {}
 
   int Search(const char *text) const;

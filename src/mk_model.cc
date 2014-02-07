@@ -34,9 +34,9 @@
 #include <math.h>
 #include <stdint.h>
 #include <assert.h>
-#include <darts.h>
-#include "utils.h"
-#include "static_hashtable.h"
+#include "utils/utils.h"
+#include "milkcat/static_hashtable.h"
+#include "milkcat/darts.h"
 
 #pragma pack(1)
 struct BigramRecord {

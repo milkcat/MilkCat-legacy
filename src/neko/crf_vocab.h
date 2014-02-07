@@ -1,5 +1,5 @@
 //
-// mixed_segmenter.h --- Created at 2013-11-25
+// crf_vocab.h.cc --- Created at 2014-02-02
 //
 // The MIT License (MIT)
 //
@@ -24,45 +24,14 @@
 // THE SOFTWARE.
 //
 
-#ifndef MIXED_SEGMENTER_H
-#define MIXED_SEGMENTER_H
+#ifndef CRF_VOCAB_H
+#define CRF_VOCAB_H
 
-#include "utils/utils.h"
-#include "segmenter.h"
-#include "trie_tree.h"
-#include "static_array.h"
-#include "static_hashtable.h"
-#include "crf_model.h"
+#include <unordered_map>
+#include <string>
 
-class OutOfVocabularyWordRecognition;
-class BigramSegmenter;
-class TermInstance;
-class TokenInstance;
-
-// Mixed Bigram segmenter and CRF Segmenter of OOV recognition
-class MixedSegmenter: public Segmenter {
- public:
-  ~MixedSegmenter();
-
-  static MixedSegmenter *New(
-      const TrieTree *index,
-      const TrieTree *user_index,
-      const StaticArray<float> *unigram_cost,
-      const StaticArray<float> *user_unigram_cost,
-      const StaticHashTable<int64_t, float> *bigram_cost,
-      const CRFModel *seg_model,
-      const TrieTree *oov_property,
-      Status &status);
-
-  // Segment a token instance into term instance
-  void Segment(TermInstance *term_instance, TokenInstance *token_instance);
-
- private:
-  TermInstance *bigram_result_;
-  BigramSegmenter *bigram_;
-  OutOfVocabularyWordRecognition *oov_recognizer_;
-
-  MixedSegmenter();
-};
+// Segment the corpus from path and return the vocabulary of chinese words.
+// If any errors occured, status is not Status::OK()
+std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, int &total_count, Status &status);
 
 #endif
