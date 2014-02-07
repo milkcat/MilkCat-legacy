@@ -31,11 +31,24 @@
 #include "token_lex.h"
 #include "milkcat_config.h"
 
+Tokenization::Tokenization(): buffer_alloced_(false) {
+  yylex_init(&yyscanner);
+}
+
 Tokenization::~Tokenization() {
   if (buffer_alloced_ == true) {
-    yy_delete_buffer(yy_buffer_state_);
+    yy_delete_buffer(yy_buffer_state_, yyscanner);
   }
-  yylex_destroy();
+
+  yylex_destroy(yyscanner);
+}
+
+void Tokenization::Scan(const char *buffer_string) {
+  if (buffer_alloced_ == true) {
+    yy_delete_buffer(yy_buffer_state_, yyscanner);
+  }
+  buffer_alloced_ = true;
+  yy_buffer_state_ = yy_scan_string(buffer_string, yyscanner);
 }
 
 bool Tokenization::GetSentence(TokenInstance *token_instance) {
@@ -43,12 +56,11 @@ bool Tokenization::GetSentence(TokenInstance *token_instance) {
   int token_count = 0;
 
   while (token_count < kTokenMax - 1) {
-    token_type = yylex();
+    token_type = yylex(yyscanner);
 
-    if (token_type == TokenInstance::kEnd) 
-      break;
-    
-    token_instance->set_value_at(token_count, yytext, token_type);
+    if (token_type == TokenInstance::kEnd) break;
+
+    token_instance->set_value_at(token_count, yyget_text(yyscanner), token_type);
     token_count++;
     
     if (token_type == TokenInstance::kPeriod || token_type == TokenInstance::kCrLf) 
@@ -57,8 +69,4 @@ bool Tokenization::GetSentence(TokenInstance *token_instance) {
 
   token_instance->set_size(token_count);
   return token_count != 0;
-}
-
-int yywrap() {
-  return 1;
 }
