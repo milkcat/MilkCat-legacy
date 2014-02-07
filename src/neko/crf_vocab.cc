@@ -66,7 +66,9 @@ std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, int &tot
   }
 
   delete fd;
-  delete buf;
+  delete[] buf;
+  milkcat_destroy(analyzer);
+  milkcat_model_destroy(model);
 
   return vocab;
 }

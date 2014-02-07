@@ -162,15 +162,20 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
     }
   }
 
-  std::vector<std::string> id_to_str(dict.size());
-  for (auto &x: dict) id_to_str[x.second] = x.first;
+  if (status.ok()) {
+    std::vector<std::string> id_to_str(dict.size());
+    for (auto &x: dict) id_to_str[x.second] = x.first;
 
-  // Calculate the candidates' adjacent entropy and store in adjacent_entropy
-  for (auto it = word_adjacent.begin(); it != word_adjacent.end(); ++it) {
-    double left_entropy = CalculateAdjacentEntropy(it->left);
-    double right_entropy = CalculateAdjacentEntropy(it->right);
-    adjacent_entropy[id_to_str[it - word_adjacent.begin()]] = std::min(left_entropy, right_entropy);
+    // Calculate the candidates' adjacent entropy and store in adjacent_entropy
+    for (auto it = word_adjacent.begin(); it != word_adjacent.end(); ++it) {
+      double left_entropy = CalculateAdjacentEntropy(it->left);
+      double right_entropy = CalculateAdjacentEntropy(it->right);
+      adjacent_entropy[id_to_str[it - word_adjacent.begin()]] = std::min(left_entropy, right_entropy);
+    }
   }
 
   delete fd;
+  delete[] buf;
+  milkcat_destroy(analyzer);
+  milkcat_model_destroy(model);
 }

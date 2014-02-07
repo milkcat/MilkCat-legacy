@@ -73,7 +73,7 @@ MaxentClassifier::MaxentClassifier(MaxentModel *model):
 }
 
 MaxentClassifier::~MaxentClassifier() {
-  delete y_cost_;
+  delete[] y_cost_;
   y_cost_ = nullptr;
 }
 
