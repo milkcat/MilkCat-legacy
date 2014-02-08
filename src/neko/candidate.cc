@@ -30,6 +30,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "milkcat/libmilkcat.h"
 #include "utils/readable_file.h"
 #include "maxent_classifier.h"
 #include "crf_vocab.h"
@@ -61,26 +62,6 @@ std::vector<std::string> ExtractNameFeature(const char *name_str) {
   return feature_list;
 }
 
-// Load vocabulary (word, frequency) from the file specified by path. On success, return 
-// the vocabulary. On failed, set status != Status::OK()
-std::unordered_map<std::string, int> LoadVocabulary(const char *path, Status &status) {
-  ReadableFile *fd = ReadableFile::New(path, status);
-  std::unordered_map<std::string, int> vocab;
-  char line[1024], word[1024];
-  int count;
-
-  while (status.ok() && !fd->Eof()) {
-    fd->ReadLine(line, 1024, status);
-    if (status.ok()) {
-      sscanf(line, "%s %d", word, &count);
-      vocab[word] = count;
-    }
-  }
-
-  delete fd;
-  return vocab;
-}
-
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
 // Returns a map the key is the word, and the value is its cost in unigram, which is
 // used for bigram segmentation
@@ -91,7 +72,9 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
                                                     int thres_freq,
                                                     Status &status) {
   std::unordered_map<std::string, float> candidates;
-  auto original_vocab = LoadVocabulary(dict_path, status);
+
+  ModelFactory *model_factory = new ModelFactory(MODEL_PATH);
+  const TrieTree *index = model_factory->Index(status);
 
   MaxentModel *name_model = nullptr;
   if (status.ok()) name_model = MaxentModel::New(model_path, status);
@@ -104,7 +87,7 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
 
       // If the word frequency is greater than the threshold value and it not exists in 
       // the original vocabulary 
-      if (x.second > thres_freq && original_vocab.find(x.first) == original_vocab.end()) {
+      if (x.second > thres_freq && index->Search(x.first.c_str()) < 0) {
         const char *y = classifier->Classify(ExtractNameFeature(x.first.c_str()));
 
         // And if it is not a name 
@@ -117,6 +100,7 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
 
   delete name_model;
   delete classifier;
+  delete model_factory;
 
   return candidates;
 }
