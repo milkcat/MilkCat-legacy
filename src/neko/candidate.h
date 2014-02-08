@@ -32,6 +32,8 @@
 #include <string>
 #include "utils/status.h"
 
+constexpr int kDefaultThresFreq = -1;
+
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
 // Returns a map the key is the word, and the value is its cost in unigram, which is
 // used for bigram segmentation
@@ -39,7 +41,7 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
                                                     const char *dict_path,
                                                     const std::unordered_map<std::string, int> &crf_vocab, 
                                                     int total_count,
-                                                    int thres_freq,
-                                                    Status &status);
+                                                    Status &status,
+                                                    int thres_freq = kDefaultThresFreq);
 
 #endif

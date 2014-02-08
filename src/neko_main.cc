@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   std::unordered_map<std::string, int> vocab = GetCrfVocabulary(argv[1], total_count, status);
   std::unordered_map<std::string, float> candidates;
   if (status.ok()) {
-    candidates = GetCandidate("model.txt", "unigram.txt", vocab, total_count, 8, status);
+    candidates = GetCandidate("model.txt", "unigram.txt", vocab, total_count, status);
   }
   
   WritableFile *fd = nullptr;
@@ -63,6 +63,8 @@ int main(int argc, char **argv) {
   
   if (status.ok()) BigramAnalyze(candidates, argv[1], adjacent_entropy, vocab, status);
   if (status.ok()) mutual_information = GetMutualInformation(vocab, candidates, status);
+
+
 
   if (status.ok()) {
     auto final_rank = FinalRank(adjacent_entropy, mutual_information);

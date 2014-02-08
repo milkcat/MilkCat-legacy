@@ -34,6 +34,7 @@
 #include "utils/readable_file.h"
 #include "maxent_classifier.h"
 #include "crf_vocab.h"
+#include "candidate.h"
 #include "utf8.h"
 
 // Extracts features from name_str for the maxent classifier
@@ -69,8 +70,8 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
                                                     const char *dict_path,
                                                     const std::unordered_map<std::string, int> &crf_vocab, 
                                                     int total_count,
-                                                    int thres_freq,
-                                                    Status &status) {
+                                                    Status &status,
+                                                    int thres_freq) {
   std::unordered_map<std::string, float> candidates;
 
   ModelFactory *model_factory = new ModelFactory(MODEL_PATH);
@@ -81,6 +82,10 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
 
   MaxentClassifier *classifier = nullptr;
   if (status.ok()) classifier = new MaxentClassifier(name_model);
+
+  // Calculate the thres_freq via total_count if thres_freq = kDefaultThresFreq
+  if (thres_freq = kDefaultThresFreq)
+    thres_freq = static_cast<int>(atan(1e-7 * total_count) * 50) + 2;
 
   if (status.ok()) {
     for (auto &x: crf_vocab) {
