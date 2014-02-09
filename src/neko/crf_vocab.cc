@@ -25,6 +25,7 @@
 //
 
 #include <stdio.h>
+#include <assert.h>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -59,6 +60,9 @@ void CrfSegmentThread(milkcat_model_t *model,
     fd_mutex.lock();
     eof = fd->Eof();
     if (!eof) fd->ReadLine(buf, buf_size, status);
+    if (!status.ok()) {
+      printf("err: %d %d\n", fd->Tell(), !eof);
+    }
     fd_mutex.unlock();
 
     // Segment the line and store the results into words
@@ -105,6 +109,8 @@ std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, int &tot
     std::vector<Status> status_vec(n_threads);
     std::vector<std::thread> threads;
     std::mutex fd_mutex, vocab_mutex;
+
+    printf("file_size %d\n", fd->Size());
 
     for (int i = 0; i < n_threads; ++i) {
       threads.push_back(std::thread(CrfSegmentThread, 

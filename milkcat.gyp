@@ -4,15 +4,20 @@
       '-g',
       '-fPIC',
       '-O2',
-      '-pthread',
     ],
     'cflags_cc': [
       '-std=c++11',
       '-fno-rtti',
     ],
-    'ldflags': [
-      '-pthread'
-    ],
+    'xcode_settings': {
+        'OTHER_CFLAGS': [
+        '-g',
+        '-fPIC',
+        '-O2',
+        '-std=c++11',
+        '-fno-rtti',
+      ],
+    },
     'include_dirs': [
       'src',
     ],
@@ -102,6 +107,12 @@
       'dependencies': [
         'libmilkcat',
       ],
+      'xcode_settings': {
+          'OTHER_CFLAGS!': [
+          '-std=c++11',
+          '-fno-rtti',
+        ],
+      },
       'sources': [
         'src/main.c', 
       ],
