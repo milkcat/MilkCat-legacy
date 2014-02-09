@@ -32,6 +32,10 @@
 
 // Segment the corpus from path and return the vocabulary of chinese words.
 // If any errors occured, status is not Status::OK()
-std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, int &total_count, Status &status);
+std::unordered_map<std::string, int> GetCrfVocabulary(
+    const char *path, 
+    int &total_count, 
+    void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second),
+    Status &status);
 
 #endif

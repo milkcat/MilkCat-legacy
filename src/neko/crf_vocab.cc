@@ -25,14 +25,18 @@
 //
 
 #include <stdio.h>
+#include <stdint.h>
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <chrono>
+#include <atomic>
 #include <thread>
 #include <mutex>
 #include "milkcat/milkcat.h"
 #include "utils/readable_file.h"
 #include "utils/status.h"
+
 
 // To analyze the corpus in multi-threading
 void CrfSegmentThread(milkcat_model_t *model,
@@ -88,10 +92,34 @@ void CrfSegmentThread(milkcat_model_t *model,
   delete[] buf;
 }
 
+// Thread to update progress information via calling callback function progress
+void ProgressUpdateThread(
+    ReadableFile *fd, 
+    std::mutex &fd_mutex,
+    std::atomic_bool &task_finished,
+    void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second)) {
+
+  int64_t file_size = fd->Size();     
+  int64_t last_bytes_processed = 0,
+          bytes_processed = 0;
+
+  while (task_finished.load() == false) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    last_bytes_processed = bytes_processed;
+    fd_mutex.lock();
+    bytes_processed = fd->Tell();
+    fd_mutex.unlock();
+    progress(bytes_processed, file_size, bytes_processed - last_bytes_processed);
+  }  
+}
 
 // Segment the corpus from path and return the vocabulary of chinese words.
 // If any errors occured, status is not Status::OK()
-std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, int &total_count, Status &status) {
+std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, 
+                                                      int &total_count,
+                                                      void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second), 
+                                                      Status &status) {
   std::unordered_map<std::string, int> vocab;
   milkcat_model_t *model = milkcat_model_new(NULL);
   total_count = 0;
@@ -100,11 +128,15 @@ std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, int &tot
   if (status.ok()) fd = ReadableFile::New(path, status);
 
   if (status.ok()) {
+    int64_t file_size = fd->Size();  
+
     // Thread number = CPU core number
     int n_threads = std::thread::hardware_concurrency();
     std::vector<Status> status_vec(n_threads);
     std::vector<std::thread> threads;
+    std::thread progress_thread;
     std::mutex fd_mutex, vocab_mutex;
+    std::atomic_bool task_finished;
 
     for (int i = 0; i < n_threads; ++i) {
       threads.push_back(std::thread(CrfSegmentThread, 
@@ -117,8 +149,15 @@ std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, int &tot
                                     std::ref(status_vec[i])));
     }
 
-    // Synchronizing all threads
+    // Synchronizing all threads, call progress function per second
+
+    if (progress) {
+      progress_thread = std::thread(ProgressUpdateThread, fd, std::ref(fd_mutex), std::ref(task_finished), progress);
+    }
+    
     for (auto &th: threads) th.join();
+    task_finished.store(true);
+    if (progress) progress_thread.join();
 
     // Set the status
     for (auto &st: status_vec) {

@@ -38,7 +38,7 @@ ReadableFile *ReadableFile::New(const char *file_path, Status &status) {
 
   if ((self->fd_ = fopen(file_path, "rb")) != NULL) {
     fseek(self->fd_, 0, SEEK_END);
-    self->size_ = ftell(self->fd_);
+    self->size_ = ftello(self->fd_);
     fseek(self->fd_, 0, SEEK_SET);
     return self;
 
@@ -78,4 +78,6 @@ ReadableFile::~ReadableFile() {
   if (fd_ != NULL) fclose(fd_);
 }
 
-int ReadableFile::Tell() { return ftell(fd_); }
+int64_t ReadableFile::Tell() { 
+  return ftello(fd_);; 
+}

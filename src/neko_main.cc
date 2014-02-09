@@ -35,13 +35,35 @@
 #include "neko/final_rank.h"
 #include "utils/writable_file.h"
 
+void DisplayProgress(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second) {
+  fprintf(stderr, 
+          "\rprogress %lld/%lld -- %2.1f%% %.3fMB/s", 
+          static_cast<long long>(bytes_processed), 
+          static_cast<long long>(file_size),
+          100.0 * bytes_processed / file_size,
+          bytes_per_second / static_cast<double>(1024 * 1024));
+}
+
 int main(int argc, char **argv) {
   Status status;
   int total_count = 0;
-  std::unordered_map<std::string, int> vocab = GetCrfVocabulary(argv[1], total_count, status);
+
+  printf("Segment corpus %s with CRF model.\n", argv[1]);
+  std::unordered_map<std::string, int> vocab = GetCrfVocabulary(argv[1], total_count, DisplayProgress, status);
+
+  if (status.ok()) {
+    printf("\nOK, %d words in corpus, vocabulary size is %d\nGet candidates from vocabulary.\n", 
+           total_count,
+           static_cast<int>(vocab.size()));
+  }
+
   std::unordered_map<std::string, float> candidates;
   if (status.ok()) {
-    candidates = GetCandidate("model.txt", "unigram.txt", vocab, total_count, status);
+    candidates = GetCandidate("model.txt", vocab, total_count, puts, status);
+  }
+
+  if (status.ok()) {
+    printf("Get %d candidates. Write to candidate_cost.txt\n", static_cast<int>(candidates.size()));    
   }
   
   WritableFile *fd = nullptr;
@@ -57,24 +79,39 @@ int main(int argc, char **argv) {
 
   delete fd;
 
-  vocab.clear();
+  // Clear the vocab
+  vocab = std::unordered_map<std::string, int>();
+
   std::unordered_map<std::string, double> adjacent_entropy;
   std::unordered_map<std::string, double> mutual_information;
-  
-  if (status.ok()) BigramAnalyze(candidates, argv[1], adjacent_entropy, vocab, status);
+
+  if (status.ok()) printf("Analyze %s with bigram segmentation.\n", argv[1]);
+  if (status.ok()) BigramAnalyze(candidates, argv[1], adjacent_entropy, vocab, DisplayProgress, status);
+
+  if (status.ok()) printf("\nCalculate mutual information.\n");
   if (status.ok()) mutual_information = GetMutualInformation(vocab, candidates, status);
 
+  if (status.ok()) printf("Calculate final rank.\n");
 
+  std::vector<std::pair<std::string, double>> final_rank;
+  if (status.ok()) final_rank = FinalRank(adjacent_entropy, mutual_information);
 
+  if (status.ok()) printf("Write result to %s\n", argv[2]);
   if (status.ok()) {
-    auto final_rank = FinalRank(adjacent_entropy, mutual_information);
+    WritableFile *wf = WritableFile::New(argv[2], status);
     for (auto &x: final_rank) {
-      printf("%s %f\n", x.first.c_str(), x.second);
-    } 
+      if (!status.ok()) break;
+
+      sprintf(line, "%s %.3f", x.first.c_str(), x.second);
+      wf->WriteLine(line, status);
+    }
+    delete wf; 
   }
 
   if (!status.ok()) {
     printf("%s\n", status.what());
+  } else {
+    puts("Success!");
   }
 
   return 0;

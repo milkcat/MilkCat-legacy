@@ -67,12 +67,13 @@ std::vector<std::string> ExtractNameFeature(const char *name_str) {
 // Returns a map the key is the word, and the value is its cost in unigram, which is
 // used for bigram segmentation
 std::unordered_map<std::string, float> GetCandidate(const char *model_path,
-                                                    const char *dict_path,
                                                     const std::unordered_map<std::string, int> &crf_vocab, 
                                                     int total_count,
+                                                    int (* log_func)(const char *message),
                                                     Status &status,
                                                     int thres_freq) {
   std::unordered_map<std::string, float> candidates;
+  char msg_text[1024];
 
   ModelFactory *model_factory = new ModelFactory(MODEL_PATH);
   const TrieTree *index = model_factory->Index(status);
@@ -87,6 +88,12 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
   if (thres_freq = kDefaultThresFreq)
     thres_freq = static_cast<int>(atan(1e-7 * total_count) * 50) + 2;
 
+  if (status.ok() && log != nullptr) {
+    sprintf(msg_text, "Threshold frequency of candidates is %d", thres_freq);
+    log_func(msg_text);
+  }
+
+  int person_name = 0;
   if (status.ok()) {
     for (auto &x: crf_vocab) {
 
@@ -98,9 +105,16 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
         // And if it is not a name 
         if (strcmp(y, "F") == 0) {  
           candidates[x.first] = -log(static_cast<float>(x.second) / total_count);
+        } else {
+          person_name++;
         }
       }
     }
+  }
+
+  if (status.ok() && log != nullptr) {
+    sprintf(msg_text, "Filtered %d person names.", person_name);
+    log_func(msg_text);
   }
 
   delete name_model;

@@ -29,6 +29,7 @@
 #define READABLE_FILE_H 
 
 #include <stdio.h>
+#include <stdint.h>
 #include "status.h"
 
 // open a random access file for read
@@ -49,17 +50,17 @@ class ReadableFile {
   // Read a line from file, if failed return false
   bool ReadLine(char *buf, int size, Status &status);
 
-  bool Eof() { return ftell(fd_) == size_; }
+  bool Eof() { return Tell() >= size_; }
 
   // Get current position in file
-  int Tell();
+  int64_t Tell();
 
   // Get the file size
-  int Size() { return size_; }
+  int64_t Size() { return size_; }
 
  private:
   FILE *fd_;
-  int size_;
+  int64_t size_;
   std::string file_path_;
 
   ReadableFile();

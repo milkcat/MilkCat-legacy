@@ -24,18 +24,21 @@
 // THE SOFTWARE.
 //
 
+#include <math.h>
+#include <stdio.h>
 #include <unordered_map>
 #include <string>
 #include <map>
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include <thread>
 #include <utility>
-#include <math.h>
-#include <stdio.h>
 #include "utils/readable_file.h"
 #include "utils/status.h"
 #include "milkcat/milkcat.h"
+
+namespace {
 
 struct Adjacent {
   std::map<int, int> left;
@@ -157,6 +160,31 @@ void BigramAnalyzeThread(milkcat_model_t *model,
   delete buf;
 }
 
+// Thread to update progress information via calling callback function progress
+void ProgressUpdateThread(
+    ReadableFile *fd, 
+    std::mutex &fd_mutex,
+    std::atomic_bool &task_finished,
+    void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second)) {
+
+  int64_t file_size = fd->Size();     
+  int64_t last_bytes_processed = 0,
+          bytes_processed = 0;
+
+  while (task_finished.load() == false) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    last_bytes_processed = bytes_processed;
+    fd_mutex.lock();
+    bytes_processed = fd->Tell();
+    fd_mutex.unlock();
+    progress(bytes_processed, file_size, bytes_processed - last_bytes_processed);
+  }  
+}
+
+
+} // end namespace
+
 // Use bigram segmentation to analyze a corpus. Candidate to analyze is specified by 
 // candidate, and the corpus is specified by corpus_path. It would use a temporary file
 // called 'candidate_cost.txt' as user dictionary file for MilkCat.
@@ -166,6 +194,7 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                    const char *corpus_path,
                    std::unordered_map<std::string, double> &adjacent_entropy,
                    std::unordered_map<std::string, int> &vocab,
+                   void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second), 
                    Status &status) {
 
   std::unordered_map<std::string, int> dict;
@@ -193,6 +222,8 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
     std::vector<Status> status_vec(n_threads);
     std::vector<std::thread> threads;
     std::mutex update_mutex, fd_mutex;
+    std::thread progress_thread;
+    std::atomic_bool task_finished;
 
     for (int i = 0; i < n_threads; ++i) {
       threads.push_back(std::thread(BigramAnalyzeThread,
@@ -207,8 +238,14 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                                     std::ref(status_vec[i])));
     }
 
+    if (progress) {
+      progress_thread = std::thread(ProgressUpdateThread, fd, std::ref(fd_mutex), std::ref(task_finished), progress);
+    }
+
     // Synchronizing all threads
     for (auto &th: threads) th.join();
+    task_finished.store(true);
+    if (progress) progress_thread.join();
 
     // Set the status
     for (auto &st: status_vec) {
