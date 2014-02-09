@@ -59,7 +59,9 @@ int main(int argc, char **argv) {
 
   std::unordered_map<std::string, float> candidates;
   if (status.ok()) {
-    candidates = GetCandidate("model.txt", vocab, total_count, puts, status);
+    std::string model_path = MODEL_PATH;
+    model_path += "person_name.maxent";
+    candidates = GetCandidate(model_path.c_str(), vocab, total_count, puts, status);
   }
 
   if (status.ok()) {
@@ -85,19 +87,24 @@ int main(int argc, char **argv) {
   std::unordered_map<std::string, double> adjacent_entropy;
   std::unordered_map<std::string, double> mutual_information;
 
-  if (status.ok()) printf("Analyze %s with bigram segmentation.\n", argv[1]);
-  if (status.ok()) BigramAnalyze(candidates, argv[1], adjacent_entropy, vocab, DisplayProgress, status);
+  if (status.ok()) {
+    printf("Analyze %s with bigram segmentation.\n", argv[1]);
+    BigramAnalyze(candidates, argv[1], adjacent_entropy, vocab, DisplayProgress, status);
+  }
 
-  if (status.ok()) printf("\nCalculate mutual information.\n");
-  if (status.ok()) mutual_information = GetMutualInformation(vocab, candidates, status);
-
-  if (status.ok()) printf("Calculate final rank.\n");
+  if (status.ok()) {
+    printf("\nCalculate mutual information.\n");
+    mutual_information = GetMutualInformation(vocab, candidates, status);
+  }
 
   std::vector<std::pair<std::string, double>> final_rank;
-  if (status.ok()) final_rank = FinalRank(adjacent_entropy, mutual_information);
-
-  if (status.ok()) printf("Write result to %s\n", argv[2]);
   if (status.ok()) {
+    printf("Calculate final rank.\n");
+    final_rank = FinalRank(adjacent_entropy, mutual_information);
+  }
+
+  if (status.ok()) {
+    printf("Write result to %s\n", argv[2]);
     WritableFile *wf = WritableFile::New(argv[2], status);
     for (auto &x: final_rank) {
       if (!status.ok()) break;

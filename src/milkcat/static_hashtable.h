@@ -37,6 +37,8 @@
 #include <string>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
+#include "utils/writable_file.h"
+#include "utils/status.h"
 
 template <class K, class V>
 class StaticHashTable {
@@ -133,47 +135,26 @@ class StaticHashTable {
   }
 
   // Save the hash table into file
-  bool Save(const char *file_path) const {
-    FILE *fd;
+  void Save(const char *file_path, Status &status) const {
     char buffer[kSerializeBukcetSize];
+    WritableFile *fd = WritableFile::New(file_path, status);
 
-    try {
-      fd = fopen(file_path, "w");
-      if (fd == NULL) throw std::runtime_error(std::string("unable to write to file ") + file_path);
+    int32_t magic_number = 0x3321;
+    if (status.ok()) fd->WriteValue<int32_t>(magic_number, status);
+    if (status.ok()) fd->WriteValue<int32_t>(bucket_size_, status);
+    if (status.ok()) fd->WriteValue<int32_t>(data_size_, status);
 
-      int32_t magic_number = 0x3321;
-      if (1 != fwrite(&magic_number, sizeof(int32_t), 1, fd)) 
-        throw std::runtime_error(std::string("unable to write to file ") + file_path);
+    int32_t serialize_size = kSerializeBukcetSize;
+    if (status.ok()) fd->WriteValue<int32_t>(serialize_size, status);
 
-      int32_t bucket_size = bucket_size_;
-      if (1 != fwrite(&bucket_size, sizeof(int32_t), 1, fd)) 
-        throw std::runtime_error(std::string("unable to write to file ") + file_path);
-
-      int32_t data_size = data_size_;
-      if (1 != fwrite(&data_size, sizeof(int32_t), 1, fd)) 
-        throw std::runtime_error(std::string("unable to write to file ") + file_path);
-
-      int32_t serialize_size = kSerializeBukcetSize;
-      if (1 != fwrite(&serialize_size, sizeof(int32_t), 1, fd)) 
-        throw std::runtime_error(std::string("unable to write to file ") + file_path);
-
-      for (int i = 0; i < bucket_size_; ++i) {
-        if (buckets_[i].empty == false) {
-          Serialize(i, buckets_[i].key, buckets_[i].value, buffer, sizeof(buffer));
-          if (1 != fwrite(buffer, kSerializeBukcetSize, 1, fd)) 
-            throw std::runtime_error(std::string("unable to write to file ") + file_path);
-        }
+    for (int i = 0; i < bucket_size_ && status.ok(); ++i) {
+      if (buckets_[i].empty == false) {
+        Serialize(i, buckets_[i].key, buckets_[i].value, buffer, sizeof(buffer));
+        fd->Write(buffer, kSerializeBukcetSize, status);
       }
-
-      fclose(fd);
-      return true;
-
-    } catch (std::exception &ex) {
-      puts(ex.what());
-
-      if (fd != NULL) fclose(fd);
-      return false;
     }
+
+    delete fd;
   }
 
   // Find the value by key in hash table if exist return a const pointer to the value

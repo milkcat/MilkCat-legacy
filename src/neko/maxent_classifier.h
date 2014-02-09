@@ -35,39 +35,49 @@
 class MaxentModel {
  public:
   // Load and create the maximum entropy model data from the model file specified 
-  // by model_path. On success, return the instance and status = Status::OK(). On 
+  // by model_path. New loads binary model file and NewFromText loads model file of 
+  // text format. On success, return the instance and status = Status::OK(). On 
   // failed, return nullptr and status != Status::OK()
+  static MaxentModel *NewFromText(const char *model_path, Status &status);
   static MaxentModel *New(const char *model_path, Status &status);
+
+  MaxentModel();
+  ~MaxentModel();
+
+  // Save the model data into file
+  void Save(const char *model_path, Status &status);
 
   // Get the cost of a feature with its y-tag in maximum entropy model
   float cost(int yid, int feature_id) {
-    return model_[yid][feature_id];
+    return cost_[feature_id * ysize_ + yid];
   }
 
   // If the feature_str not exists in feature set, use this value instead
   static constexpr int kFeatureIdNone = -1;
+  static constexpr int kYNameMax = 64;
 
   // Get the number of y-tags in the model
-  int ysize() const { return yname_.size(); }
+  int ysize() const { return ysize_; }
 
   // Get the name string of a y-tag's id
-  const char *yname(int yid) const { return yname_[yid].c_str(); }
+  const char *yname(int yid) const { return yname_[yid]; }
 
   // Return the id of feature_str, if the feature_str not in feature set of model
   // return kFeatureIdNone
   int feature_id(const char *feature_str) const {
-    auto it = feature_ids_.find(std::string(feature_str));
-    if (it == feature_ids_.end())
-      return kFeatureIdNone;
+    int id = double_array_.exactMatchSearch<int>(feature_str);
+    if (id >= 0)
+      return id;
     else
-      return it->second;
+      return kFeatureIdNone;
   }
 
  private:
-  std::unordered_map<std::string, int> feature_ids_;
-  std::unordered_map<std::string, int> yid_;
-  std::vector<std::string> yname_;
-  std::unordered_map<int, std::unordered_map<int, float>> model_;
+  Darts::DoubleArray double_array_;
+  int xsize_;
+  int ysize_;
+  char (*yname_)[kYNameMax];
+  float *cost_;
 };
 
 class MaxentClassifier {

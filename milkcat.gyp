@@ -9,6 +9,7 @@
     'cflags_cc': [
       '-std=c++11',
       '-fno-rtti',
+      '-fno-exceptions',
     ],
     'ldflags': [
       '-pthread'
@@ -119,6 +120,9 @@
     {
       'target_name': 'neko',
       'type': 'executable',
+      'defines': [
+        'MODEL_PATH="<(model_path)"',
+      ],
       'dependencies': [
         'libmilkcat',
       ],

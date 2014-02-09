@@ -41,6 +41,15 @@ class WritableFile {
   // Writes a line to file
   void WriteLine(const char *line, Status &status);
 
+  // Writes data to file
+  void Write(const void *data, int size, Status &status);
+
+  // Write an type T to file
+  template<typename T>
+  void WriteValue(const T &data, Status &status) {
+    Write(&data, sizeof(data), status);
+  }
+
  private:
   FILE *fd_;
   std::string file_path_;
