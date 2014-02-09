@@ -38,9 +38,9 @@ constexpr int kDefaultThresFreq = -1;
 // Returns a map the key is the word, and the value is its cost in unigram, which is
 // used for bigram segmentation
 std::unordered_map<std::string, float> GetCandidate(const char *model_path,
-                                                    const char *dict_path,
                                                     const std::unordered_map<std::string, int> &crf_vocab, 
                                                     int total_count,
+                                                    int (* log)(const char *message),
                                                     Status &status,
                                                     int thres_freq = kDefaultThresFreq);
 
