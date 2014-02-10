@@ -28,11 +28,11 @@
 #ifndef LIBMILKCAT_H
 #define LIBMILKCAT_H
 
-#include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 #include "utils/utils.h"
@@ -132,7 +132,7 @@ class ModelFactory {
  private:
   std::string model_dir_path_;
   std::string user_dictionary_path_;
-  pthread_mutex_t mutex;
+  std::mutex mutex;
 
   const TrieTree *unigram_index_;
   const TrieTree *user_index_;

@@ -189,13 +189,9 @@ ModelFactory::ModelFactory(const char *model_dir_path):
     oov_property_(nullptr),
     user_index_(nullptr),
     default_tag_(nullptr) {
-
-  pthread_mutex_init(&mutex, nullptr);
 }
 
 ModelFactory::~ModelFactory() {
-  pthread_mutex_destroy(&mutex);
-
   delete user_index_;
   user_index_ = nullptr;
 
@@ -228,11 +224,11 @@ ModelFactory::~ModelFactory() {
 }
 
 const TrieTree *ModelFactory::Index(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (unigram_index_ == nullptr) {
     unigram_index_ = DoubleArrayTrieTree::New((model_dir_path_ + UNIGRAM_INDEX).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return unigram_index_;
 }
 
@@ -285,83 +281,83 @@ void ModelFactory::LoadUserDictionary(Status &status) {
 }
 
 const TrieTree *ModelFactory::UserIndex(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (user_index_ == nullptr) {
     LoadUserDictionary(status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return user_index_;
 } 
 
 const StaticArray<float> *ModelFactory::UserCost(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (user_cost_ == nullptr) {
     LoadUserDictionary(status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return user_cost_;
 } 
 
 const StaticArray<float> *ModelFactory::UnigramCost(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (unigram_cost_ == NULL) {
     unigram_cost_ = StaticArray<float>::New((model_dir_path_ + UNIGRAM_DATA).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return unigram_cost_;
 }
 
 const StaticHashTable<int64_t, float> *ModelFactory::BigramCost(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (bigram_cost_ == NULL) {
     bigram_cost_ = StaticHashTable<int64_t, float>::New((model_dir_path_ + BIGRAM_DATA).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return bigram_cost_;
 }
 
 const CRFModel *ModelFactory::CRFSegModel(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (seg_model_ == NULL) {
     seg_model_ = CRFModel::New((model_dir_path_ + CRF_SEGMENTER_MODEL).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return seg_model_;   
 }
 
 const CRFModel *ModelFactory::CRFPosModel(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (crf_pos_model_ == NULL) {
     crf_pos_model_ = CRFModel::New((model_dir_path_ + CRF_PART_OF_SPEECH_MODEL).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return crf_pos_model_;   
 }
 
 const HMMModel *ModelFactory::HMMPosModel(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (hmm_pos_model_ == NULL) {
     hmm_pos_model_ = HMMModel::New((model_dir_path_ + HMM_PART_OF_SPEECH_MODEL).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return hmm_pos_model_;   
 }
 
 const TrieTree *ModelFactory::OOVProperty(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (oov_property_ == NULL) {
     oov_property_ = DoubleArrayTrieTree::New((model_dir_path_ + OOV_PROPERTY).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return oov_property_;
 }
 
 const Configuration *ModelFactory::DefaultTag(Status &status) {
-  pthread_mutex_lock(&mutex);
+  mutex.lock();
   if (default_tag_ == NULL) {
     default_tag_ = Configuration::New((model_dir_path_ + DEFAULT_TAG).c_str(), status);
   }
-  pthread_mutex_unlock(&mutex);
+  mutex.unlock();
   return default_tag_;
 }
 
