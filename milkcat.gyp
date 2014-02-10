@@ -8,6 +8,7 @@
     'cflags_cc': [
       '-std=c++11',
       '-fno-rtti',
+      '-fno-exceptions',
     ],
     'xcode_settings': {
         'OTHER_CFLAGS': [
@@ -130,6 +131,9 @@
     {
       'target_name': 'neko',
       'type': 'executable',
+      'defines': [
+        'MODEL_PATH="<(model_path)"',
+      ],
       'dependencies': [
         'libmilkcat',
       ],

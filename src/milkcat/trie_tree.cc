@@ -41,7 +41,7 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &sta
   if (-1 == self->double_array_.open(file_path)) {
     status = Status::IOError(file_path);
     delete self;
-    return NULL;
+    return nullptr;
   } else {
     return self;
   }
@@ -58,7 +58,7 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(const std::map<std::string,
     word_ids.push_back(x.second);
   }
 
-  self->double_array_.build(word_strs.size(), word_strs.data(), NULL, word_ids.data());
+  self->double_array_.build(word_strs.size(), word_strs.data(), nullptr, word_ids.data());
   return self;
 }
 

@@ -63,3 +63,12 @@ void WritableFile::WriteLine(const char *line, Status &status) {
     status = Status::IOError(error_message.c_str());
   }
 }
+
+void WritableFile::Write(const void *data, int size, Status &status) {
+  std::string error_message;
+
+  if (fwrite(data, size, 1, fd_) < 1) {
+    error_message = std::string("Failed to write to ") + file_path_;
+    status = Status::IOError(error_message.c_str());    
+  }
+}

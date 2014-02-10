@@ -35,8 +35,11 @@
 #include <stdint.h>
 #include <assert.h>
 #include "utils/utils.h"
+#include "utils/readable_file.h"
+#include "utils/writable_file.h"
 #include "milkcat/static_hashtable.h"
 #include "milkcat/darts.h"
+#include "neko/maxent_classifier.h"
 
 #pragma pack(1)
 struct BigramRecord {
@@ -57,63 +60,63 @@ struct HMMEmitRecord {
 #define BIGRAM_FILE "bigram.bin"
 #define HMM_MODEL_FILE "hmm_model.bin"
 
-// Load unigram data from unigram_file, returns the number of entries successfully loaded
-// if an error occured return -1
-int LoadUnigramFile(const char *unigram_file, std::map<std::string, double> &unigram_data) {
-  FILE *fp = fopen(unigram_file, "r");
-  char word[100];
-  double count,
-         sum = 0;
+// Load unigram data from unigram_file, if an error occured set status != Status::OK()
+void LoadUnigramFile(const char *unigram_file, 
+                     std::map<std::string, double> &unigram_data,
+                     Status &status) {
 
-  if (fp == NULL) {
-    fprintf(stderr, "\nerror: unable to open unigram file %s\n", unigram_file);
-    fflush(stderr);
-    return -1;
-  }
+  ReadableFile *fd = ReadableFile::New(unigram_file, status);
+  char word[1024], line[1024];
+  double count, sum = 0;
 
-  while (EOF != fscanf(fp, "%s %lf", word, &count)) {
-    unigram_data[std::string(word)] += count;
-    sum += count;
+  while (status.ok() && !fd->Eof()) {
+    fd->ReadLine(line, sizeof(line), status);
+    if (status.ok()) {
+      sscanf(line, "%s %lf", word, &count);
+      unigram_data[std::string(word)] += count;
+      sum += count;      
+    }
   }
 
   // Calculate the weight = -log(freq / total)
-  for (std::map<std::string, double>::iterator it = unigram_data.begin(); it != unigram_data.end(); ++it) {
-    it->second = -log(it->second / sum);
+  if (status.ok()) {
+    for (auto it = unigram_data.begin(); it != unigram_data.end(); ++it) {
+      it->second = -log(it->second / sum);
+    }
   }
 
-  fclose(fp);
-  return unigram_data.size();
+  delete fd;
 }
 
-// Load bigram data from unigram_file, returns the number of entries successfully loaded
-// if an error occured return -1
-int LoadBigramFile(const char *bigram_file, 
-                   std::map<std::pair<std::string, std::string>, int> &bigram_data,
-                   int &total_count) {
-  FILE *fp = fopen(bigram_file, "r");
-  char left[100], right[100];
+// Load bigram data from bigram_file, if an error occured set status != Status::OK()
+void LoadBigramFile(const char *bigram_file, 
+                    std::map<std::pair<std::string, std::string>, int> &bigram_data,
+                    int &total_count,
+                    Status &status) {
+
+  char left[100], right[100], line[1024];
   int count; 
 
+  ReadableFile *fd = ReadableFile::New(bigram_file, status);
   total_count = 0;
 
-  if (fp == NULL) {
-    fprintf(stderr, "\nerror: unable to open bigram file %s\n", bigram_file);
-    fflush(stderr);
-    return -1;
-  }
-  
-  while (EOF != fscanf(fp, "%s %s %d", left, right, &count)) {
-    bigram_data[std::pair<std::string, std::string>(left, right)] += count;
-    total_count += count;
-  }
+  while (status.ok() && !fd->Eof()) {
+    fd->ReadLine(line, sizeof(line), status);
+    if (status.ok()) {
+      sscanf(line, "%s %s %d", left, right, &count);
+      bigram_data[std::pair<std::string, std::string>(left, right)] += count;
+      total_count += count;    
+    }
+  } 
 
-  fclose(fp);  
-  return bigram_data.size();
+  delete fd; 
 }
 
 // Build Double-Array TrieTree index from unigram, and save the index and the unigram data file
-int BuildAndSaveUnigramData(const std::map<std::string, double> &unigram_data, 
-                            Darts::DoubleArray &double_array) {
+void BuildAndSaveUnigramData(const std::map<std::string, double> &unigram_data, 
+                             Darts::DoubleArray &double_array,
+                             Status &status) {
+
   std::vector<const char *> key;
   std::vector<Darts::DoubleArray::value_type> term_id;
   std::vector<float> weight;
@@ -128,49 +131,31 @@ int BuildAndSaveUnigramData(const std::map<std::string, double> &unigram_data,
     weight.push_back(it->second);
   }
 
-
   int result = double_array.build(key.size(), &key[0], 0, &term_id[0]);
-  if (result != 0) {
-    fprintf(stderr, "\nerror: unable to build trie-tree\n");
-    fflush(stderr);
-  }
+  if (result != 0) status = Status::RuntimeError("unable to build trie-tree");
 
-  FILE *fp = fopen(UNIGRAM_DATA_FILE, "wb");
-  if (fp == NULL) {
-    fprintf(stderr, "\nerror: unable to open %s for write.\n", UNIGRAM_DATA_FILE);
-    fflush(stderr);
-    return -1;
-  }
-
-  if (weight.size() != fwrite(&weight[0], sizeof(float), weight.size(), fp)) {
-    fprintf(stderr, "\nerror: unable to write to file %s.\n", UNIGRAM_DATA_FILE);
-    fflush(stderr);
-    return -1;     
-  }
-  fclose(fp);
+  WritableFile *fd = nullptr;
+  if (status.ok()) fd = WritableFile::New(UNIGRAM_DATA_FILE, status);
+  if (status.ok()) fd->Write(weight.data(), sizeof(float) * weight.size(), status);
   
- 
-  if (0 != double_array.save(UNIGRAM_INDEX_FILE)) {
-    fprintf(stderr, "\nerror: unable to save double array file %s\n", UNIGRAM_INDEX_FILE);
-    fflush(stderr);
-    return 5;
+  
+  if (status.ok()) {
+    if (0 != double_array.save(UNIGRAM_INDEX_FILE)) {
+      std::string message = "unable to save index file ";
+      message += UNIGRAM_INDEX_FILE;
+      status = Status::RuntimeError(message.c_str());
+    }    
   }
 
-  return result;
+  delete fd;
 }
 
 // Save unigram data into binary file UNIGRAM_FILE. On success, return the number of 
-// bigram word pairs successfully writed. On failed, return -1
+// bigram word pairs successfully writed. On failed, set status != Status::OK()
 int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, int> &bigram_data, 
                       int total_count,
-                      const Darts::DoubleArray &double_array) {
-  FILE *fp = fopen(BIGRAM_FILE, "wb");
-  if (fp == NULL) {
-    fprintf(stderr, "\nerror: unable to open %s for write.\n", BIGRAM_FILE);
-    fflush(stderr);
-    return -1;
-  }
-
+                      const Darts::DoubleArray &double_array,
+                      Status &status) {
   BigramRecord bigram_record;
   const char *left_word, *right_word;
   int32_t left_id, right_id;
@@ -193,18 +178,10 @@ int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, int> &
     }
   }
 
-  const StaticHashTable<int64_t, float> *hashtable = StaticHashTable<int64_t, float>::Build(&keys[0], &values[0], keys.size());
-  if (hashtable == 0) {
-    fprintf(stderr, "\nerror: unable to build hash table.\n");
-    fflush(stderr);    
-  }
-  if (hashtable->Save(BIGRAM_FILE) == false) {
-    fprintf(stderr, "\nerror: unable to write to file %s.\n", BIGRAM_FILE);
-    fflush(stderr);      
-  }
+  auto hashtable = StaticHashTable<int64_t, float>::Build(&keys[0], &values[0], keys.size());
+  hashtable->Save(BIGRAM_FILE, status);
 
   delete hashtable;
-  fclose(fp);
   return keys.size();
 }
 
@@ -212,50 +189,49 @@ int MakeGramModel(int argc, char **argv) {
   Darts::DoubleArray double_array;
   std::map<std::string, double> unigram_data;
   std::map<std::pair<std::string, std::string>, int> bigram_data;
+  Status status;
   
-  if (argc != 4) {
-    fprintf(stderr, "Usage: mc_model gram [UNIGRAM FILE] [BIGRAM FILE]\n");
-    fflush(stderr);
-    return 1;
-  }
+  if (argc != 4) status = Status::Info("Usage: mc_model gram [UNIGRAM FILE] [BIGRAM FILE]");
 
   const char *unigram_file = argv[argc - 2];
   const char *bigram_file = argv[argc - 1];
 
-  printf("Loading unigram data ...");
-  fflush(stdout);
-  int count = LoadUnigramFile(unigram_file, unigram_data);
-  if (count == -1) {
-    return 2;
+  if (status.ok()) {
+    printf("Loading unigram data ...");
+    fflush(stdout);
+    LoadUnigramFile(unigram_file, unigram_data, status);
   }
-  printf(" OK, %d entries loaded.\n", count);
 
-  printf("Loading bigram data ...");
-  fflush(stdout);
-  int total_count;
-  count = LoadBigramFile(bigram_file, bigram_data, total_count);
-  if (count == -1) {
-    return 3;
+  int total_count = 0;
+  if (status.ok()) {
+    printf(" OK, %d entries loaded.\n", static_cast<int>(unigram_data.size()));    
+    printf("Loading bigram data ...");
+    fflush(stdout);
+    LoadBigramFile(bigram_file, bigram_data, total_count, status);
   }
-  printf(" OK, %ld entries loaded.\n", bigram_data.size());
 
-  printf("Saveing unigram index and data file ...");
-  fflush(stdout);
-  int result = BuildAndSaveUnigramData(unigram_data, double_array);
-  if (result != 0) {
-    return 4;
+  if (status.ok()) {
+    printf(" OK, %d entries loaded.\n", static_cast<int>(bigram_data.size()));
+    printf("Saveing unigram index and data file ...");
+    fflush(stdout);
+    BuildAndSaveUnigramData(unigram_data, double_array, status);
   }
-  printf(" OK\n");
 
-  printf("Saving Bigram Binary File ...");
-  count = SaveBigramBinFile(bigram_data, total_count, double_array);
-  if (count < 0) {
-    return 7;
+  int count = 0;
+  if (status.ok()) {
+    printf(" OK\n");   
+    printf("Saving Bigram Binary File ...");
+    count = SaveBigramBinFile(bigram_data, total_count, double_array, status);  
   }
-  printf(" OK, %d entries saved.\n", count);
-  printf("Success!");
 
-  return 0;
+  if (status.ok()) {
+    printf(" OK, %d entries saved.\n", count);
+    printf("Success!");
+    return 0;
+  } else {
+    puts(status.what());
+    return -1;
+  }
 }
 
 int MakeIndexFile(int argc, char **argv) {
@@ -484,9 +460,30 @@ int MakeHMMTaggerModel(int argc, char **argv) {
   return 0;
 }
 
+int MakeMaxentFile(int argc, char **argv) {
+  Status status;
+
+  if (argc != 4) status = Status::Info("Usage: mc_model maxent text-model-file binary-model-file");
+
+  printf("Load text formatted model: %s \n", argv[argc - 2]);
+  MaxentModel *maxent = MaxentModel::NewFromText(argv[argc - 2], status);
+
+  if (status.ok()) {
+    printf("Save binary formatted model: %s \n", argv[argc - 1]);
+    maxent->Save(argv[argc - 1], status);
+  }
+
+  delete maxent;
+  if (status.ok()) {
+    return 0;
+  } else {
+    puts(status.what());
+  }
+}
+
 int main(int argc, char **argv) {
   if (argc < 2) {
-    fprintf(stderr, "Usage: mc_model [dict|gram|hmm]\n");
+    fprintf(stderr, "Usage: mc_model [dict|gram|hmm|maxent]\n");
     return 1;
   }
 
@@ -498,8 +495,10 @@ int main(int argc, char **argv) {
     return MakeGramModel(argc, argv);
   } else if (strcmp(tool, "hmm") == 0) {
     return MakeHMMTaggerModel(argc, argv);
+  } else if (strcmp(tool, "maxent") == 0) {
+    return MakeMaxentFile(argc, argv);
   } else {
-    fprintf(stderr, "Usage: mc_model [dict|gram|hmm]\n");
+    fprintf(stderr, "Usage: mc_model [dict|gram|hmm|maxent]\n");
     return 1;    
   }
 

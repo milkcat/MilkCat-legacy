@@ -48,6 +48,9 @@ class Status {
   static Status RuntimeError(const char *message) {
     return Status(kRuntimeError, message);
   } 
+  static Status Info(const char *message) {
+    return Status(kInfo, message);
+  } 
 
   // Return true if the state is success
   bool ok() { return code_ == 0; }
@@ -64,7 +67,8 @@ class Status {
     kIOError = 1,
     kCorruption = 2,
     kRuntimeError = 3,
-    kNotImplemented = 4
+    kNotImplemented = 4,
+    kInfo = 5
   };
 
   Status(int code, const char *error_message): code_(code) {
@@ -81,6 +85,9 @@ class Status {
       break;
      case kNotImplemented:
       message = "NotImplemented: ";
+      break;
+     case kInfo:
+      message = "";
       break;
     }
 
