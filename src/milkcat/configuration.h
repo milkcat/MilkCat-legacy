@@ -36,7 +36,7 @@ class Configuration {
   Configuration();
 
   // Load the configuration file of path
-  static Configuration *New(const char *path, Status &status);
+  static Configuration *New(const char *path, Status *status);
 
   // Get integer value by key, default is 0
   int GetInteger(const char *key) const;

@@ -41,7 +41,9 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                    const char *corpus_path,
                    std::unordered_map<std::string, double> &adjacent_entropy,
                    std::unordered_map<std::string, int> &vocab,
-                   void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second), 
-                   Status &status);
+                   void (* progress)(int64_t bytes_processed, 
+                                     int64_t file_size, 
+                                     int64_t bytes_per_second), 
+                   Status *status);
 
 #endif

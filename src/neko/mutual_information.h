@@ -33,6 +33,6 @@
 std::unordered_map<std::string, double> GetMutualInformation(
     const std::unordered_map<std::string, int> &bigram_vocab,
     const std::unordered_map<std::string, float> &candidate,
-    Status &status);
+    Status *status);
 
 #endif

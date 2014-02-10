@@ -26,14 +26,14 @@
 // THE SOFTWARE.
 //
 
-#include <map>
-#include <string>
-#include <algorithm>
-#include <set>
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
 #include <assert.h>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <set>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
 #include "utils/writable_file.h"
@@ -60,18 +60,18 @@ struct HMMEmitRecord {
 #define BIGRAM_FILE "bigram.bin"
 #define HMM_MODEL_FILE "hmm_model.bin"
 
-// Load unigram data from unigram_file, if an error occured set status != Status::OK()
-void LoadUnigramFile(const char *unigram_file, 
-                     std::map<std::string, double> &unigram_data,
-                     Status &status) {
-
+// Load unigram data from unigram_file, if an error occured set status !=
+// Status::OK()
+std::map<std::string, double>
+LoadUnigramFile(const char *unigram_file, Status *status) {
   ReadableFile *fd = ReadableFile::New(unigram_file, status);
+  std::map<std::string, double> unigram_data;
   char word[1024], line[1024];
   double count, sum = 0;
 
-  while (status.ok() && !fd->Eof()) {
+  while (status->ok() && !fd->Eof()) {
     fd->ReadLine(line, sizeof(line), status);
-    if (status.ok()) {
+    if (status->ok()) {
       sscanf(line, "%s %lf", word, &count);
       unigram_data[std::string(word)] += count;
       sum += count;      
@@ -79,20 +79,23 @@ void LoadUnigramFile(const char *unigram_file,
   }
 
   // Calculate the weight = -log(freq / total)
-  if (status.ok()) {
+  if (status->ok()) {
     for (auto it = unigram_data.begin(); it != unigram_data.end(); ++it) {
       it->second = -log(it->second / sum);
     }
   }
 
   delete fd;
+  return unigram_data;
 }
 
-// Load bigram data from bigram_file, if an error occured set status != Status::OK()
-void LoadBigramFile(const char *bigram_file, 
-                    std::map<std::pair<std::string, std::string>, int> &bigram_data,
-                    int &total_count,
-                    Status &status) {
+// Load bigram data from bigram_file, if an error occured set status != 
+// Status::OK()
+void LoadBigramFile(
+    const char *bigram_file, 
+    std::map<std::pair<std::string, std::string>, int> &bigram_data,
+    int &total_count,
+    Status *status) {
 
   char left[100], right[100], line[1024];
   int count; 
@@ -100,9 +103,9 @@ void LoadBigramFile(const char *bigram_file,
   ReadableFile *fd = ReadableFile::New(bigram_file, status);
   total_count = 0;
 
-  while (status.ok() && !fd->Eof()) {
+  while (status->ok() && !fd->Eof()) {
     fd->ReadLine(line, sizeof(line), status);
-    if (status.ok()) {
+    if (status->ok()) {
       sscanf(line, "%s %s %d", left, right, &count);
       bigram_data[std::pair<std::string, std::string>(left, right)] += count;
       total_count += count;    
@@ -112,10 +115,11 @@ void LoadBigramFile(const char *bigram_file,
   delete fd; 
 }
 
-// Build Double-Array TrieTree index from unigram, and save the index and the unigram data file
+// Build Double-Array TrieTree index from unigram, and save the index and the 
+// unigram data file
 void BuildAndSaveUnigramData(const std::map<std::string, double> &unigram_data, 
                              Darts::DoubleArray &double_array,
-                             Status &status) {
+                             Status *status) {
 
   std::vector<const char *> key;
   std::vector<Darts::DoubleArray::value_type> term_id;
@@ -125,37 +129,41 @@ void BuildAndSaveUnigramData(const std::map<std::string, double> &unigram_data,
   int i = 1;
   weight.push_back(0.0);
 
-  for (std::map<std::string, double>::const_iterator it = unigram_data.begin(); it != unigram_data.end(); ++it) {
-    key.push_back(it->first.c_str());
+  for (auto &x: unigram_data) {
+    key.push_back(x.first.c_str());
     term_id.push_back(i++);
-    weight.push_back(it->second);
+    weight.push_back(x.second);
   }
 
   int result = double_array.build(key.size(), &key[0], 0, &term_id[0]);
-  if (result != 0) status = Status::RuntimeError("unable to build trie-tree");
+  if (result != 0) *status = Status::RuntimeError("unable to build trie-tree");
 
   WritableFile *fd = nullptr;
-  if (status.ok()) fd = WritableFile::New(UNIGRAM_DATA_FILE, status);
-  if (status.ok()) fd->Write(weight.data(), sizeof(float) * weight.size(), status);
+  if (status->ok()) fd = WritableFile::New(UNIGRAM_DATA_FILE, status);
+  if (status->ok()) 
+    fd->Write(weight.data(), sizeof(float) * weight.size(), status);
   
   
-  if (status.ok()) {
+  if (status->ok()) {
     if (0 != double_array.save(UNIGRAM_INDEX_FILE)) {
       std::string message = "unable to save index file ";
       message += UNIGRAM_INDEX_FILE;
-      status = Status::RuntimeError(message.c_str());
+      *status = Status::RuntimeError(message.c_str());
     }    
   }
 
   delete fd;
 }
 
-// Save unigram data into binary file UNIGRAM_FILE. On success, return the number of 
-// bigram word pairs successfully writed. On failed, set status != Status::OK()
-int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, int> &bigram_data, 
-                      int total_count,
-                      const Darts::DoubleArray &double_array,
-                      Status &status) {
+// Save unigram data into binary file UNIGRAM_FILE. On success, return the 
+// number of bigram word pairs successfully writed. On failed, set status != 
+// Status::OK()
+int SaveBigramBinFile(
+    const std::map<std::pair<std::string, std::string>, int> &bigram_data, 
+    int total_count,
+    const Darts::DoubleArray &double_array,
+    Status *status) {
+
   BigramRecord bigram_record;
   const char *left_word, *right_word;
   int32_t left_id, right_id;
@@ -164,21 +172,23 @@ int SaveBigramBinFile(const std::map<std::pair<std::string, std::string>, int> &
   std::vector<float> values;
 
   int write_num = 0;
-  for (std::map<std::pair<std::string, std::string>, int>::const_iterator it = bigram_data.begin(); 
-       it != bigram_data.end();  
-       ++it) {
-    left_word = it->first.first.c_str();
-    right_word = it->first.second.c_str();
-    count = it->second;
-    left_id = double_array.exactMatchSearch<Darts::DoubleArray::value_type>(left_word);
-    right_id = double_array.exactMatchSearch<Darts::DoubleArray::value_type>(right_word);
+  typedef Darts::DoubleArray::value_type value_type;
+  for (auto &x: bigram_data) {
+    left_word = x.first.first.c_str();
+    right_word = x.first.second.c_str();
+    count = x.second;
+    left_id = double_array.exactMatchSearch<value_type>(left_word);
+    right_id = double_array.exactMatchSearch<value_type>(right_word);
     if (left_id > 0 && right_id > 0) {
       keys.push_back((static_cast<int64_t>(left_id) << 32) + right_id);
-      values.push_back(static_cast<float>(-log(static_cast<double>(count) / total_count)));
+      values.push_back(-log(static_cast<double>(count) / total_count));
     }
   }
 
-  auto hashtable = StaticHashTable<int64_t, float>::Build(&keys[0], &values[0], keys.size());
+  auto hashtable = StaticHashTable<int64_t, float>::Build(
+      keys.data(), 
+      values.data(), 
+      keys.size());
   hashtable->Save(BIGRAM_FILE, status);
 
   delete hashtable;
@@ -191,7 +201,8 @@ int MakeGramModel(int argc, char **argv) {
   std::map<std::pair<std::string, std::string>, int> bigram_data;
   Status status;
   
-  if (argc != 4) status = Status::Info("Usage: mc_model gram [UNIGRAM FILE] [BIGRAM FILE]");
+  if (argc != 4) 
+    status = Status::Info("Usage: mc_model gram [UNIGRAM FILE] [BIGRAM FILE]");
 
   const char *unigram_file = argv[argc - 2];
   const char *bigram_file = argv[argc - 1];
@@ -199,7 +210,7 @@ int MakeGramModel(int argc, char **argv) {
   if (status.ok()) {
     printf("Loading unigram data ...");
     fflush(stdout);
-    LoadUnigramFile(unigram_file, unigram_data, status);
+    unigram_data = LoadUnigramFile(unigram_file, &status);
   }
 
   int total_count = 0;
@@ -207,21 +218,21 @@ int MakeGramModel(int argc, char **argv) {
     printf(" OK, %d entries loaded.\n", static_cast<int>(unigram_data.size()));    
     printf("Loading bigram data ...");
     fflush(stdout);
-    LoadBigramFile(bigram_file, bigram_data, total_count, status);
+    LoadBigramFile(bigram_file, bigram_data, total_count, &status);
   }
 
   if (status.ok()) {
     printf(" OK, %d entries loaded.\n", static_cast<int>(bigram_data.size()));
     printf("Saveing unigram index and data file ...");
     fflush(stdout);
-    BuildAndSaveUnigramData(unigram_data, double_array, status);
+    BuildAndSaveUnigramData(unigram_data, double_array, &status);
   }
 
   int count = 0;
   if (status.ok()) {
     printf(" OK\n");   
     printf("Saving Bigram Binary File ...");
-    count = SaveBigramBinFile(bigram_data, total_count, double_array, status);  
+    count = SaveBigramBinFile(bigram_data, total_count, double_array, &status);  
   }
 
   if (status.ok()) {
@@ -263,18 +274,22 @@ int MakeIndexFile(int argc, char **argv) {
   std::vector<const char *> keys;
   std::vector<Darts::DoubleArray::value_type> values;
 
-  for (std::vector<std::pair<std::string, int> >::const_iterator it = key_value.begin(); it != key_value.end(); ++it) {
-    keys.push_back(it->first.c_str());
-    values.push_back(it->second);
+  for (auto &x: key_value) {
+    keys.push_back(x.first.c_str());
+    values.push_back(x.second);
   }
 
   if (double_array.build(keys.size(), &keys[0], 0, &values[0]) != 0) {
-    fprintf(stderr, "error: unable to build double array from file %s\n", input_path);
+    fprintf(stderr, 
+            "error: unable to build double array from file %s\n", 
+            input_path);
     return 1;  
   }
 
   if (double_array.save(output_path) != 0) {
-    fprintf(stderr, "error: unable to save double array to file %s\n", output_path);
+    fprintf(stderr, 
+            "error: unable to save double array to file %s\n", 
+            output_path);
     return 1; 
   }
 
@@ -297,7 +312,8 @@ int MakeIndexFile(int argc, char **argv) {
 //
 int MakeHMMTaggerModel(int argc, char **argv) {
   if (argc < 4) {
-    fprintf(stderr, "Usage: mc_model hmm_tag [TAGSET-FILE] [EMIT-FILE] [TRANS-FILE] [INDEX-FILE]\n");
+    fprintf(stderr, "Usage: mc_model hmm_tag [TAGSET-FILE]"
+                    " [EMIT-FILE] [TRANS-FILE] [INDEX-FILE]\n");
     return 1;
   }
 
@@ -360,9 +376,9 @@ int MakeHMMTaggerModel(int argc, char **argv) {
     fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
     return 1;     
   }
-  for (std::vector<std::string>::iterator it = tag_str.begin(); it != tag_str.end(); ++it) {
+  for (auto &x: tag_str) {
     memset(line_buf, 0, 16);
-    strlcpy(line_buf, it->c_str(), 16);
+    strlcpy(line_buf, x.c_str(), 16);
     if (16 != fwrite(&line_buf, sizeof(char), 16, fd_output)) {
       fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
       return 1;     
@@ -386,13 +402,22 @@ int MakeHMMTaggerModel(int argc, char **argv) {
     trans_matrix_data[i] = 1e37;
   }
   while (EOF != fscanf(fd_trans, "%s %s %lf", tag_left, tag_right, &log_prob)) {
-    if (tag_id_map.find(tag_left) == tag_id_map.end() || tag_id_map.find(tag_right) == tag_id_map.end()) {
-      fprintf(stderr, "error: invalid tag pair (not in tagset) %s %s.\n", tag_left, tag_right);
+    if (tag_id_map.find(tag_left) == tag_id_map.end() || 
+        tag_id_map.find(tag_right) == tag_id_map.end()) {
+      fprintf(stderr, 
+              "error: invalid tag pair (not in tagset) %s %s.\n", 
+              tag_left, 
+              tag_right);
       return 1;
     }
-    trans_matrix_data[tag_id_map[tag_left] * tag_number + tag_id_map[tag_right]] = static_cast<float>(log_prob);
+    int id = tag_id_map[tag_left] * tag_number + tag_id_map[tag_right];
+    trans_matrix_data[id] = static_cast<float>(log_prob);
   }
-  if (tag_number * tag_number != fwrite(trans_matrix_data, sizeof(float), tag_number * tag_number, fd_output)) {
+  int result = fwrite(trans_matrix_data, 
+                      sizeof(float), 
+                      tag_number * tag_number, 
+                      fd_output);
+  if (tag_number * tag_number != result) {
     fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
     return 1;    
   }
@@ -415,7 +440,7 @@ int MakeHMMTaggerModel(int argc, char **argv) {
   int ignore_count = 0;
   HMMEmitRecord record;
   while (EOF != fscanf(fd_emit, "%s %s %lf", line_buf, tag_left, &log_prob)) {
-    int32_t term_id = double_array.exactMatchSearch<Darts::DoubleArray::value_type>(line_buf);
+    int32_t term_id = double_array.exactMatchSearch<int>(line_buf);
     if (term_id < 0) {
       ignore_count++;
       continue;
@@ -463,14 +488,16 @@ int MakeHMMTaggerModel(int argc, char **argv) {
 int MakeMaxentFile(int argc, char **argv) {
   Status status;
 
-  if (argc != 4) status = Status::Info("Usage: mc_model maxent text-model-file binary-model-file");
+  if (argc != 4) 
+    status = Status::Info("Usage: mc_model maxent "
+                          "text-model-file binary-model-file");
 
   printf("Load text formatted model: %s \n", argv[argc - 2]);
-  MaxentModel *maxent = MaxentModel::NewFromText(argv[argc - 2], status);
+  MaxentModel *maxent = MaxentModel::NewFromText(argv[argc - 2], &status);
 
   if (status.ok()) {
     printf("Save binary formatted model: %s \n", argv[argc - 1]);
-    maxent->Save(argv[argc - 1], status);
+    maxent->Save(argv[argc - 1], &status);
   }
 
   delete maxent;

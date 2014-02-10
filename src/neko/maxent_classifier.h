@@ -34,18 +34,18 @@
 
 class MaxentModel {
  public:
-  // Load and create the maximum entropy model data from the model file specified 
-  // by model_path. New loads binary model file and NewFromText loads model file of 
-  // text format. On success, return the instance and status = Status::OK(). On 
-  // failed, return nullptr and status != Status::OK()
-  static MaxentModel *NewFromText(const char *model_path, Status &status);
-  static MaxentModel *New(const char *model_path, Status &status);
+  // Load and create the maximum entropy model data from the model file 
+  // specified by model_path. New loads binary model file and NewFromText loads 
+  // model file of text format. On success, return the instance and status = 
+  // Status::OK(). On failed, return nullptr and status != Status::OK()
+  static MaxentModel *NewFromText(const char *model_path, Status *status);
+  static MaxentModel *New(const char *model_path, Status *status);
 
   MaxentModel();
   ~MaxentModel();
 
   // Save the model data into file
-  void Save(const char *model_path, Status &status);
+  void Save(const char *model_path, Status *status);
 
   // Get the cost of a feature with its y-tag in maximum entropy model
   float cost(int yid, int feature_id) {
@@ -62,8 +62,8 @@ class MaxentModel {
   // Get the name string of a y-tag's id
   const char *yname(int yid) const { return yname_[yid]; }
 
-  // Return the id of feature_str, if the feature_str not in feature set of model
-  // return kFeatureIdNone
+  // Return the id of feature_str, if the feature_str not in feature set of 
+  // model return kFeatureIdNone
   int feature_id(const char *feature_str) const {
     int id = double_array_.exactMatchSearch<int>(feature_str);
     if (id >= 0)
@@ -85,8 +85,8 @@ class MaxentClassifier {
   MaxentClassifier(MaxentModel *model);
   ~MaxentClassifier();
 
-  // Classify an instance of features specified by feature_list and return the y-tag
-  // for the instance
+  // Classify an instance of features specified by feature_list and return the 
+  // y-tag for the instance
   const char *Classify(const std::vector<std::string> &feature_list) const;
 
  private:

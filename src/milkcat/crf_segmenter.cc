@@ -37,12 +37,18 @@
 
 class SegmentFeatureExtractor: public FeatureExtractor {
  public:
-  void set_token_instance(const TokenInstance *token_instance) { token_instance_ = token_instance; }
+  void set_token_instance(const TokenInstance *token_instance) { 
+    token_instance_ = token_instance; 
+  }
+
   size_t size() const { return token_instance_->size(); }
 
-  void ExtractFeatureAt(size_t position, char (*feature_list)[kFeatureLengthMax], int list_size) {
+  void ExtractFeatureAt(size_t position, 
+                        char (*feature_list)[kFeatureLengthMax], 
+                        int list_size) {
     assert(list_size == 1);
-    if (token_instance_->token_type_at(position) == TokenInstance::kChineseChar) {
+    int token_type = token_instance_->token_type_at(position);
+    if (token_type == TokenInstance::kChineseChar) {
       strcpy(feature_list[0], token_instance_->token_text_at(position));
     } else {
       strcpy(feature_list[0], "，");
@@ -53,7 +59,7 @@ class SegmentFeatureExtractor: public FeatureExtractor {
   const TokenInstance *token_instance_;
 };
 
-CRFSegmenter *CRFSegmenter::New(const CRFModel *model, Status &status) {
+CRFSegmenter *CRFSegmenter::New(const CRFModel *model, Status *status) {
   char error_message[1024];
   CRFSegmenter *self = new CRFSegmenter();
 
@@ -70,10 +76,11 @@ CRFSegmenter *CRFSegmenter::New(const CRFModel *model, Status &status) {
 
   if (self->S < 0 || self->B < 0 || self->B1 < 0 || self->B2 < 0 || 
       self->M < 0 || self->E < 0) {
-    status = Status::Corruption("bad CRF++ segmenter model, unable to find S, B, B1, B2, M, E tag.");
+    *status = Status::Corruption(
+      "bad CRF++ segmenter model, unable to find S, B, B1, B2, M, E tag.");
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
@@ -92,7 +99,10 @@ CRFSegmenter::~CRFSegmenter() {
 CRFSegmenter::CRFSegmenter(): crf_tagger_(NULL), 
                               feature_extractor_(NULL) {}
 
-void CRFSegmenter::SegmentRange(TermInstance *term_instance, TokenInstance *token_instance, int begin, int end) {
+void CRFSegmenter::SegmentRange(TermInstance *term_instance, 
+                                TokenInstance *token_instance, 
+                                int begin, 
+                                int end) {
   std::string buffer;
 
   feature_extractor_->set_token_instance(token_instance);
@@ -111,12 +121,16 @@ void CRFSegmenter::SegmentRange(TermInstance *term_instance, TokenInstance *toke
     if (tag_id == S || tag_id == E) {
 
       if (tag_id == S) {
-        term_type = TokenTypeToTermType(token_instance->token_type_at(begin + i));
+        term_type = TokenTypeToTermType(
+          token_instance->token_type_at(begin + i));
       } else {
         term_type = TermInstance::kChineseWord;
       }
 
-      term_instance->set_value_at(term_count, buffer.c_str(), token_count, term_type);
+      term_instance->set_value_at(term_count, 
+                                  buffer.c_str(), 
+                                  token_count, 
+                                  term_type);
       term_count++;
       token_count = 0;
       buffer.clear();
@@ -124,7 +138,10 @@ void CRFSegmenter::SegmentRange(TermInstance *term_instance, TokenInstance *toke
   }
 
   if (!buffer.empty()) {
-    term_instance->set_value_at(term_count, buffer.c_str(), token_count, TermInstance::kChineseWord);
+    term_instance->set_value_at(term_count, 
+                                buffer.c_str(), 
+                                token_count, 
+                                TermInstance::kChineseWord);
     term_count++;
   }
 

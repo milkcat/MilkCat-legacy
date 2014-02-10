@@ -39,18 +39,18 @@
 OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::New(
     const CRFModel *crf_model, 
     const TrieTree *oov_property,
-    Status &status) {
+    Status *status) {
 
   OutOfVocabularyWordRecognition *self = new OutOfVocabularyWordRecognition();
 
   self->crf_segmenter_ = CRFSegmenter::New(crf_model, status);
 
-  if (status.ok()) {
+  if (status->ok()) {
     self->term_instance_ = new TermInstance();
     self->oov_property_ = oov_property;
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
@@ -67,8 +67,9 @@ OutOfVocabularyWordRecognition::~OutOfVocabularyWordRecognition() {
   term_instance_ = NULL;
 }
 
-OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition(): term_instance_(NULL),
-                                                                  crf_segmenter_(NULL) {
+OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition(): 
+    term_instance_(NULL),
+    crf_segmenter_(NULL) {
 }
 
 void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
@@ -151,25 +152,33 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
     }
     ner_begin_token = current_token + term_token_number;
   } else if (ner_term_number == 1) {
-    CopyTermValue(term_instance, current_term, in_term_instance, in_term_instance->size() - 1);
+    CopyTermValue(term_instance, 
+                  current_term, 
+                  in_term_instance, 
+                  in_term_instance->size() - 1);
     current_term++;
   }
 
   term_instance->set_size(current_term);
 }
 
-void OutOfVocabularyWordRecognition::CopyTermValue(TermInstance *dest_term_instance, 
-                                                   int dest_postion, 
-                                                   TermInstance *src_term_instance, 
-                                                   int src_position)  {
+void OutOfVocabularyWordRecognition::CopyTermValue(
+    TermInstance *dest_term_instance, 
+    int dest_postion, 
+    TermInstance *src_term_instance, 
+    int src_position)  {
 
-  dest_term_instance->set_value_at(dest_postion,
-                                   src_term_instance->term_text_at(src_position),
-                                   src_term_instance->token_number_at(src_position),
-                                   src_term_instance->term_type_at(src_position),
-                                   src_term_instance->term_id_at(src_position));
+  dest_term_instance->set_value_at(
+      dest_postion,
+      src_term_instance->term_text_at(src_position),
+      src_term_instance->token_number_at(src_position),
+      src_term_instance->term_type_at(src_position),
+      src_term_instance->term_id_at(src_position));
 }
 
-void OutOfVocabularyWordRecognition::RecognizeRange(TokenInstance *token_instance, int begin, int end) {
+void OutOfVocabularyWordRecognition::RecognizeRange(
+    TokenInstance *token_instance, 
+    int begin, 
+    int end) {
   crf_segmenter_->SegmentRange(term_instance_, token_instance, begin, end);
 }

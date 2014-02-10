@@ -30,7 +30,11 @@
 #include "term_instance.h"
 #include "token_instance.h"
 
-MixedSegmenter::MixedSegmenter(): bigram_(NULL), oov_recognizer_(NULL), bigram_result_(NULL) {}
+MixedSegmenter::MixedSegmenter(): 
+    bigram_(NULL), 
+    oov_recognizer_(NULL), 
+    bigram_result_(NULL) {
+}
 
 MixedSegmenter *MixedSegmenter::New(
     const TrieTree *index,
@@ -40,14 +44,21 @@ MixedSegmenter *MixedSegmenter::New(
     const StaticHashTable<int64_t, float> *bigram_cost,
     const CRFModel *seg_model,
     const TrieTree *oov_property,
-    Status &status) {
+    Status *status) {
 
   MixedSegmenter *self = new MixedSegmenter();
-  self->bigram_ = new BigramSegmenter(index, user_index, unigram_cost, user_unigram_cost, bigram_cost);
-  self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(seg_model, oov_property, status);
-  if (status.ok()) self->bigram_result_ = new TermInstance();
+  self->bigram_ = new BigramSegmenter(index, 
+                                      user_index, 
+                                      unigram_cost, 
+                                      user_unigram_cost, 
+                                      bigram_cost);
+  self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(
+      seg_model, 
+      oov_property, 
+      status);
+  if (status->ok()) self->bigram_result_ = new TermInstance();
 
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
@@ -67,7 +78,8 @@ MixedSegmenter::~MixedSegmenter() {
   oov_recognizer_ = NULL;
 }
 
-void MixedSegmenter::Segment(TermInstance *term_instance, TokenInstance *token_instance) {
+void MixedSegmenter::Segment(TermInstance *term_instance, 
+                             TokenInstance *token_instance) {
   bigram_->Segment(bigram_result_, token_instance);
   oov_recognizer_->Process(term_instance, bigram_result_, token_instance);
 }

@@ -37,10 +37,13 @@
 #include "milkcat/darts.h"
 #include "maxent_classifier.h"
 
-MaxentModel::MaxentModel(): xsize_(0), ysize_(0), yname_(nullptr), cost_(nullptr) {
+MaxentModel::MaxentModel(): xsize_(0), 
+                            ysize_(0), 
+                            yname_(nullptr), 
+                            cost_(nullptr) {
 }
 
-MaxentModel *MaxentModel::NewFromText(const char *model_path, Status &status) {
+MaxentModel *MaxentModel::NewFromText(const char *model_path, Status *status) {
   ReadableFile *fd = ReadableFile::New(model_path, status);
   MaxentModel *self = new MaxentModel();
   char line[1024];
@@ -54,9 +57,9 @@ MaxentModel *MaxentModel::NewFromText(const char *model_path, Status &status) {
   char y[1024], x[1024];
   int xid, yid;
   float cost;
-  while (status.ok() && !fd->Eof()) {
+  while (status->ok() && !fd->Eof()) {
     fd->ReadLine(line, 1024, status);
-    if (status.ok()) {
+    if (status->ok()) {
       sscanf(line, "%s %s %f", y, x, &cost);
       if (yids.find(y) == yids.end()) {
         yids.emplace(y, yids.size());
@@ -71,7 +74,7 @@ MaxentModel *MaxentModel::NewFromText(const char *model_path, Status &status) {
     }
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     // Generate cost data
     self->xsize_ = xids.size();
     self->ysize_ = yids.size();
@@ -89,17 +92,21 @@ MaxentModel *MaxentModel::NewFromText(const char *model_path, Status &status) {
       xname_vec.push_back(x.first.c_str());
       xid_vec.push_back(x.second);
     }
-    self->double_array_.build(xname_vec.size(), xname_vec.data(), nullptr, xid_vec.data());
+    self->double_array_.build(xname_vec.size(), 
+                              xname_vec.data(), 
+                              nullptr, 
+                              xid_vec.data());
 
     // Generate yname
-    self->yname_ = reinterpret_cast<char (*)[kYNameMax]>(new char[kYNameMax * self->ysize_]);
+    self->yname_ = reinterpret_cast<char (*)[kYNameMax]>(
+      new char[kYNameMax * self->ysize_]);
     for (int yid = 0; yid < self->ysize_; ++yid) {
       strlcpy(self->yname_[yid], yname[yid].c_str(), kYNameMax);
     }
   }
 
   delete fd;
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
@@ -107,37 +114,38 @@ MaxentModel *MaxentModel::NewFromText(const char *model_path, Status &status) {
   }
 }
 
-MaxentModel *MaxentModel::New(const char *model_path, Status &status) {
+MaxentModel *MaxentModel::New(const char *model_path, Status *status) {
   ReadableFile *fd = ReadableFile::New(model_path, status);
   MaxentModel *self = new MaxentModel();
 
-  if (status.ok()) {
+  if (status->ok()) {
     int magic_number = 0;
     fd->ReadValue<int32_t>(magic_number, status);
-    if (magic_number != 0x2233) status = Status::Corruption(model_path);
+    if (magic_number != 0x2233) *status = Status::Corruption(model_path);
   }
 
-  if (status.ok()) fd->ReadValue<int32_t>(self->xsize_, status);
-  if (status.ok()) fd->ReadValue<int32_t>(self->ysize_, status);
-  if (status.ok()) {
-    self->yname_ = reinterpret_cast<char (*)[kYNameMax]>(new char[kYNameMax * self->ysize_]);
+  if (status->ok()) fd->ReadValue<int32_t>(self->xsize_, status);
+  if (status->ok()) fd->ReadValue<int32_t>(self->ysize_, status);
+  if (status->ok()) {
+    self->yname_ = reinterpret_cast<char (*)[kYNameMax]>(
+      new char[kYNameMax * self->ysize_]);
     fd->Read(self->yname_, kYNameMax * self->ysize_, status);
   }
 
   int index_size = 0;
-  if (status.ok()) fd->ReadValue<int32_t>(index_size, status);
-  if (status.ok()) {
+  if (status->ok()) fd->ReadValue<int32_t>(index_size, status);
+  if (status->ok()) {
     char *index_data = new char[index_size];
     fd->Read(index_data, index_size, status);
-    if (status.ok()) self->double_array_.set_array(index_data);
+    if (status->ok()) self->double_array_.set_array(index_data);
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     self->cost_ = new float[self->xsize_ * self->ysize_];
     fd->Read(self->cost_, sizeof(float) * self->xsize_ * self->ysize_, status);
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
@@ -154,20 +162,25 @@ MaxentModel *MaxentModel::New(const char *model_path, Status &status) {
 // int32_t index_size
 // char[index_size] index
 // float[xsize * ysize] cost
-void MaxentModel::Save(const char *model_path, Status &status) {
+void MaxentModel::Save(const char *model_path, Status *status) {
   WritableFile *fd = WritableFile::New(model_path, status);
 
-  if (status.ok()) {
+  if (status->ok()) {
     int32_t magic_number = 0x2233;
     fd->WriteValue<int32_t>(magic_number, status);
   }
 
-  if (status.ok()) fd->WriteValue<int32_t>(xsize_, status);
-  if (status.ok()) fd->WriteValue<int32_t>(ysize_, status);
-  if (status.ok()) fd->Write(yname_, ysize_ * kYNameMax,status);
-  if (status.ok()) fd->WriteValue<int32_t>(static_cast<int32_t>(double_array_.total_size()), status);
-  if (status.ok()) fd->Write(double_array_.array(), double_array_.total_size(), status);
-  if (status.ok()) fd->Write(cost_, sizeof(float) * xsize_ * ysize_, status);
+  if (status->ok()) fd->WriteValue<int32_t>(xsize_, status);
+  if (status->ok()) fd->WriteValue<int32_t>(ysize_, status);
+  if (status->ok()) fd->Write(yname_, ysize_ * kYNameMax,status);
+  if (status->ok()) 
+    fd->WriteValue<int32_t>(
+      static_cast<int32_t>(double_array_.total_size()), 
+      status);
+  if (status->ok()) fd->Write(double_array_.array(), 
+                              double_array_.total_size(), 
+                              status);
+  if (status->ok()) fd->Write(cost_, sizeof(float) * xsize_ * ysize_, status);
   
   delete fd;
 }
@@ -191,7 +204,8 @@ MaxentClassifier::~MaxentClassifier() {
   y_cost_ = nullptr;
 }
 
-const char *MaxentClassifier::Classify(const std::vector<std::string> &feature_list) const {
+const char *MaxentClassifier::Classify(
+    const std::vector<std::string> &feature_list) const {
   // Clear the y_cost_ array
   for (int i = 0; i < y_size_; ++i) y_cost_[i] = 0.0;
 

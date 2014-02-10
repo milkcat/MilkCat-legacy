@@ -52,7 +52,7 @@ class MixedSegmenter: public Segmenter {
       const StaticHashTable<int64_t, float> *bigram_cost,
       const CRFModel *seg_model,
       const TrieTree *oov_property,
-      Status &status);
+      Status *status);
 
   // Segment a token instance into term instance
   void Segment(TermInstance *term_instance, TokenInstance *token_instance);

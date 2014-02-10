@@ -101,33 +101,33 @@ class ModelFactory {
 
   // Get the index for word which were used in unigram cost, bigram cost
   // hmm pos model and oov property
-  const TrieTree *Index(Status &status);
+  const TrieTree *Index(Status *status);
 
   void SetUserDictionary(const char *path) { user_dictionary_path_ = path; }
 
   // Load and set the user dictionary data specified by path
-  void LoadUserDictionary(Status &status);
+  void LoadUserDictionary(Status *status);
   bool HasUserDictionary() const { return user_dictionary_path_.size() != 0; }
 
-  const TrieTree *UserIndex(Status &status);
-  const StaticArray<float> *UserCost(Status &status);
+  const TrieTree *UserIndex(Status *status);
+  const StaticArray<float> *UserCost(Status *status);
 
-  const StaticArray<float> *UnigramCost(Status &status);
-  const StaticHashTable<int64_t, float> *BigramCost(Status &status);
+  const StaticArray<float> *UnigramCost(Status *status);
+  const StaticHashTable<int64_t, float> *BigramCost(Status *status);
 
   // Get the CRF word segmenter model
-  const CRFModel *CRFSegModel(Status &status);
+  const CRFModel *CRFSegModel(Status *status);
 
   // Get the CRF word part-of-speech model
-  const CRFModel *CRFPosModel(Status &status);
+  const CRFModel *CRFPosModel(Status *status);
 
   // Get the HMM word part-of-speech model
-  const HMMModel *HMMPosModel(Status &status);
+  const HMMModel *HMMPosModel(Status *status);
 
   // Get the character's property in out-of-vocabulary word recognition
-  const TrieTree *OOVProperty(Status &status);
+  const TrieTree *OOVProperty(Status *status);
 
-  const Configuration *DefaultTag(Status &status);
+  const Configuration *DefaultTag(Status *status);
 
  private:
   std::string model_dir_path_;
@@ -151,13 +151,13 @@ Tokenization *TokenizerFactory(int tokenizer_id);
 
 // A factory function to create segmenters. On success, return the instance of 
 // Segmenter, on failed, set status != Status::OK()
-Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status &status);
+Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status *status);
 
 // A factory function to create part-of-speech taggers. On success, return the 
 // instance of part-of-speech tagger, on failed, set status != Status::OK()
 PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
                                               int part_of_speech_tagger_id, 
-                                              Status &status);
+                                              Status *status);
 
 
 // Cursor class save the internal state of the analyzing result, such as

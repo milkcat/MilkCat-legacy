@@ -37,24 +37,24 @@
 template<class T>
 class StaticArray {
  public:
-  static StaticArray *New(const char *file_path, Status &status) {
+  static StaticArray *New(const char *file_path, Status *status) {
     int type_size = sizeof(T);
     StaticArray *self = new StaticArray();
     ReadableFile *fd = ReadableFile::New(file_path, status);
 
-    if (status.ok()) {
-      if (fd->Size() % type_size != 0) status = Status::Corruption(file_path);
+    if (status->ok()) {
+      if (fd->Size() % type_size != 0) *status = Status::Corruption(file_path);
     }
     
-    if (status.ok()) {
+    if (status->ok()) {
       self->data_ = new T[fd->Size() / type_size];
       self->size_ = fd->Size() / type_size;      
     }
 
-    if (status.ok()) fd->Read(self->data_, fd->Size(), status);
+    if (status->ok()) fd->Read(self->data_, fd->Size(), status);
 
     if (fd != NULL) delete fd;
-    if (status.ok()) {
+    if (status->ok()) {
       return self;
     } else {
       delete self;

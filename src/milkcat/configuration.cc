@@ -33,7 +33,7 @@
 
 Configuration::Configuration() {}
 
-Configuration *Configuration::New(const char *path, Status &status) {
+Configuration *Configuration::New(const char *path, Status *status) {
   char line[2048], 
        key[2048],
        value[2048],
@@ -44,10 +44,10 @@ Configuration *Configuration::New(const char *path, Status &status) {
   Configuration *self = new Configuration();
 
   if (fp == NULL) {
-    status = Status::IOError(path);
+    *status = Status::IOError(path);
   }
 
-  while (status.ok() && NULL != fgets(line, 2048, fp)) {
+  while (status->ok() && NULL != fgets(line, 2048, fp)) {
     line_number++;
     trim(line);
     if (line[0] == '#') continue;
@@ -56,10 +56,10 @@ Configuration *Configuration::New(const char *path, Status &status) {
     while (*p != '=' && *p != '\0') p++;
     if (*p == '\0') {
       sprintf(error_messge, "missing '=' in %s line %d.", path, line_number);
-      status = Status::Corruption(error_messge);
+      *status = Status::Corruption(error_messge);
     }
 
-    if (status.ok()) {
+    if (status->ok()) {
       strlcpy(key, line, p - line + 1);
       strlcpy(value, p + 1, 1024);
       trim(key);
@@ -71,7 +71,7 @@ Configuration *Configuration::New(const char *path, Status &status) {
   
   if (fp != NULL) fclose(fp);
 
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
@@ -83,8 +83,8 @@ bool Configuration::SaveToPath(const char *path) {
   FILE *fp = fopen(path, "w");
   if (fp == NULL) return false;
 
-  for (std::map<std::string, std::string>::iterator it = data_.begin(); it != data_.end(); ++it) {
-    fprintf(fp, "%s = %s\n", it->first.c_str(), it->second.c_str());
+  for (auto &x: data_) {
+    fprintf(fp, "%s = %s\n", x.first.c_str(), x.second.c_str());
   }
 
   fclose(fp);
@@ -100,7 +100,7 @@ bool Configuration::HasKey(const char *key) const {
 }
 
 const char *Configuration::GetString(const char *key) const {
-  std::map<std::string, std::string>::const_iterator it = data_.find(std::string(key));
+  auto it = data_.find(std::string(key));
   if (it != data_.end()) {
     return it->second.c_str();
   } else {

@@ -37,11 +37,14 @@ class TermInstance;
 
 class CRFSegmenter: public Segmenter {
  public:
-  static CRFSegmenter *New(const CRFModel *model, Status &status);
+  static CRFSegmenter *New(const CRFModel *model, Status *status);
   ~CRFSegmenter();
 
   // Segment a range [begin, end) of token 
-  void SegmentRange(TermInstance *term_instance, TokenInstance *token_instance, int begin, int end);
+  void SegmentRange(TermInstance *term_instance, 
+                    TokenInstance *token_instance, 
+                    int begin, 
+                    int end);
 
   void Segment(TermInstance *term_instance, TokenInstance *token_instance) {
   	SegmentRange(term_instance, token_instance, 0, token_instance->size());

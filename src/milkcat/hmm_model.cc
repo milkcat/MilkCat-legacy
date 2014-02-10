@@ -41,35 +41,33 @@ struct HMMEmitRecord {
 };
 #pragma pack(0)
 
-HMMModel *HMMModel::New(const char *model_path, Status &status) {
-
+HMMModel *HMMModel::New(const char *model_path, Status *status) {
   HMMModel *self = new HMMModel();
-
   ReadableFile *fd = ReadableFile::New(model_path, status);
 
   int32_t magic_number;
-  if (status.ok()) fd->ReadValue<int32_t>(magic_number, status);
+  if (status->ok()) fd->ReadValue<int32_t>(magic_number, status);
 
   if (magic_number != 0x3322)
-    status = Status::Corruption(model_path);
+    *status = Status::Corruption(model_path);
 
   int32_t tag_num;
-  if (status.ok()) fd->ReadValue<int32_t>(tag_num, status);
+  if (status->ok()) fd->ReadValue<int32_t>(tag_num, status);
 
   int32_t max_term_id;
-  if (status.ok()) fd->ReadValue<int32_t>(max_term_id, status);
+  if (status->ok()) fd->ReadValue<int32_t>(max_term_id, status);
 
   int32_t emit_num;
-  if (status.ok()) fd->ReadValue<int32_t>(emit_num, status);
+  if (status->ok()) fd->ReadValue<int32_t>(emit_num, status);
 
   self->tag_str_ = reinterpret_cast<char (*)[16]>(new char[16 * tag_num]);
-  for (int i = 0; i < tag_num && status.ok(); ++i) {
+  for (int i = 0; i < tag_num && status->ok(); ++i) {
     fd->Read(self->tag_str_[i], 16, status);
   }
 
   self->transition_matrix_ = new double[tag_num * tag_num];
   float f_weight;
-  for (int i = 0; i < tag_num * tag_num && status.ok(); ++i) {
+  for (int i = 0; i < tag_num * tag_num && status->ok(); ++i) {
     fd->ReadValue<float>(f_weight, status);
     self->transition_matrix_[i] = f_weight;
   }
@@ -78,7 +76,7 @@ HMMModel *HMMModel::New(const char *model_path, Status &status) {
   memset(self->emit_matrix_, 0, sizeof(EmitRow *) * (max_term_id + 1));
   HMMEmitRecord emit_record;
   EmitRow *emit_node;
-  for (int i = 0; i < emit_num && status.ok(); ++i) {
+  for (int i = 0; i < emit_num && status->ok(); ++i) {
     fd->ReadValue<HMMEmitRecord>(emit_record, status);
     emit_node = new EmitRow();
     emit_node->tag = emit_record.tag_id;
@@ -87,14 +85,14 @@ HMMModel *HMMModel::New(const char *model_path, Status &status) {
     self->emit_matrix_[emit_record.term_id] = emit_node;
   }
 
-  if (status.ok() && fd->Tell() != fd->Size())
-    status = Status::Corruption(model_path);
+  if (status->ok() && fd->Tell() != fd->Size())
+    *status = Status::Corruption(model_path);
 
   self->tag_num_ = tag_num;
   self->max_term_id_ = max_term_id;
 
   delete fd;
-  if (!status.ok()) {
+  if (!status->ok()) {
     delete self;
     return NULL;
 
@@ -104,7 +102,9 @@ HMMModel *HMMModel::New(const char *model_path, Status &status) {
 }
 
 
-HMMModel::HMMModel(): emit_matrix_(NULL), transition_matrix_(NULL), tag_str_(NULL) {}
+HMMModel::HMMModel(): emit_matrix_(NULL), 
+                      transition_matrix_(NULL), 
+                      tag_str_(NULL) {}
 
 HMMModel::~HMMModel() {
   delete[] transition_matrix_;

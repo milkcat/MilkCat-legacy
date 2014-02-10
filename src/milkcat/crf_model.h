@@ -40,13 +40,13 @@
 class CRFModel {
  public:
   // Open a CRF++ model file
-  static CRFModel *New(const char *model_path, Status &status);
+  static CRFModel *New(const char *model_path, Status *status);
 
   ~CRFModel();
 
   // Get internal id of feature_str, if not exists return -1
   int GetFeatureId(const char *feature_str) const {
-    return double_array_->exactMatchSearch<Darts::DoubleArray::result_type>(feature_str);
+    return double_array_->exactMatchSearch<int>(feature_str);
   }
   
   // Get Tag's string text by its id
@@ -56,7 +56,7 @@ class CRFModel {
 
   // Get Tag's id by its text, return -1 if it not exists
   int GetTagId(const char *tag_text) const  {
-    for (std::vector<const char *>::const_iterator it = y_.begin(); it != y_.end(); ++it) {
+    for (auto it = y_.begin(); it != y_.end(); ++it) {
       if (strcmp(tag_text, *it) == 0) return it - y_.begin();
     }
 
@@ -94,7 +94,9 @@ class CRFModel {
   }
 
   // Get the bigram cost for feature with left tag and right tag
-  double GetBigramCost(int feature_id, int left_tag_id, int right_tag_id) const {
+  double GetBigramCost(int feature_id,
+                       int left_tag_id,
+                       int right_tag_id) const {
     return cost_data_[feature_id + left_tag_id * y_.size() + right_tag_id];
   }
 

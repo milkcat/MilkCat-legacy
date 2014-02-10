@@ -122,10 +122,10 @@ void BigramAnalyzeThread(milkcat_model_t *model,
                          std::unordered_map<std::string, int> &vocab,
                          std::unordered_map<std::string, int> &dict,
                          std::mutex &update_mutex,
-                         Status &status) {
+                         Status *status) {
 
   milkcat_t *analyzer = milkcat_new(model, BIGRAM_SEGMENTER);
-  if (analyzer == nullptr) status = Status::Corruption(milkcat_last_error());
+  if (analyzer == nullptr) *status = Status::Corruption(milkcat_last_error());
 
   int buf_size = 1024 * 1024;
   char *buf = new char[buf_size];
@@ -133,13 +133,13 @@ void BigramAnalyzeThread(milkcat_model_t *model,
   bool eof = false;
   std::vector<std::string> words;
   std::vector<int> word_ids;
-  while (status.ok() && !eof) {
+  while (status->ok() && !eof) {
     fd_mutex.lock();
     eof = fd->Eof();
     if (!eof) fd->ReadLine(buf, buf_size, status);
     fd_mutex.unlock();
 
-    if (status.ok() && !eof) {
+    if (status->ok() && !eof) {
 
       // Using bigram model to segment the corpus
       words = SegmentText(buf, analyzer);
@@ -165,7 +165,9 @@ void ProgressUpdateThread(
     ReadableFile *fd, 
     std::mutex &fd_mutex,
     std::atomic_bool &task_finished,
-    void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second)) {
+    void (* progress)(int64_t bytes_processed, 
+                      int64_t file_size, 
+                      int64_t bytes_per_second)) {
 
   int64_t file_size = fd->Size();     
   int64_t last_bytes_processed = 0,
@@ -178,25 +180,29 @@ void ProgressUpdateThread(
     fd_mutex.lock();
     bytes_processed = fd->Tell();
     fd_mutex.unlock();
-    progress(bytes_processed, file_size, bytes_processed - last_bytes_processed);
+    progress(bytes_processed, 
+             file_size, 
+             bytes_processed - last_bytes_processed);
   }  
 }
 
 
 } // end namespace
 
-// Use bigram segmentation to analyze a corpus. Candidate to analyze is specified by 
-// candidate, and the corpus is specified by corpus_path. It would use a temporary file
-// called 'candidate_cost.txt' as user dictionary file for MilkCat.
-// On success, stores the adjecent entropy in adjacent_entropy, and stores the vocabulary
-// of segmentation's result in vocab. On failed set status != Status::OK()
+// Use bigram segmentation to analyze a corpus. Candidate to analyze is 
+// specified by candidate, and the corpus is specified by corpus_path. It would 
+// use a temporary file called 'candidate_cost.txt' as user dictionary file for 
+// MilkCat. On success, stores the adjecent entropy in adjacent_entropy, and 
+// stores the vocabulary of segmentation's result in vocab. On failed set 
+// status != Status::OK()
 void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                    const char *corpus_path,
                    std::unordered_map<std::string, double> &adjacent_entropy,
                    std::unordered_map<std::string, int> &vocab,
-                   void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second), 
-                   Status &status) {
-
+                   void (* progress)(int64_t bytes_processed, 
+                                     int64_t file_size, 
+                                     int64_t bytes_per_second), 
+                   Status *status) {
   std::unordered_map<std::string, int> dict;
   dict.reserve(500000);
 
@@ -213,11 +219,11 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
   milkcat_model_set_userdict(model, "candidate_cost.txt");
   
   ReadableFile *fd = nullptr;
-  if (status.ok()) {
+  if (status->ok()) {
     fd = ReadableFile::New(corpus_path, status);
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     int n_threads = std::thread::hardware_concurrency();
     std::vector<Status> status_vec(n_threads);
     std::vector<std::thread> threads;
@@ -235,11 +241,15 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                                     std::ref(vocab),
                                     std::ref(dict),
                                     std::ref(update_mutex),
-                                    std::ref(status_vec[i])));
+                                    &status_vec[i]));
     }
 
     if (progress) {
-      progress_thread = std::thread(ProgressUpdateThread, fd, std::ref(fd_mutex), std::ref(task_finished), progress);
+      progress_thread = std::thread(ProgressUpdateThread, 
+                                    fd, 
+                                    std::ref(fd_mutex), 
+                                    std::ref(task_finished), 
+                                    progress);
     }
 
     // Synchronizing all threads
@@ -249,19 +259,21 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
 
     // Set the status
     for (auto &st: status_vec) {
-      if (!st.ok()) status = st;
+      if (!st.ok()) *status = st;
     }
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     std::vector<std::string> id_to_str(dict.size());
     for (auto &x: dict) id_to_str[x.second] = x.first;
 
     // Calculate the candidates' adjacent entropy and store in adjacent_entropy
+    std::string word;
     for (auto it = word_adjacent.begin(); it != word_adjacent.end(); ++it) {
       double left_entropy = CalculateAdjacentEntropy(it->left);
       double right_entropy = CalculateAdjacentEntropy(it->right);
-      adjacent_entropy[id_to_str[it - word_adjacent.begin()]] = std::min(left_entropy, right_entropy);
+      word = id_to_str[it - word_adjacent.begin()];
+      adjacent_entropy[word] = std::min(left_entropy, right_entropy);
     }
   }
 

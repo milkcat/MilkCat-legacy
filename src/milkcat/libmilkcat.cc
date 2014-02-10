@@ -55,7 +55,7 @@ Tokenization *TokenizerFactory(int tokenizer_id) {
   }
 }
 
-Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status &status) {
+Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status *status) {
   const TrieTree *index = NULL;
   const TrieTree *user_index = NULL;
   const StaticArray<float> *unigram_cost = NULL;
@@ -66,37 +66,37 @@ Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status &sta
 
   switch (segmenter_id) {
    case kBigramSegmenter:
-    if (status.ok()) index = factory->Index(status);
-    if (status.ok() && factory->HasUserDictionary()) user_index = factory->UserIndex(status);
-    if (status.ok() && factory->HasUserDictionary()) user_unigram_cost = factory->UserCost(status);
-    if (status.ok()) unigram_cost = factory->UnigramCost(status);
-    if (status.ok()) bigram_cost = factory->BigramCost(status);
+    if (status->ok()) index = factory->Index(status);
+    if (status->ok() && factory->HasUserDictionary()) user_index = factory->UserIndex(status);
+    if (status->ok() && factory->HasUserDictionary()) user_unigram_cost = factory->UserCost(status);
+    if (status->ok()) unigram_cost = factory->UnigramCost(status);
+    if (status->ok()) bigram_cost = factory->BigramCost(status);
 
-    if (status.ok()) {
+    if (status->ok()) {
       return new BigramSegmenter(index, user_index, unigram_cost, user_unigram_cost, bigram_cost);
     } else {
       return NULL;
     }
 
    case kCrfSegmenter:
-    if (status.ok()) seg_model = factory->CRFSegModel(status);
+    if (status->ok()) seg_model = factory->CRFSegModel(status);
 
-    if (status.ok()) {
+    if (status->ok()) {
       return CRFSegmenter::New(seg_model, status);
     } else {
       return NULL;
     }
 
    case kMixedSegmenter:
-    if (status.ok()) index = factory->Index(status);
-    if (status.ok() && factory->HasUserDictionary()) user_index = factory->UserIndex(status);
-    if (status.ok() && factory->HasUserDictionary()) user_unigram_cost = factory->UserCost(status);
-    if (status.ok()) unigram_cost = factory->UnigramCost(status);
-    if (status.ok()) bigram_cost = factory->BigramCost(status);
-    if (status.ok()) seg_model = factory->CRFSegModel(status);
-    if (status.ok()) oov_property = factory->OOVProperty(status);
+    if (status->ok()) index = factory->Index(status);
+    if (status->ok() && factory->HasUserDictionary()) user_index = factory->UserIndex(status);
+    if (status->ok() && factory->HasUserDictionary()) user_unigram_cost = factory->UserCost(status);
+    if (status->ok()) unigram_cost = factory->UnigramCost(status);
+    if (status->ok()) bigram_cost = factory->BigramCost(status);
+    if (status->ok()) seg_model = factory->CRFSegModel(status);
+    if (status->ok()) oov_property = factory->OOVProperty(status);
 
-    if (status.ok()) {
+    if (status->ok()) {
       return MixedSegmenter::New(
         index,
         user_index,
@@ -112,14 +112,14 @@ Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status &sta
 
 
    default:
-    status = Status::NotImplemented("");
+    *status = Status::NotImplemented("");
     return NULL;
   }
 }
 
 PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
                                               int part_of_speech_tagger_id, 
-                                              Status &status) {
+                                              Status *status) {
   const HMMModel *hmm_pos_model;
   const CRFModel *crf_pos_model;
   const TrieTree *index;
@@ -127,32 +127,32 @@ PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
 
   switch (part_of_speech_tagger_id) {
    case kCrfPartOfSpeechTagger:
-    if (status.ok()) crf_pos_model = factory->CRFPosModel(status);
+    if (status->ok()) crf_pos_model = factory->CRFPosModel(status);
 
-    if (status.ok()) {
+    if (status->ok()) {
       return new CRFPartOfSpeechTagger(crf_pos_model);
     } else {
       return NULL;
     }
 
    case kHmmPartOfSpeechTagger:
-    if (status.ok()) hmm_pos_model = factory->HMMPosModel(status);
-    if (status.ok()) index = factory->Index(status);
-    if (status.ok()) default_tag = factory->DefaultTag(status);
+    if (status->ok()) hmm_pos_model = factory->HMMPosModel(status);
+    if (status->ok()) index = factory->Index(status);
+    if (status->ok()) default_tag = factory->DefaultTag(status);
 
-    if (status.ok()) {
+    if (status->ok()) {
       return HMMPartOfSpeechTagger::New(hmm_pos_model, index, default_tag, status);  
     } else {
       return NULL;
     }
 
    case kMixedPartOfSpeechTagger:
-    if (status.ok()) crf_pos_model = factory->CRFPosModel(status);
-    if (status.ok()) hmm_pos_model = factory->HMMPosModel(status);
-    if (status.ok()) index = factory->Index(status);
-    if (status.ok()) default_tag = factory->DefaultTag(status);
+    if (status->ok()) crf_pos_model = factory->CRFPosModel(status);
+    if (status->ok()) hmm_pos_model = factory->HMMPosModel(status);
+    if (status->ok()) index = factory->Index(status);
+    if (status->ok()) default_tag = factory->DefaultTag(status);
 
-    if (status.ok()) {
+    if (status->ok()) {
       return MixedPartOfSpeechTagger::New(
         hmm_pos_model,
         index,
@@ -164,7 +164,7 @@ PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
     }
 
    default:
-    status = Status::NotImplemented("");
+    *status = Status::NotImplemented("");
     return NULL;   
   }
 
@@ -223,7 +223,7 @@ ModelFactory::~ModelFactory() {
   default_tag_ = nullptr;    
 }
 
-const TrieTree *ModelFactory::Index(Status &status) {
+const TrieTree *ModelFactory::Index(Status *status) {
   mutex.lock();
   if (unigram_index_ == nullptr) {
     unigram_index_ = DoubleArrayTrieTree::New((model_dir_path_ + UNIGRAM_INDEX).c_str(), status);
@@ -232,7 +232,7 @@ const TrieTree *ModelFactory::Index(Status &status) {
   return unigram_index_;
 }
 
-void ModelFactory::LoadUserDictionary(Status &status) {
+void ModelFactory::LoadUserDictionary(Status *status) {
   char line[1024], word[1024];
   std::string errmsg;
   ReadableFile *fd;
@@ -241,14 +241,14 @@ void ModelFactory::LoadUserDictionary(Status &status) {
   std::map<std::string, int> term_ids;
 
   if (user_dictionary_path_ == "") {
-    status = Status::RuntimeError("No user dictionary.");
+    *status = Status::RuntimeError("No user dictionary.");
     return ;
   }
 
-  if (status.ok()) fd = ReadableFile::New(user_dictionary_path_.c_str(), status);
-  while (status.ok() && !fd->Eof()) {
+  if (status->ok()) fd = ReadableFile::New(user_dictionary_path_.c_str(), status);
+  while (status->ok() && !fd->Eof()) {
     fd->ReadLine(line, sizeof(line), status);
-    if (status.ok()) {
+    if (status->ok()) {
       char *p = strchr(line, ' ');
 
       // Checks if the entry has a cost 
@@ -267,20 +267,20 @@ void ModelFactory::LoadUserDictionary(Status &status) {
     }
   }
 
-  if (status.ok() && term_ids.size() == 0) {
+  if (status->ok() && term_ids.size() == 0) {
     errmsg = std::string("user dictionary ") + user_dictionary_path_ + " is empty.";
-    status = Status::Corruption(errmsg.c_str());
+    *status = Status::Corruption(errmsg.c_str());
   }
 
   
   // Build the index and the cost array from user dictionary
-  if (status.ok()) user_index_ = DoubleArrayTrieTree::NewFromMap(term_ids);
-  if (status.ok()) user_cost_ = StaticArray<float>::NewFromArray(user_costs.data(), user_costs.size());
+  if (status->ok()) user_index_ = DoubleArrayTrieTree::NewFromMap(term_ids);
+  if (status->ok()) user_cost_ = StaticArray<float>::NewFromArray(user_costs.data(), user_costs.size());
 
   delete fd;
 }
 
-const TrieTree *ModelFactory::UserIndex(Status &status) {
+const TrieTree *ModelFactory::UserIndex(Status *status) {
   mutex.lock();
   if (user_index_ == nullptr) {
     LoadUserDictionary(status);
@@ -289,7 +289,7 @@ const TrieTree *ModelFactory::UserIndex(Status &status) {
   return user_index_;
 } 
 
-const StaticArray<float> *ModelFactory::UserCost(Status &status) {
+const StaticArray<float> *ModelFactory::UserCost(Status *status) {
   mutex.lock();
   if (user_cost_ == nullptr) {
     LoadUserDictionary(status);
@@ -298,7 +298,7 @@ const StaticArray<float> *ModelFactory::UserCost(Status &status) {
   return user_cost_;
 } 
 
-const StaticArray<float> *ModelFactory::UnigramCost(Status &status) {
+const StaticArray<float> *ModelFactory::UnigramCost(Status *status) {
   mutex.lock();
   if (unigram_cost_ == NULL) {
     unigram_cost_ = StaticArray<float>::New((model_dir_path_ + UNIGRAM_DATA).c_str(), status);
@@ -307,7 +307,7 @@ const StaticArray<float> *ModelFactory::UnigramCost(Status &status) {
   return unigram_cost_;
 }
 
-const StaticHashTable<int64_t, float> *ModelFactory::BigramCost(Status &status) {
+const StaticHashTable<int64_t, float> *ModelFactory::BigramCost(Status *status) {
   mutex.lock();
   if (bigram_cost_ == NULL) {
     bigram_cost_ = StaticHashTable<int64_t, float>::New((model_dir_path_ + BIGRAM_DATA).c_str(), status);
@@ -316,7 +316,7 @@ const StaticHashTable<int64_t, float> *ModelFactory::BigramCost(Status &status) 
   return bigram_cost_;
 }
 
-const CRFModel *ModelFactory::CRFSegModel(Status &status) {
+const CRFModel *ModelFactory::CRFSegModel(Status *status) {
   mutex.lock();
   if (seg_model_ == NULL) {
     seg_model_ = CRFModel::New((model_dir_path_ + CRF_SEGMENTER_MODEL).c_str(), status);
@@ -325,7 +325,7 @@ const CRFModel *ModelFactory::CRFSegModel(Status &status) {
   return seg_model_;   
 }
 
-const CRFModel *ModelFactory::CRFPosModel(Status &status) {
+const CRFModel *ModelFactory::CRFPosModel(Status *status) {
   mutex.lock();
   if (crf_pos_model_ == NULL) {
     crf_pos_model_ = CRFModel::New((model_dir_path_ + CRF_PART_OF_SPEECH_MODEL).c_str(), status);
@@ -334,7 +334,7 @@ const CRFModel *ModelFactory::CRFPosModel(Status &status) {
   return crf_pos_model_;   
 }
 
-const HMMModel *ModelFactory::HMMPosModel(Status &status) {
+const HMMModel *ModelFactory::HMMPosModel(Status *status) {
   mutex.lock();
   if (hmm_pos_model_ == NULL) {
     hmm_pos_model_ = HMMModel::New((model_dir_path_ + HMM_PART_OF_SPEECH_MODEL).c_str(), status);
@@ -343,7 +343,7 @@ const HMMModel *ModelFactory::HMMPosModel(Status &status) {
   return hmm_pos_model_;   
 }
 
-const TrieTree *ModelFactory::OOVProperty(Status &status) {
+const TrieTree *ModelFactory::OOVProperty(Status *status) {
   mutex.lock();
   if (oov_property_ == NULL) {
     oov_property_ = DoubleArrayTrieTree::New((model_dir_path_ + OOV_PROPERTY).c_str(), status);
@@ -352,7 +352,7 @@ const TrieTree *ModelFactory::OOVProperty(Status &status) {
   return oov_property_;
 }
 
-const Configuration *ModelFactory::DefaultTag(Status &status) {
+const Configuration *ModelFactory::DefaultTag(Status *status) {
   mutex.lock();
   if (default_tag_ == NULL) {
     default_tag_ = Configuration::New((model_dir_path_ + DEFAULT_TAG).c_str(), status);
@@ -440,48 +440,55 @@ milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
 
   switch (analyzer_type) {
    case DEFAULT_PROCESSOR:
-    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
-        analyzer->model->model_factory, 
-        kMixedSegmenter, 
-        global_status);
-    if (global_status.ok()) analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
-        analyzer->model->model_factory,
-        kMixedPartOfSpeechTagger, 
-        global_status);
+    if (global_status.ok()) 
+      analyzer->segmenter = SegmenterFactory(
+          analyzer->model->model_factory, 
+          kMixedSegmenter, 
+          &global_status);
+    if (global_status.ok()) 
+      analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
+          analyzer->model->model_factory,
+          kMixedPartOfSpeechTagger, 
+          &global_status);
     break;
 
    case CRF_SEGMENTER:
-    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
-        analyzer->model->model_factory, 
-        kCrfSegmenter, 
-        global_status);
+    if (global_status.ok()) 
+      analyzer->segmenter = SegmenterFactory(
+          analyzer->model->model_factory, 
+          kCrfSegmenter, 
+          &global_status);
     analyzer->part_of_speech_tagger = NULL;
     break;
 
    case CRF_PROCESSOR:
-    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
-        analyzer->model->model_factory, 
-        kCrfSegmenter, 
-        global_status);
-    if (global_status.ok()) analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
-        analyzer->model->model_factory, 
-        kCrfPartOfSpeechTagger, 
-        global_status);
+    if (global_status.ok()) 
+      analyzer->segmenter = SegmenterFactory(
+          analyzer->model->model_factory, 
+          kCrfSegmenter, 
+          &global_status);
+    if (global_status.ok()) 
+      analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
+          analyzer->model->model_factory, 
+          kCrfPartOfSpeechTagger, 
+          &global_status);
     break;
 
    case DEFAULT_SEGMENTER:
-    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
-        analyzer->model->model_factory, 
-        kMixedSegmenter, 
-        global_status);
+    if (global_status.ok()) 
+      analyzer->segmenter = SegmenterFactory(
+          analyzer->model->model_factory, 
+          kMixedSegmenter, 
+          &global_status);
     analyzer->part_of_speech_tagger = NULL;
     break;
 
    case BIGRAM_SEGMENTER:
-    if (global_status.ok()) analyzer->segmenter = SegmenterFactory(
-        analyzer->model->model_factory, 
-        kBigramSegmenter, 
-        global_status);
+    if (global_status.ok()) 
+      analyzer->segmenter = SegmenterFactory(
+          analyzer->model->model_factory, 
+          kBigramSegmenter, 
+          &global_status);
     analyzer->part_of_speech_tagger = nullptr;
     break;    
 
@@ -548,7 +555,8 @@ milkcat_cursor_t milkcat_analyze(milkcat_t *analyzer, const char *text) {
   return cursor;
 }
 
-int milkcat_cursor_get_next(milkcat_cursor_t *cursor, milkcat_item_t *next_item) {
+int milkcat_cursor_get_next(milkcat_cursor_t *cursor, 
+                            milkcat_item_t *next_item) {
   Cursor *internal_cursor = reinterpret_cast<Cursor *>(cursor->internal_cursor);
 
   // If the cursor is already released

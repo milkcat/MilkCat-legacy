@@ -35,20 +35,20 @@
 // open a random access file for read
 class ReadableFile {
  public:
-  static ReadableFile *New(const char *file_path, Status &status);
+  static ReadableFile *New(const char *file_path, Status *status);
   ~ReadableFile();
 
   // Read n bytes (size) from file and put to *ptr
-  bool Read(void *ptr, int size, Status &status);
+  bool Read(void *ptr, int size, Status *status);
 
   // Read an type T from file
   template<typename T>
-  bool ReadValue(T &data, Status &status) {
+  bool ReadValue(T &data, Status *status) {
     return Read(&data, sizeof(T), status);
   }
 
   // Read a line from file, if failed return false
-  bool ReadLine(char *buf, int size, Status &status);
+  bool ReadLine(char *buf, int size, Status *status);
 
   bool Eof() { return Tell() >= size_; }
 

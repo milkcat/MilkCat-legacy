@@ -31,7 +31,7 @@
 #include "readable_file.h"
 #include "status.h"
 
-ReadableFile *ReadableFile::New(const char *file_path, Status &status) {
+ReadableFile *ReadableFile::New(const char *file_path, Status *status) {
   ReadableFile *self = new ReadableFile();
   self->file_path_ = file_path;
   std::string msg;
@@ -45,29 +45,29 @@ ReadableFile *ReadableFile::New(const char *file_path, Status &status) {
   } else {
     std::string msg("failed to open ");
     msg += file_path;
-    status = Status::IOError(msg.c_str());
+    *status = Status::IOError(msg.c_str());
     return NULL;
   }
 }
 
 ReadableFile::ReadableFile(): fd_(NULL), size_(0) {}
 
-bool ReadableFile::Read(void *ptr, int size, Status &status) {
+bool ReadableFile::Read(void *ptr, int size, Status *status) {
   if (1 != fread(ptr, size, 1, fd_)) {
     std::string msg("failed to read from ");
     msg += file_path_;
-    status = Status::IOError(msg.c_str());
+    *status = Status::IOError(msg.c_str());
     return false;    
   } else {
     return true;
   }
 }
 
-bool ReadableFile::ReadLine(char *ptr, int size, Status &status) {
+bool ReadableFile::ReadLine(char *ptr, int size, Status *status) {
   if (NULL == fgets(ptr, size, fd_)) {
     std::string msg("failed to read from ");
     msg += file_path_;
-    status = Status::IOError(msg.c_str());
+    *status = Status::IOError(msg.c_str());
     return false;    
   } else {
     return true;

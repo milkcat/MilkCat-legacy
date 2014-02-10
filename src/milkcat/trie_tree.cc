@@ -35,11 +35,12 @@
 #include "trie_tree.h"
 #include "milkcat_config.h"
 
-DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &status) {
+DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, 
+                                              Status *status) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
 
   if (-1 == self->double_array_.open(file_path)) {
-    status = Status::IOError(file_path);
+    *status = Status::IOError(file_path);
     delete self;
     return nullptr;
   } else {
@@ -47,7 +48,8 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &sta
   }
 }
 
-DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(const std::map<std::string, int> &src_map) {
+DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(
+    const std::map<std::string, int> &src_map) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
   std::vector<const char *> word_strs;
   std::vector<int> word_ids;
@@ -58,7 +60,10 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(const std::map<std::string,
     word_ids.push_back(x.second);
   }
 
-  self->double_array_.build(word_strs.size(), word_strs.data(), nullptr, word_ids.data());
+  self->double_array_.build(word_strs.size(),
+                            word_strs.data(),
+                            nullptr,
+                            word_ids.data());
   return self;
 }
 

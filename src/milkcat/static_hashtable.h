@@ -65,42 +65,42 @@ class StaticHashTable {
   }
 
   // Load hash table from file
-  static const StaticHashTable *New(const char *file_path, Status &status) {
+  static const StaticHashTable *New(const char *file_path, Status *status) {
     StaticHashTable *self = new StaticHashTable();
     char *buffer = NULL; 
     
     ReadableFile *fd = ReadableFile::New(file_path, status);
 
     int32_t magic_number;
-    if (status.ok()) fd->ReadValue(magic_number, status);
-    if (status.ok()) {
-      if (magic_number != 0x3321) status = Status::Corruption(file_path);
+    if (status->ok()) fd->ReadValue(magic_number, status);
+    if (status->ok()) {
+      if (magic_number != 0x3321) *status = Status::Corruption(file_path);
     }
 
     int32_t bucket_size;
-    if (status.ok()) fd->ReadValue(bucket_size, status);
+    if (status->ok()) fd->ReadValue(bucket_size, status);
 
     int32_t data_size;
-    if (status.ok()) fd->ReadValue(data_size, status);
+    if (status->ok()) fd->ReadValue(data_size, status);
 
     int32_t serialize_size;
-    if (status.ok()) fd->ReadValue(serialize_size, status);
+    if (status->ok()) fd->ReadValue(serialize_size, status);
 
-    if (status.ok()) {
+    if (status->ok()) {
       if (kSerializeBukcetSize != serialize_size)
-        status = Status::Corruption(file_path);     
+        *status = Status::Corruption(file_path);     
     }
 
-    if (status.ok()) {
+    if (status->ok()) {
       buffer = new char[kSerializeBukcetSize * data_size];
       fd->Read(buffer, kSerializeBukcetSize * data_size, status);  
     }
 
-    if (status.ok()) {
-      if (fd->Tell() != fd->Size()) status = Status::Corruption(file_path); 
+    if (status->ok()) {
+      if (fd->Tell() != fd->Size()) *status = Status::Corruption(file_path); 
     }
     
-    if (status.ok()) {
+    if (status->ok()) {
       self->buckets_ = new Bucket[bucket_size];
       self->bucket_size_ = bucket_size;
       self->data_size_ = data_size;
@@ -126,7 +126,7 @@ class StaticHashTable {
     delete fd;
     fd = NULL;
 
-    if (status.ok()) {
+    if (status->ok()) {
       return self;
     } else {
       delete self;
@@ -135,21 +135,25 @@ class StaticHashTable {
   }
 
   // Save the hash table into file
-  void Save(const char *file_path, Status &status) const {
+  void Save(const char *file_path, Status *status) const {
     char buffer[kSerializeBukcetSize];
     WritableFile *fd = WritableFile::New(file_path, status);
 
     int32_t magic_number = 0x3321;
-    if (status.ok()) fd->WriteValue<int32_t>(magic_number, status);
-    if (status.ok()) fd->WriteValue<int32_t>(bucket_size_, status);
-    if (status.ok()) fd->WriteValue<int32_t>(data_size_, status);
+    if (status->ok()) fd->WriteValue<int32_t>(magic_number, status);
+    if (status->ok()) fd->WriteValue<int32_t>(bucket_size_, status);
+    if (status->ok()) fd->WriteValue<int32_t>(data_size_, status);
 
     int32_t serialize_size = kSerializeBukcetSize;
-    if (status.ok()) fd->WriteValue<int32_t>(serialize_size, status);
+    if (status->ok()) fd->WriteValue<int32_t>(serialize_size, status);
 
-    for (int i = 0; i < bucket_size_ && status.ok(); ++i) {
+    for (int i = 0; i < bucket_size_ && status->ok(); ++i) {
       if (buckets_[i].empty == false) {
-        Serialize(i, buckets_[i].key, buckets_[i].value, buffer, sizeof(buffer));
+        Serialize(i, 
+                  buckets_[i].key, 
+                  buckets_[i].value, 
+                  buffer, 
+                  sizeof(buffer));
         fd->Write(buffer, kSerializeBukcetSize, status);
       }
     }
@@ -157,8 +161,8 @@ class StaticHashTable {
     delete fd;
   }
 
-  // Find the value by key in hash table if exist return a const pointer to the value
-  // else return NULL
+  // Find the value by key in hash table if exist return a const pointer to the 
+  // value else return nullptr
   const V *Find(const K &key) const {
     int position = FindPosition(key);
     if (buckets_[position].empty) {
@@ -191,10 +195,16 @@ class StaticHashTable {
   StaticHashTable(): buckets_(NULL), bucket_size_(0), data_size_(0) {}
 
   // Serialize size of each bucket
-  static const int kSerializeBukcetSize = sizeof(int32_t) + sizeof(K) + sizeof(V);
+  static const int kSerializeBukcetSize = sizeof(int32_t) +
+                                          sizeof(K) +
+                                          sizeof(V);
 
   // Serialize a Bucket into buffer
-  void Serialize(int32_t position, const K &key, const V &value, void *buffer, int buffer_size) const {
+  void Serialize(int32_t position, 
+                 const K &key, 
+                 const V &value, 
+                 void *buffer, 
+                 int buffer_size) const {
     assert(kSerializeBukcetSize <= buffer_size);
     
     char *p = reinterpret_cast<char *>(buffer);
@@ -207,7 +217,10 @@ class StaticHashTable {
     *reinterpret_cast<V *>(p) = value;
   }
 
-  void Desericalize(int32_t &position, K &key, V &value, const void *buffer, int buffer_size) const {
+  void Desericalize(int32_t &position, 
+                    K &key, V &value, 
+                    const void *buffer, 
+                    int buffer_size) const {
     assert(kSerializeBukcetSize <= buffer_size);
 
     const char *p = reinterpret_cast<const char *>(buffer);

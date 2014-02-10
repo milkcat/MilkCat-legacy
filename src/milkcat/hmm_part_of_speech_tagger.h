@@ -44,12 +44,13 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   static const int kMaxBucket = kTokenMax;
 
   ~HMMPartOfSpeechTagger();
-  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance);
+  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, 
+           TermInstance *term_instance);
 
   static HMMPartOfSpeechTagger *New(const HMMModel *model, 
                                     const TrieTree *index,
                                     const Configuration *default_tag,
-                                    Status &status);
+                                    Status *status);
 
  private:
   struct Node;
@@ -81,8 +82,12 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   // Get the tag's id by its text if the tag not exists return -1
   int GetTagIdByStr(const char *tag_str);
 
-  // Load the default tag key from configuration file and put in term_type_emit_tag_
-  void LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag, Status &status);
+  // Load the default tag key from configuration file and put in 
+  // term_type_emit_tag_
+  void LoadDefaultTags(const Configuration *conf, 
+                       const char *key, 
+                       int *emit_tag, 
+                       Status *status);
 
   // Get each term's emit tag and save it in term_tags_
   void BuildEmitTagfForNode(TermInstance *term_instance);

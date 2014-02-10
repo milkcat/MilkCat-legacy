@@ -42,7 +42,7 @@ class OutOfVocabularyWordRecognition {
  public:
   static OutOfVocabularyWordRecognition *New(const CRFModel *crf_model, 
                                              const TrieTree *oov_property,
-                                             Status &status);
+                                             Status *status);
   ~OutOfVocabularyWordRecognition();
   void Process(TermInstance *term_instance,
                TermInstance *in_term_instance, 

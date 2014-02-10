@@ -33,7 +33,7 @@ class HMMModel {
  public:
   struct EmitRow;
 
-  static HMMModel *New(const char *model_path, Status &status);
+  static HMMModel *New(const char *model_path, Status *status);
   ~HMMModel();
 
   int tag_num() const { return tag_num_; }

@@ -45,7 +45,7 @@ void CrfSegmentThread(milkcat_model_t *model,
                       std::unordered_map<std::string, int> &vocab,
                       int &total_count,
                       std::mutex &vocab_mutex,
-                      Status &status) {
+                      Status *status) {
 
   int buf_size = 1024 * 1024;
   char *buf = new char[buf_size];
@@ -53,11 +53,11 @@ void CrfSegmentThread(milkcat_model_t *model,
   milkcat_t *analyzer = milkcat_new(model, CRF_SEGMENTER);
   milkcat_item_t item;
   milkcat_cursor_t cursor;
-  if (analyzer == nullptr) status = Status::Corruption(milkcat_last_error());
+  if (analyzer == nullptr) *status = Status::Corruption(milkcat_last_error());
 
   bool eof = false;
   std::vector<std::string> words;
-  while (status.ok() && !eof) {
+  while (status->ok() && !eof) {
 
     // Read a line from corpus
     fd_mutex.lock();
@@ -66,7 +66,7 @@ void CrfSegmentThread(milkcat_model_t *model,
     fd_mutex.unlock();
 
     // Segment the line and store the results into words
-    if (status.ok() && !eof) {
+    if (status->ok() && !eof) {
       words.clear();
       cursor = milkcat_analyze(analyzer, buf);
       while (milkcat_cursor_get_next(&cursor, &item)) {
@@ -78,7 +78,7 @@ void CrfSegmentThread(milkcat_model_t *model,
     }
 
     // Update vocab and total_count with words
-    if (status.ok() && !eof) {
+    if (status->ok() && !eof) {
       vocab_mutex.lock();
       for (auto &word: words) {
         vocab[word] += 1;
@@ -97,7 +97,9 @@ void ProgressUpdateThread(
     ReadableFile *fd, 
     std::mutex &fd_mutex,
     std::atomic_bool &task_finished,
-    void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second)) {
+    void (* progress)(int64_t bytes_processed, 
+                      int64_t file_size, 
+                      int64_t bytes_per_second)) {
 
   int64_t file_size = fd->Size();     
   int64_t last_bytes_processed = 0,
@@ -110,24 +112,29 @@ void ProgressUpdateThread(
     fd_mutex.lock();
     bytes_processed = fd->Tell();
     fd_mutex.unlock();
-    progress(bytes_processed, file_size, bytes_processed - last_bytes_processed);
+    progress(bytes_processed, 
+             file_size, 
+             bytes_processed - last_bytes_processed);
   }  
 }
 
 // Segment the corpus from path and return the vocabulary of chinese words.
 // If any errors occured, status is not Status::OK()
-std::unordered_map<std::string, int> GetCrfVocabulary(const char *path, 
-                                                      int &total_count,
-                                                      void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second), 
-                                                      Status &status) {
+std::unordered_map<std::string, int> GetCrfVocabulary(
+    const char *path, 
+    int &total_count,
+    void (* progress)(int64_t bytes_processed, 
+                      int64_t file_size, 
+                      int64_t bytes_per_second), 
+    Status *status) {
   std::unordered_map<std::string, int> vocab;
   milkcat_model_t *model = milkcat_model_new(NULL);
   total_count = 0;
 
   ReadableFile *fd;
-  if (status.ok()) fd = ReadableFile::New(path, status);
+  if (status->ok()) fd = ReadableFile::New(path, status);
 
-  if (status.ok()) {
+  if (status->ok()) {
     int64_t file_size = fd->Size();  
 
     // Thread number = CPU core number
@@ -146,13 +153,17 @@ std::unordered_map<std::string, int> GetCrfVocabulary(const char *path,
                                     std::ref(vocab), 
                                     std::ref(total_count), 
                                     std::ref(vocab_mutex), 
-                                    std::ref(status_vec[i])));
+                                    &status_vec[i]));
     }
 
     // Synchronizing all threads, call progress function per second
 
     if (progress) {
-      progress_thread = std::thread(ProgressUpdateThread, fd, std::ref(fd_mutex), std::ref(task_finished), progress);
+      progress_thread = std::thread(ProgressUpdateThread, 
+                                    fd, 
+                                    std::ref(fd_mutex), 
+                                    std::ref(task_finished), 
+                                    progress);
     }
     
     for (auto &th: threads) th.join();
@@ -161,7 +172,7 @@ std::unordered_map<std::string, int> GetCrfVocabulary(const char *path,
 
     // Set the status
     for (auto &st: status_vec) {
-      if (!st.ok()) status = st;
+      if (!st.ok()) *status = st;
     }
   }
 

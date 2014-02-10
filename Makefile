@@ -2,6 +2,7 @@ PREFIX ?= /usr/local
 MODEL_DIR ?= $(PREFIX)/share/milkcat
 LIBRARY_DIR ?= $(PREFIX)/lib
 BINARY_DIR ?= $(PREFIX)/bin
+PYTHON ?= python
 V ?= 0
 
 all: milkcat
@@ -32,3 +33,16 @@ uninstall:
 	rm $(LIBRARY_DIR)/libmilkcat.*
 
 
+CPPLINT_EXCLUDE ?=
+CPPLINT_EXCLUDE += src/node_dtrace.cc
+CPPLINT_EXCLUDE += src/node_dtrace.cc
+CPPLINT_EXCLUDE += src/node_root_certs.h
+CPPLINT_EXCLUDE += src/node_win32_perfctr_provider.cc
+CPPLINT_EXCLUDE += src/queue.h
+CPPLINT_EXCLUDE += src/tree.h
+CPPLINT_EXCLUDE += src/v8abbr.h
+
+CPPLINT_FILES = $(filter-out $(CPPLINT_EXCLUDE), $(wildcard src/*.cc src/*.h src/*.c))
+
+lint:
+	$(PYTHON) tools/cpplint.py $(CPPLINT_FILES)

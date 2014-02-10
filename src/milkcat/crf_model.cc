@@ -51,7 +51,7 @@ void read_value(const char **ptr, T *value) {
 }
 
 CRFModel::CRFModel(): data_(NULL), cost_num_(0), cost_data_(NULL),
-                          double_array_(NULL), cost_factor_(0.0) {
+                      double_array_(NULL), cost_factor_(0.0) {
 }
 
 CRFModel::~CRFModel() {
@@ -69,27 +69,27 @@ CRFModel::~CRFModel() {
   }
 }
 
-CRFModel *CRFModel::New(const char *model_path, Status &status) {
+CRFModel *CRFModel::New(const char *model_path, Status *status) {
   CRFModel *self = new CRFModel();
 
   ReadableFile *fd = ReadableFile::New(model_path, status);
-  if (status.ok()) {
+  if (status->ok()) {
     self->data_ = new char[fd->Size()];
     fd->Read(self->data_, fd->Size(), status);
   }
 
   const char *ptr, *end;
 
-  if (status.ok()) {
+  if (status->ok()) {
     ptr = self->data_;
     end = ptr + fd->Size();
 
     int32_t version = 0;
     read_value<int32_t>(&ptr, &version);
-    if (version != 100) status = Status::Corruption(model_path);
+    if (version != 100) *status = Status::Corruption(model_path);
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     int32_t type = 0;
     read_value<int32_t>(&ptr, &type);
     read_value<double>(&ptr, &(self->cost_factor_));
@@ -134,12 +134,12 @@ CRFModel *CRFModel::New(const char *model_path, Status &status) {
     ptr += sizeof(float) * self->cost_num_;    
   }
 
-  if (status.ok() && ptr != end) {
-    status = Status::Corruption(model_path);  
+  if (status->ok() && ptr != end) {
+    *status = Status::Corruption(model_path);  
   }
 
   delete fd;
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;

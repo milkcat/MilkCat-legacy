@@ -49,9 +49,10 @@ class MixedPartOfSpeechTagger: public PartOfSpeechTagger {
       const TrieTree *index,
       const Configuration *default_tag,
       const CRFModel *crf_model,
-      Status &status);
+      Status *status);
 
-  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance);
+  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, 
+           TermInstance *term_instance);
 
  private:
   CRFPartOfSpeechTagger *crf_tagger_;

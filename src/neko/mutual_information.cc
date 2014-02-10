@@ -38,7 +38,7 @@
 std::unordered_map<std::string, double> GetMutualInformation(
     const std::unordered_map<std::string, int> &bigram_vocab,
     const std::unordered_map<std::string, float> &candidate,
-    Status &status) {
+    Status *status) {
 
   char line[1024];
   std::unordered_map<std::string, double> mutual_information;
@@ -57,8 +57,11 @@ std::unordered_map<std::string, double> GetMutualInformation(
   // Prepare the user dictionary
   WritableFile *fd = WritableFile::New("bigram_vocab.txt", status);
   for (auto &x: bigram_vocab) {
-    if (!status.ok()) break;
-    sprintf(line, "%s %.5lf", x.first.c_str(), -log(static_cast<double>(x.second) / total_frequency));
+    if (!status->ok()) break;
+    sprintf(line, 
+            "%s %.5lf", 
+            x.first.c_str(), 
+            -log(static_cast<double>(x.second) / total_frequency));
     fd->WriteLine(line, status);
   }
   delete fd;
@@ -69,14 +72,15 @@ std::unordered_map<std::string, double> GetMutualInformation(
   milkcat_t *analyzer;
   milkcat_cursor_t cursor;
   milkcat_item_t item;
-  if (status.ok()) {
+  if (status->ok()) {
     model = milkcat_model_new(nullptr);
     milkcat_model_set_userdict(model, "bigram_vocab.txt");
     analyzer = milkcat_new(model, BIGRAM_SEGMENTER);
-    if (analyzer == nullptr) status = Status::RuntimeError(milkcat_last_error());
+    if (analyzer == nullptr) 
+      *status = Status::RuntimeError(milkcat_last_error());
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     segmenter = static_cast<BigramSegmenter *>(analyzer->segmenter);
     for (auto &x: candidate_frequencies) {
       const char *word = x.first.c_str();
@@ -91,7 +95,7 @@ std::unordered_map<std::string, double> GetMutualInformation(
       double word_cost = -log(static_cast<double>(x.second) / total_frequency);
       double bigram_cost = segmenter->RecentSegCost();
 
-      mutual_information.insert(std::pair<std::string, double>(x.first, bigram_cost - word_cost));
+      mutual_information.emplace(x.first, bigram_cost - word_cost);
     }
   }
 
