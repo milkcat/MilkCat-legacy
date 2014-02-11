@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef CANDIDATE_H
-#define CANDIDATE_H
+#ifndef SRC_NEKO_CANDIDATE_H_
+#define SRC_NEKO_CANDIDATE_H_
 
 #include <vector>
 #include <unordered_map>
@@ -35,14 +35,14 @@
 constexpr int kDefaultThresFreq = -1;
 
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
-// Returns a map the key is the word, and the value is its cost in unigram, which is
-// used for bigram segmentation
+// Returns a map the key is the word, and the value is its cost in unigram,
+// which is used for bigram segmentation
 std::unordered_map<std::string, float> GetCandidate(
     const char *model_path,
-    const std::unordered_map<std::string, int> &crf_vocab, 
+    const std::unordered_map<std::string, int> &crf_vocab,
     int total_count,
     int (* log_func)(const char *message),
     Status *status,
     int thres_freq = kDefaultThresFreq);
 
-#endif
+#endif  // SRC_NEKO_CANDIDATE_H_

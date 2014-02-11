@@ -35,13 +35,13 @@
 #include "neko/final_rank.h"
 #include "utils/writable_file.h"
 
-void DisplayProgress(int64_t bytes_processed, 
-                     int64_t file_size, 
+void DisplayProgress(int64_t bytes_processed,
+                     int64_t file_size,
                      int64_t bytes_per_second) {
-  fprintf(stderr, 
-          "\rprogress %lld/%lld -- %2.1f%% %.3fMB/s", 
-          static_cast<long long>(bytes_processed), 
-          static_cast<long long>(file_size),
+  fprintf(stderr,
+          "\rprogress %ld/%ld -- %2.1f%% %.3fMB/s",
+          static_cast<int64_t>(bytes_processed),
+          static_cast<int64_t>(file_size),
           100.0 * bytes_processed / file_size,
           bytes_per_second / static_cast<double>(1024 * 1024));
 }
@@ -52,14 +52,14 @@ int main(int argc, char **argv) {
 
   printf("Segment corpus %s with CRF model.\n", argv[1]);
   std::unordered_map<std::string, int> vocab = GetCrfVocabulary(
-      argv[1], 
-      total_count, 
-      DisplayProgress, 
+      argv[1],
+      &total_count,
+      DisplayProgress,
       &status);
 
   if (status.ok()) {
     printf("\nOK, %d words in corpus, vocabulary size is"
-           " %d\nGet candidates from vocabulary.\n", 
+           " %d\nGet candidates from vocabulary.\n",
            total_count,
            static_cast<int>(vocab.size()));
   }
@@ -68,25 +68,25 @@ int main(int argc, char **argv) {
   if (status.ok()) {
     std::string model_path = MODEL_PATH;
     model_path += "person_name.maxent";
-    candidates = GetCandidate(model_path.c_str(), 
-                              vocab, 
-                              total_count, 
-                              puts, 
+    candidates = GetCandidate(model_path.c_str(),
+                              vocab,
+                              total_count,
+                              puts,
                               &status);
   }
 
   if (status.ok()) {
-    printf("Get %d candidates. Write to candidate_cost.txt\n", 
-           static_cast<int>(candidates.size()));    
+    printf("Get %d candidates. Write to candidate_cost.txt\n",
+           static_cast<int>(candidates.size()));
   }
-  
+
   WritableFile *fd = nullptr;
   if (status.ok()) fd = WritableFile::New("candidate_cost.txt", &status);
 
   char line[1024];
   if (status.ok()) {
-    for (auto &x: candidates) {
-      sprintf(line, "%s %.5f", x.first.c_str(), x.second);
+    for (auto &x : candidates) {
+      snprintf(line, sizeof(line), "%s %.5f", x.first.c_str(), x.second);
       fd->WriteLine(line, &status);
     }
   }
@@ -101,11 +101,11 @@ int main(int argc, char **argv) {
 
   if (status.ok()) {
     printf("Analyze %s with bigram segmentation.\n", argv[1]);
-    BigramAnalyze(candidates, 
-                  argv[1], 
-                  adjacent_entropy, 
-                  vocab, 
-                  DisplayProgress, 
+    BigramAnalyze(candidates,
+                  argv[1],
+                  &adjacent_entropy,
+                  &vocab,
+                  DisplayProgress,
                   &status);
   }
 
@@ -123,13 +123,13 @@ int main(int argc, char **argv) {
   if (status.ok()) {
     printf("Write result to %s\n", argv[2]);
     WritableFile *wf = WritableFile::New(argv[2], &status);
-    for (auto &x: final_rank) {
+    for (auto &x : final_rank) {
       if (!status.ok()) break;
 
-      sprintf(line, "%s %.3f", x.first.c_str(), x.second);
+      snprintf(line, sizeof(line), "%s %.3f", x.first.c_str(), x.second);
       wf->WriteLine(line, &status);
     }
-    delete wf; 
+    delete wf;
   }
 
   if (!status.ok()) {

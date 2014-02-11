@@ -25,14 +25,14 @@
 //
 
 
-#ifndef STATUS_H
-#define STATUS_H
+#ifndef SRC_UTILS_STATUS_H_
+#define SRC_UTILS_STATUS_H_
 
 #include <stdio.h>
 #include <string>
 
 class Status {
- public:  
+ public:
   Status(): code_(0) {}
 
   static Status OK() { return Status(); }
@@ -44,13 +44,13 @@ class Status {
   }
   static Status NotImplemented(const char *message) {
     return Status(kNotImplemented, message);
-  } 
+  }
   static Status RuntimeError(const char *message) {
     return Status(kRuntimeError, message);
-  } 
+  }
   static Status Info(const char *message) {
     return Status(kInfo, message);
-  } 
+  }
 
   // Return true if the state is success
   bool ok() { return code_ == 0; }
@@ -96,5 +96,4 @@ class Status {
   }
 };
 
-
-#endif
+#endif  // SRC_UTILS_STATUS_H_

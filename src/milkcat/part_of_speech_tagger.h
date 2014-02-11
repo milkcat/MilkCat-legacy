@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef PART_OF_SPEECH_TAGGER_H
-#define PART_OF_SPEECH_TAGGER_H
+#ifndef SRC_MILKCAT_PART_OF_SPEECH_TAGGER_H_
+#define SRC_MILKCAT_PART_OF_SPEECH_TAGGER_H_
 
 class PartOfSpeechTagInstance;
 class TermInstance;
@@ -34,11 +34,12 @@ class TermInstance;
 class PartOfSpeechTagger {
  public:
   virtual ~PartOfSpeechTagger() = 0;
-  
+
   // Tag the TermInstance and put the result to PartOfSpeechTagInstance
-  virtual void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance) = 0;
+  virtual void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance,
+                   TermInstance *term_instance) = 0;
 };
 
 inline PartOfSpeechTagger::~PartOfSpeechTagger() {}
 
-#endif
+#endif  // SRC_MILKCAT_PART_OF_SPEECH_TAGGER_H_

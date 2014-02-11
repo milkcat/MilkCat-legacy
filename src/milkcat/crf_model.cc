@@ -30,13 +30,13 @@
 // Copyright(C) 2005-2007 Taku Kudo <taku@chasen.org>
 //
 
+#include "milkcat/crf_model.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
-#include "crf_model.h"
 
 inline const char *read_data(const char **ptr, size_t size) {
   const char *r = *ptr;
@@ -44,7 +44,7 @@ inline const char *read_data(const char **ptr, size_t size) {
   return r;
 }
 
-template <class T> 
+template <class T>
 void read_value(const char **ptr, T *value) {
   const char *r = read_data(ptr, sizeof(T));
   memcpy(value, r, sizeof(T));
@@ -125,17 +125,17 @@ CRFModel *CRFModel::New(const char *model_path, Status *status) {
       }
       while (tmpl_str[pos++] != '\0') {}
     }
-    
+
     self->double_array_ = new Darts::DoubleArray();
     self->double_array_->set_array(const_cast<char *>(ptr));
     ptr += dsize;
 
     self->cost_data_ = reinterpret_cast<const float *>(ptr);
-    ptr += sizeof(float) * self->cost_num_;    
+    ptr += sizeof(float) * self->cost_num_;
   }
 
   if (status->ok() && ptr != end) {
-    *status = Status::Corruption(model_path);  
+    *status = Status::Corruption(model_path);
   }
 
   delete fd;

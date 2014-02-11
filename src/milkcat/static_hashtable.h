@@ -25,15 +25,12 @@
 //
 
 
-#ifndef STATIC_HASHTABLE_H
-#define STATIC_HASHTABLE_H
+#ifndef SRC_MILKCAT_STATIC_HASHTABLE_H_
+#define SRC_MILKCAT_STATIC_HASHTABLE_H_
 
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <exception>
-#include <stdexcept>
-#include <iostream>
 #include <string>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
@@ -43,7 +40,10 @@
 template <class K, class V>
 class StaticHashTable {
  public:
-  static const StaticHashTable *Build(const K *keys, const V *values, int size, double load_factor = 0.5) {
+  static const StaticHashTable *Build(const K *keys,
+                                      const V *values,
+                                      int size,
+                                      double load_factor = 0.5) {
     StaticHashTable *self = new StaticHashTable();
 
     self->bucket_size_ = static_cast<int>(size / load_factor);
@@ -67,39 +67,39 @@ class StaticHashTable {
   // Load hash table from file
   static const StaticHashTable *New(const char *file_path, Status *status) {
     StaticHashTable *self = new StaticHashTable();
-    char *buffer = NULL; 
-    
+    char *buffer = NULL;
+
     ReadableFile *fd = ReadableFile::New(file_path, status);
 
     int32_t magic_number;
-    if (status->ok()) fd->ReadValue(magic_number, status);
+    if (status->ok()) fd->ReadValue(&magic_number, status);
     if (status->ok()) {
       if (magic_number != 0x3321) *status = Status::Corruption(file_path);
     }
 
     int32_t bucket_size;
-    if (status->ok()) fd->ReadValue(bucket_size, status);
+    if (status->ok()) fd->ReadValue(&bucket_size, status);
 
     int32_t data_size;
-    if (status->ok()) fd->ReadValue(data_size, status);
+    if (status->ok()) fd->ReadValue(&data_size, status);
 
     int32_t serialize_size;
-    if (status->ok()) fd->ReadValue(serialize_size, status);
+    if (status->ok()) fd->ReadValue(&serialize_size, status);
 
     if (status->ok()) {
       if (kSerializeBukcetSize != serialize_size)
-        *status = Status::Corruption(file_path);     
+        *status = Status::Corruption(file_path);
     }
 
     if (status->ok()) {
       buffer = new char[kSerializeBukcetSize * data_size];
-      fd->Read(buffer, kSerializeBukcetSize * data_size, status);  
+      fd->Read(buffer, kSerializeBukcetSize * data_size, status);
     }
 
     if (status->ok()) {
-      if (fd->Tell() != fd->Size()) *status = Status::Corruption(file_path); 
+      if (fd->Tell() != fd->Size()) *status = Status::Corruption(file_path);
     }
-    
+
     if (status->ok()) {
       self->buckets_ = new Bucket[bucket_size];
       self->bucket_size_ = bucket_size;
@@ -114,12 +114,12 @@ class StaticHashTable {
       K key;
       V value;
       for (int i = 0; i < data_size; ++i) {
-        self->Desericalize(position, key, value, p, p_end - p);
+        self->Desericalize(&position, &key, &value, p, p_end - p);
         self->buckets_[position].key = key;
         self->buckets_[position].value = value;
         self->buckets_[position].empty = false;
         p += kSerializeBukcetSize;
-      }     
+      }
     }
 
     delete[] buffer;
@@ -149,10 +149,10 @@ class StaticHashTable {
 
     for (int i = 0; i < bucket_size_ && status->ok(); ++i) {
       if (buckets_[i].empty == false) {
-        Serialize(i, 
-                  buckets_[i].key, 
-                  buckets_[i].value, 
-                  buffer, 
+        Serialize(i,
+                  buckets_[i].key,
+                  buckets_[i].value,
+                  buffer,
                   sizeof(buffer));
         fd->Write(buffer, kSerializeBukcetSize, status);
       }
@@ -161,7 +161,7 @@ class StaticHashTable {
     delete fd;
   }
 
-  // Find the value by key in hash table if exist return a const pointer to the 
+  // Find the value by key in hash table if exist return a const pointer to the
   // value else return nullptr
   const V *Find(const K &key) const {
     int position = FindPosition(key);
@@ -200,13 +200,13 @@ class StaticHashTable {
                                           sizeof(V);
 
   // Serialize a Bucket into buffer
-  void Serialize(int32_t position, 
-                 const K &key, 
-                 const V &value, 
-                 void *buffer, 
+  void Serialize(int32_t position,
+                 const K &key,
+                 const V &value,
+                 void *buffer,
                  int buffer_size) const {
     assert(kSerializeBukcetSize <= buffer_size);
-    
+
     char *p = reinterpret_cast<char *>(buffer);
     *reinterpret_cast<int32_t *>(p) = position;
 
@@ -217,20 +217,21 @@ class StaticHashTable {
     *reinterpret_cast<V *>(p) = value;
   }
 
-  void Desericalize(int32_t &position, 
-                    K &key, V &value, 
-                    const void *buffer, 
+  void Desericalize(int32_t *position,
+                    K *key,
+                    V *value,
+                    const void *buffer,
                     int buffer_size) const {
     assert(kSerializeBukcetSize <= buffer_size);
 
     const char *p = reinterpret_cast<const char *>(buffer);
-    position = *reinterpret_cast<const int32_t *>(p);
+    *position = *reinterpret_cast<const int32_t *>(p);
 
     p += sizeof(int32_t);
-    key = *reinterpret_cast<const K *>(p);
+    *key = *reinterpret_cast<const K *>(p);
 
     p += sizeof(K);
-    value = *reinterpret_cast<const V *>(p);
+    *value = *reinterpret_cast<const V *>(p);
   }
 
   int FindPosition(const K &key) const {
@@ -238,11 +239,9 @@ class StaticHashTable {
         position = original;
     for (int i = 1; ; i++) {
       if (buckets_[position].empty) {
-        
         // key not exists in hash table
         return position;
       } else if (buckets_[position].key == key) {
-
         // OK, find the key
         return position;
       } else {
@@ -251,7 +250,7 @@ class StaticHashTable {
       }
     }
   }
-  
+
   // The JS hash function
   int JSHash(const K &key) const {
     const char *p = reinterpret_cast<const char *>(&key);
@@ -274,4 +273,4 @@ class StaticHashTable {
 };
 
 
-#endif
+#endif  // SRC_MILKCAT_STATIC_HASHTABLE_H_

@@ -24,6 +24,7 @@
 // THE SOFTWARE.
 //
 
+#include "neko/maxent_classifier.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -35,11 +36,10 @@
 #include "utils/status.h"
 #include "utils/utils.h"
 #include "milkcat/darts.h"
-#include "maxent_classifier.h"
 
-MaxentModel::MaxentModel(): xsize_(0), 
-                            ysize_(0), 
-                            yname_(nullptr), 
+MaxentModel::MaxentModel(): xsize_(0),
+                            ysize_(0),
+                            yname_(nullptr),
                             cost_(nullptr) {
 }
 
@@ -85,16 +85,16 @@ MaxentModel *MaxentModel::NewFromText(const char *model_path, Status *status) {
       }
     }
 
-    // Generate index data, NOTE: xname in xids are sorted! 
+    // Generate index data, NOTE: xname in xids are sorted!
     std::vector<const char *> xname_vec;
     std::vector<int> xid_vec;
-    for (auto &x: xids) {
+    for (auto &x : xids) {
       xname_vec.push_back(x.first.c_str());
       xid_vec.push_back(x.second);
     }
-    self->double_array_.build(xname_vec.size(), 
-                              xname_vec.data(), 
-                              nullptr, 
+    self->double_array_.build(xname_vec.size(),
+                              xname_vec.data(),
+                              nullptr,
                               xid_vec.data());
 
     // Generate yname
@@ -120,12 +120,12 @@ MaxentModel *MaxentModel::New(const char *model_path, Status *status) {
 
   if (status->ok()) {
     int magic_number = 0;
-    fd->ReadValue<int32_t>(magic_number, status);
+    fd->ReadValue<int32_t>(&magic_number, status);
     if (magic_number != 0x2233) *status = Status::Corruption(model_path);
   }
 
-  if (status->ok()) fd->ReadValue<int32_t>(self->xsize_, status);
-  if (status->ok()) fd->ReadValue<int32_t>(self->ysize_, status);
+  if (status->ok()) fd->ReadValue<int32_t>(&(self->xsize_), status);
+  if (status->ok()) fd->ReadValue<int32_t>(&(self->ysize_), status);
   if (status->ok()) {
     self->yname_ = reinterpret_cast<char (*)[kYNameMax]>(
       new char[kYNameMax * self->ysize_]);
@@ -133,7 +133,7 @@ MaxentModel *MaxentModel::New(const char *model_path, Status *status) {
   }
 
   int index_size = 0;
-  if (status->ok()) fd->ReadValue<int32_t>(index_size, status);
+  if (status->ok()) fd->ReadValue<int32_t>(&index_size, status);
   if (status->ok()) {
     char *index_data = new char[index_size];
     fd->Read(index_data, index_size, status);
@@ -172,16 +172,16 @@ void MaxentModel::Save(const char *model_path, Status *status) {
 
   if (status->ok()) fd->WriteValue<int32_t>(xsize_, status);
   if (status->ok()) fd->WriteValue<int32_t>(ysize_, status);
-  if (status->ok()) fd->Write(yname_, ysize_ * kYNameMax,status);
-  if (status->ok()) 
+  if (status->ok()) fd->Write(yname_, ysize_ * kYNameMax, status);
+  if (status->ok())
     fd->WriteValue<int32_t>(
-      static_cast<int32_t>(double_array_.total_size()), 
+      static_cast<int32_t>(double_array_.total_size()),
       status);
-  if (status->ok()) fd->Write(double_array_.array(), 
-                              double_array_.total_size(), 
+  if (status->ok()) fd->Write(double_array_.array(),
+                              double_array_.total_size(),
                               status);
   if (status->ok()) fd->Write(cost_, sizeof(float) * xsize_ * ysize_, status);
-  
+
   delete fd;
 }
 
@@ -193,7 +193,7 @@ MaxentModel::~MaxentModel() {
   yname_ = nullptr;
 }
 
-MaxentClassifier::MaxentClassifier(MaxentModel *model): 
+MaxentClassifier::MaxentClassifier(MaxentModel *model):
     model_(model),
     y_cost_(new double[model->ysize()]),
     y_size_(model->ysize()) {
@@ -209,7 +209,7 @@ const char *MaxentClassifier::Classify(
   // Clear the y_cost_ array
   for (int i = 0; i < y_size_; ++i) y_cost_[i] = 0.0;
 
-  for (auto &feature_str: feature_list) {
+  for (auto &feature_str : feature_list) {
     int x = model_->feature_id(feature_str.c_str());
     if (x != MaxentModel::kFeatureIdNone) {
       // If this feature exists

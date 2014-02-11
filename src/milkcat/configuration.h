@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#ifndef SRC_MILKCAT_CONFIGURATION_H_
+#define SRC_MILKCAT_CONFIGURATION_H_
 
 #include <string>
 #include <map>
@@ -60,4 +60,4 @@ class Configuration {
   std::map<std::string, std::string> data_;
 };
 
-#endif
+#endif  // SRC_MILKCAT_CONFIGURATION_H_

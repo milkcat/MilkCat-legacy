@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
+#include "utils/writable_file.h"
 #include <string>
-#include "writable_file.h"
 
 WritableFile::WritableFile(): fd_(nullptr) {
 }
@@ -43,7 +43,7 @@ WritableFile *WritableFile::New(const char *path, Status *status) {
   if (self->fd_ == nullptr) {
     error_message = std::string("Unable to open ") + path + " for write.";
     *status = Status::IOError(error_message.c_str());
-  } 
+  }
 
   if (status->ok()) {
     return self;
@@ -57,7 +57,7 @@ void WritableFile::WriteLine(const char *line, Status *status) {
   std::string error_message;
   int r = fputs(line, fd_);
   int r2 = fputc('\n', fd_);
-  
+
   if (r < 0 || r2 == EOF) {
     error_message = std::string("Failed to write to ") + file_path_;
     *status = Status::IOError(error_message.c_str());
@@ -69,6 +69,6 @@ void WritableFile::Write(const void *data, int size, Status *status) {
 
   if (fwrite(data, size, 1, fd_) < 1) {
     error_message = std::string("Failed to write to ") + file_path_;
-    *status = Status::IOError(error_message.c_str());    
+    *status = Status::IOError(error_message.c_str());
   }
 }

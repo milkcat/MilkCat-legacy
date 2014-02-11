@@ -25,11 +25,10 @@
 // THE SOFTWARE.
 //
 
-
+#include "utils/readable_file.h"
 #include <stdio.h>
 #include <string>
-#include "readable_file.h"
-#include "status.h"
+#include "utils/status.h"
 
 ReadableFile *ReadableFile::New(const char *file_path, Status *status) {
   ReadableFile *self = new ReadableFile();
@@ -57,7 +56,7 @@ bool ReadableFile::Read(void *ptr, int size, Status *status) {
     std::string msg("failed to read from ");
     msg += file_path_;
     *status = Status::IOError(msg.c_str());
-    return false;    
+    return false;
   } else {
     return true;
   }
@@ -68,7 +67,7 @@ bool ReadableFile::ReadLine(char *ptr, int size, Status *status) {
     std::string msg("failed to read from ");
     msg += file_path_;
     *status = Status::IOError(msg.c_str());
-    return false;    
+    return false;
   } else {
     return true;
   }
@@ -78,6 +77,6 @@ ReadableFile::~ReadableFile() {
   if (fd_ != NULL) fclose(fd_);
 }
 
-int64_t ReadableFile::Tell() { 
-  return ftello(fd_);; 
+int64_t ReadableFile::Tell() {
+  return ftello(fd_);
 }

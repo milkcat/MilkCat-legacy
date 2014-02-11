@@ -25,16 +25,16 @@
 // THE SOFTWARE.
 //
 
-#ifndef BIGRAM_SEGMENTER_H
-#define BIGRAM_SEGMENTER_H
+#ifndef SRC_MILKCAT_BIGRAM_SEGMENTER_H_
+#define SRC_MILKCAT_BIGRAM_SEGMENTER_H_
 
 #include <stdint.h>
 #include <unordered_set>
-#include "milkcat_config.h"
-#include "static_hashtable.h"
-#include "darts.h"
-#include "segmenter.h"
-#include "static_array.h"
+#include "milkcat/milkcat_config.h"
+#include "milkcat/static_hashtable.h"
+#include "milkcat/darts.h"
+#include "milkcat/segmenter.h"
+#include "milkcat/static_array.h"
 
 class TrieTree;
 class TokenInstance;
@@ -42,14 +42,13 @@ class TermInstance;
 
 class BigramSegmenter: public Segmenter {
  public:
-
   // A node in decode graph
   struct Node;
 
   // A Bucket contains several node
   class Bucket;
 
-  // A pool to alloc and release nodes 
+  // A pool to alloc and release nodes
   class NodePool;
 
   BigramSegmenter(const TrieTree *index,
@@ -61,17 +60,18 @@ class BigramSegmenter: public Segmenter {
   ~BigramSegmenter();
 
   // Segment a token instance into term instance
-  void Segment(TermInstance *term_instance, TokenInstance *token_instance) override;
+  void Segment(TermInstance *term_instance,
+               TokenInstance *token_instance) override;
 
   // Get the recent segmentation cost
   double RecentSegCost() { return cost_; }
 
-  // Get term-id by string. Return term-id if term exists, or a negative value 
-  // if the term neither in system dictionary nor in user dictionry. 
+  // Get term-id by string. Return term-id if term exists, or a negative value
+  // if the term neither in system dictionary nor in user dictionry.
   int GetTermId(const char *term_str);
 
-  // Add a disabled term-id to segmenter. When the term-id is disabled, just like 
-  // it doesn't exists in the dictionary for segmenter.
+  // Add a disabled term-id to segmenter. When the term-id is disabled, just
+  // like it doesn't exists in the dictionary for segmenter.
   void AddDisabledTermId(int term_id) {
     use_disabled_term_ids_ = true;
     disabled_term_ids_.insert(term_id);
@@ -112,11 +112,23 @@ class BigramSegmenter: public Segmenter {
   std::unordered_set<int> disabled_term_ids_;
 
   // Add an arc to the decode graph with the weight and term_id
-  void AddArcToDecodeGraph(int from_position, int from_index, int to_position, double weight, int term_id);
+  void AddArcToDecodeGraph(int from_position,
+                           int from_index,
+                           int to_position,
+                           double weight,
+                           int term_id);
 
-  double CalculateBigramCost(int left_id, int right_id, double left_cost, double right_cost);
-  int GetTermIdAndUnigramCost(const char *token_str, bool &system_flag, bool &user_flag, 
-                              size_t &system_node, size_t &user_node, double &right_cost);
+  double CalculateBigramCost(int left_id,
+                             int right_id,
+                             double left_cost,
+                             double right_cost);
+
+  int GetTermIdAndUnigramCost(const char *token_str,
+                              bool *system_flag,
+                              bool *user_flag,
+                              size_t *system_node,
+                              size_t *user_node,
+                              double *right_cost);
 };
 
-#endif
+#endif  // SRC_MILKCAT_BIGRAM_SEGMENTER_H_

@@ -24,12 +24,13 @@
 // THE SOFTWARE.
 //
 
-#ifndef FINAL_RANK_H
-#define FINAL_RANK_H
+#ifndef SRC_NEKO_FINAL_RANK_H_
+#define SRC_NEKO_FINAL_RANK_H_
 
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <utility>
 
 std::vector<std::pair<std::string, double>> FinalRank(
     const std::unordered_map<std::string, double> &adjecent_entropy,
@@ -37,4 +38,4 @@ std::vector<std::pair<std::string, double>> FinalRank(
     double remove_ratio = 0.1,
     double alpha = 0.6);
 
-#endif
+#endif  // SRC_NEKO_FINAL_RANK_H_

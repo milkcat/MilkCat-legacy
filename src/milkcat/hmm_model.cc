@@ -24,14 +24,12 @@
 // THE SOFTWARE.
 //
 
+#include "milkcat/hmm_model.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdexcept>
-#include <fstream>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
-#include "hmm_model.h"
 
 #pragma pack(1)
 struct HMMEmitRecord {
@@ -46,19 +44,19 @@ HMMModel *HMMModel::New(const char *model_path, Status *status) {
   ReadableFile *fd = ReadableFile::New(model_path, status);
 
   int32_t magic_number;
-  if (status->ok()) fd->ReadValue<int32_t>(magic_number, status);
+  if (status->ok()) fd->ReadValue<int32_t>(&magic_number, status);
 
   if (magic_number != 0x3322)
     *status = Status::Corruption(model_path);
 
   int32_t tag_num;
-  if (status->ok()) fd->ReadValue<int32_t>(tag_num, status);
+  if (status->ok()) fd->ReadValue<int32_t>(&tag_num, status);
 
   int32_t max_term_id;
-  if (status->ok()) fd->ReadValue<int32_t>(max_term_id, status);
+  if (status->ok()) fd->ReadValue<int32_t>(&max_term_id, status);
 
   int32_t emit_num;
-  if (status->ok()) fd->ReadValue<int32_t>(emit_num, status);
+  if (status->ok()) fd->ReadValue<int32_t>(&emit_num, status);
 
   self->tag_str_ = reinterpret_cast<char (*)[16]>(new char[16 * tag_num]);
   for (int i = 0; i < tag_num && status->ok(); ++i) {
@@ -68,7 +66,7 @@ HMMModel *HMMModel::New(const char *model_path, Status *status) {
   self->transition_matrix_ = new double[tag_num * tag_num];
   float f_weight;
   for (int i = 0; i < tag_num * tag_num && status->ok(); ++i) {
-    fd->ReadValue<float>(f_weight, status);
+    fd->ReadValue<float>(&f_weight, status);
     self->transition_matrix_[i] = f_weight;
   }
 
@@ -77,7 +75,7 @@ HMMModel *HMMModel::New(const char *model_path, Status *status) {
   HMMEmitRecord emit_record;
   EmitRow *emit_node;
   for (int i = 0; i < emit_num && status->ok(); ++i) {
-    fd->ReadValue<HMMEmitRecord>(emit_record, status);
+    fd->ReadValue<HMMEmitRecord>(&emit_record, status);
     emit_node = new EmitRow();
     emit_node->tag = emit_record.tag_id;
     emit_node->cost = emit_record.cost;
@@ -102,8 +100,8 @@ HMMModel *HMMModel::New(const char *model_path, Status *status) {
 }
 
 
-HMMModel::HMMModel(): emit_matrix_(NULL), 
-                      transition_matrix_(NULL), 
+HMMModel::HMMModel(): emit_matrix_(NULL),
+                      transition_matrix_(NULL),
                       tag_str_(NULL) {}
 
 HMMModel::~HMMModel() {

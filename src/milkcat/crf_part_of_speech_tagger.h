@@ -26,43 +26,51 @@
 //
 
 
-#ifndef CRF_PART_OF_SPEECH_TAGGER_H
-#define CRF_PART_OF_SPEECH_TAGGER_H
+#ifndef SRC_MILKCAT_CRF_PART_OF_SPEECH_TAGGER_H_
+#define SRC_MILKCAT_CRF_PART_OF_SPEECH_TAGGER_H_
 
-#include "term_instance.h"
-#include "part_of_speech_tag_instance.h"
-#include "crf_tagger.h"
-#include "milkcat_config.h" 
-#include "part_of_speech_tagger.h"
+#include "milkcat/term_instance.h"
+#include "milkcat/part_of_speech_tag_instance.h"
+#include "milkcat/crf_tagger.h"
+#include "milkcat/milkcat_config.h"
+#include "milkcat/part_of_speech_tagger.h"
 
 class FeatureExtractor;
 class PartOfSpeechFeatureExtractor;
 
 class CRFPartOfSpeechTagger: public PartOfSpeechTagger {
  public:
-  CRFPartOfSpeechTagger(const CRFModel *model);
+  explicit CRFPartOfSpeechTagger(const CRFModel *model);
   ~CRFPartOfSpeechTagger();
 
   // Tag the TermInstance and put the result to PartOfSpeechTagInstance
-  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance) {
-    TagRange(part_of_speech_tag_instance, term_instance, 0, term_instance->size());
+  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance,
+           TermInstance *term_instance) {
+    TagRange(part_of_speech_tag_instance,
+             term_instance,
+             0,
+             term_instance->size());
   }
 
-  // Tag a range [begin, end) of TermInstance and put the result to PartOfSpeechTagInstance
-  void TagRange(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance, int begin, int end);
+  // Tag a range [begin, end) of TermInstance and put the result to
+  // PartOfSpeechTagInstance
+  void TagRange(PartOfSpeechTagInstance *part_of_speech_tag_instance,
+                TermInstance *term_instance,
+                int begin,
+                int end);
 
  private:
   CRFTagger *crf_tagger_;
 
   CRFPartOfSpeechTagger();
 
-  // Use FeatureExtractor to extract part-of-speech tagging features from TermInstance
-  // to the CRF tagger
+  // Use FeatureExtractor to extract part-of-speech tagging features from
+  // TermInstance to the CRF tagger
   PartOfSpeechFeatureExtractor *feature_extractor_;
-  
+
   DISALLOW_COPY_AND_ASSIGN(CRFPartOfSpeechTagger);
 };
 
 
 
-#endif
+#endif  // SRC_MILKCAT_CRF_PART_OF_SPEECH_TAGGER_H_

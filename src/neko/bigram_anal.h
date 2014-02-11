@@ -24,26 +24,27 @@
 // THE SOFTWARE.
 //
 
-#ifndef BIGRAM_ANAL_H
-#define BIGRAM_ANAL_H
+#ifndef SRC_NEKO_BIGRAM_ANAL_H_
+#define SRC_NEKO_BIGRAM_ANAL_H_
 
 #include <vector>
 #include <string>
 #include <unordered_map>
 #include "utils/status.h"
 
-// Use bigram segmentation to analyze a corpus. Candidate to analyze is specified by 
-// candidate, and the corpus is specified by corpus_path. It would use a temporary file
-// called 'candidate_cost.txt' as user dictionary file for MilkCat.
-// On success, stores the adjecent entropy in adjacent_entropy, and stores the vocabulary
-// of segmentation's result in vocab. On failed set status != Status::OK()
+// Use bigram segmentation to analyze a corpus. Candidate to analyze is
+// specified by candidate, and the corpus is specified by corpus_path. It would
+// use a temporary file called 'candidate_cost.txt' as user dictionary file for
+// MilkCat. On success, stores the adjecent entropy in adjacent_entropy, and
+// stores the vocabulary of segmentation's result in vocab. On failed set
+// status != Status::OK()
 void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                    const char *corpus_path,
-                   std::unordered_map<std::string, double> &adjacent_entropy,
-                   std::unordered_map<std::string, int> &vocab,
-                   void (* progress)(int64_t bytes_processed, 
-                                     int64_t file_size, 
-                                     int64_t bytes_per_second), 
+                   std::unordered_map<std::string, double> *adjacent_entropy,
+                   std::unordered_map<std::string, int> *vocab,
+                   void (* progress)(int64_t bytes_processed,
+                                     int64_t file_size,
+                                     int64_t bytes_per_second),
                    Status *status);
 
-#endif
+#endif  // SRC_NEKO_BIGRAM_ANAL_H_

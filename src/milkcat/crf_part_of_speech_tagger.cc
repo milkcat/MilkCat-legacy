@@ -25,19 +25,22 @@
 // THE SOFTWARE.
 //
 
+#include "milkcat/crf_part_of_speech_tagger.h"
 #include <string.h>
 #include "utils/utils.h"
-#include "crf_part_of_speech_tagger.h"
-#include "feature_extractor.h"
-#include "milkcat_config.h"
+#include "milkcat/feature_extractor.h"
+#include "milkcat/milkcat_config.h"
 
 class PartOfSpeechFeatureExtractor: public FeatureExtractor {
  public:
-
-  void set_term_instance(const TermInstance *term_instance) { term_instance_ = term_instance; }
+  void set_term_instance(const TermInstance *term_instance) {
+    term_instance_ = term_instance;
+  }
   size_t size() const { return term_instance_->size(); }
 
-  void ExtractFeatureAt(size_t position, char (*feature_list)[kFeatureLengthMax], int list_size) {
+  void ExtractFeatureAt(size_t position,
+                        char (*feature_list)[kFeatureLengthMax],
+                        int list_size) {
     assert(list_size == 3);
     int term_type = term_instance_->term_type_at(position);
     const char *term_text = term_instance_->term_text_at(position);
@@ -46,7 +49,7 @@ class PartOfSpeechFeatureExtractor: public FeatureExtractor {
     switch (term_type) {
      case TermInstance::kChineseWord:
       // term itself
-      strlcpy(feature_list[0], term_text, kFeatureLengthMax);     
+      strlcpy(feature_list[0], term_text, kFeatureLengthMax);
 
       // first character of the term
       strlcpy(feature_list[1], term_text, 4);
@@ -57,24 +60,25 @@ class PartOfSpeechFeatureExtractor: public FeatureExtractor {
 
      case TermInstance::kEnglishWord:
      case TermInstance::kSymbol:
-      strcpy(feature_list[0], "A");   
-      strcpy(feature_list[1], "A");
-      strcpy(feature_list[2], "A");
+      strlcpy(feature_list[0], "A", kFeatureLengthMax);
+      strlcpy(feature_list[1], "A", kFeatureLengthMax);
+      strlcpy(feature_list[2], "A", kFeatureLengthMax);
       break;
 
      case TermInstance::kNumber:
-      strcpy(feature_list[0], "1");   
-      strcpy(feature_list[1], "1");
-      strcpy(feature_list[2], "1");
+      strlcpy(feature_list[0], "1", kFeatureLengthMax);
+      strlcpy(feature_list[1], "1", kFeatureLengthMax);
+      strlcpy(feature_list[2], "1", kFeatureLengthMax);
       break;
 
      default:
-      strcpy(feature_list[0], ".");   
-      strcpy(feature_list[1], ".");
-      strcpy(feature_list[2], ".");
-      break;     
+      strlcpy(feature_list[0], ".", kFeatureLengthMax);
+      strlcpy(feature_list[1], ".", kFeatureLengthMax);
+      strlcpy(feature_list[2], ".", kFeatureLengthMax);
+      break;
     }
   }
+
  private:
   const TermInstance *term_instance_;
 };
@@ -86,7 +90,7 @@ CRFPartOfSpeechTagger::CRFPartOfSpeechTagger(const CRFModel *model) {
   crf_tagger_ = new CRFTagger(model);
 }
 
-CRFPartOfSpeechTagger::CRFPartOfSpeechTagger(): crf_tagger_(NULL), 
+CRFPartOfSpeechTagger::CRFPartOfSpeechTagger(): crf_tagger_(NULL),
                                                 feature_extractor_(NULL) {
 }
 
@@ -98,14 +102,17 @@ CRFPartOfSpeechTagger::~CRFPartOfSpeechTagger() {
   crf_tagger_ = NULL;
 }
 
-void CRFPartOfSpeechTagger::TagRange(PartOfSpeechTagInstance *part_of_speech_tag_instance, 
-                                     TermInstance *term_instance,
-                                     int begin,
-                                     int end) {
+void CRFPartOfSpeechTagger::TagRange(
+    PartOfSpeechTagInstance *part_of_speech_tag_instance,
+    TermInstance *term_instance,
+    int begin,
+    int end) {
   feature_extractor_->set_term_instance(term_instance);
   crf_tagger_->TagRange(feature_extractor_, begin, end);
   for (size_t i = 0; i < end - begin; ++i) {
-    part_of_speech_tag_instance->set_value_at(i, crf_tagger_->GetTagText(crf_tagger_->GetTagAt(i))); 
+    part_of_speech_tag_instance->set_value_at(
+        i,
+        crf_tagger_->GetTagText(crf_tagger_->GetTagAt(i)));
   }
   part_of_speech_tag_instance->set_size(end - begin);
 }

@@ -26,8 +26,8 @@
 
 
 
-#ifndef MILKCAT_H
-#define MILKCAT_H
+#ifndef SRC_MILKCAT_MILKCAT_H_
+#define SRC_MILKCAT_MILKCAT_H_
 
 #include <stdbool.h>
 
@@ -35,7 +35,7 @@
 #ifdef MILKCAT_EXPORTS
 #define EXPORT_API __declspec(dllexport)
 #else
-#define EXPORT_API __declspec(dllimport) 
+#define EXPORT_API __declspec(dllimport)
 #endif
 #else
 #define EXPORT_API
@@ -49,21 +49,22 @@ extern "C" {
 #endif
 
 enum {
-
   // DEFAULT_PROCESSOR is the Mixed Bigram & CRF segmenter and Mixed HMM & CRF
   // part-of-speech tagger
   DEFAULT_PROCESSOR = 0,
 
-  // CRF_SEGMENTER is a CRF-model chinese word segmenter using the character tagging algorithm
-  // It is better for Out-Of-Vocabulary word but not good at the recall on In-Vocabulary words
-  // Moreover, it is slower than HMM-model word-based segmenter.
+  // CRF_SEGMENTER is a CRF-model chinese word segmenter using the character
+  // tagging algorithm. It is better for Out-Of-Vocabulary word but not good at
+  // the recall on In-Vocabulary words. Moreover, it is slower than HMM-model
+  // word-based segmenter.
   CRF_SEGMENTER = 1,
 
-  // CRF_PROCESSOR is a CRF-model chinese word segmenter and Part-of-Speech Tagger. 
-  // segmention using CRF_SEGMENTER, and Part-of-Speech Tagging also using CRF model.
+  // CRF_PROCESSOR is a CRF-model chinese word segmenter and Part-of-Speech
+  // Tagger. segmention using CRF_SEGMENTER, and Part-of-Speech Tagging also
+  // using CRF model.
   CRF_PROCESSOR = 2,
 
-  // DEFAULT_SEGMENTER is the Mixed Bigram & CRF segmenter 
+  // DEFAULT_SEGMENTER is the Mixed Bigram & CRF segmenter
   DEFAULT_SEGMENTER = 3,
 
   BIGRAM_SEGMENTER = 4
@@ -100,14 +101,17 @@ EXPORT_API void milkcat_destroy(milkcat_t *m);
 // Start to Process a text
 EXPORT_API milkcat_cursor_t milkcat_analyze(milkcat_t *m, const char *text);
 
-// goto the next word in the text, if end of the text reached return 0 else return 1
-EXPORT_API int milkcat_cursor_get_next(milkcat_cursor_t *c, milkcat_item_t *next_item);
+// Goto the next word in the text, if end of the text reached return 0 else
+// return 1
+EXPORT_API int milkcat_cursor_get_next(milkcat_cursor_t *c,
+                                       milkcat_item_t *next_item);
 
 EXPORT_API milkcat_model_t *milkcat_model_new(const char *model_path);
 
 EXPORT_API void milkcat_model_destroy(milkcat_model_t *model);
 
-EXPORT_API void milkcat_model_set_userdict(milkcat_model_t *model, const char *path);
+EXPORT_API void milkcat_model_set_userdict(milkcat_model_t *model,
+                                           const char *path);
 
 // Get the error message if an error occurred
 EXPORT_API const char *milkcat_last_error();
@@ -117,4 +121,4 @@ EXPORT_API const char *milkcat_last_error();
 #endif
 
 // ~endif of ifndef MILKCAT_H
-#endif
+#endif  // SRC_MILKCAT_MILKCAT_H_

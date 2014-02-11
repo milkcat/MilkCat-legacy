@@ -24,20 +24,20 @@
 // THE SOFTWARE.
 //
 
+#include "milkcat/mixed_part_of_speech_tagger.h"
 #include "utils/utils.h"
-#include "mixed_part_of_speech_tagger.h"
-#include "crf_part_of_speech_tagger.h"
-#include "hmm_part_of_speech_tagger.h"
-#include "term_instance.h"
-#include "part_of_speech_tag_instance.h"
-#include "hmm_model.h"
-#include "trie_tree.h"
-#include "configuration.h"
-#include "crf_model.h"
+#include "milkcat/crf_part_of_speech_tagger.h"
+#include "milkcat/hmm_part_of_speech_tagger.h"
+#include "milkcat/term_instance.h"
+#include "milkcat/part_of_speech_tag_instance.h"
+#include "milkcat/hmm_model.h"
+#include "milkcat/trie_tree.h"
+#include "milkcat/configuration.h"
+#include "milkcat/crf_model.h"
 
-MixedPartOfSpeechTagger::MixedPartOfSpeechTagger(): 
-    crf_tagger_(NULL), 
-    hmm_tagger_(NULL), 
+MixedPartOfSpeechTagger::MixedPartOfSpeechTagger():
+    crf_tagger_(NULL),
+    hmm_tagger_(NULL),
     one_instance_(NULL) {
 }
 
@@ -51,11 +51,11 @@ MixedPartOfSpeechTagger *MixedPartOfSpeechTagger::New(
   MixedPartOfSpeechTagger *self = new MixedPartOfSpeechTagger();
   self->one_instance_ = new PartOfSpeechTagInstance();
   self->crf_tagger_ = new CRFPartOfSpeechTagger(crf_model);
-  self->hmm_tagger_ = HMMPartOfSpeechTagger::New(hmm_model, 
-                                                 index, 
-                                                 default_tag, 
+  self->hmm_tagger_ = HMMPartOfSpeechTagger::New(hmm_model,
+                                                 index,
+                                                 default_tag,
                                                  status);
-  
+
   if (status->ok()) {
     return self;
   } else {
@@ -72,21 +72,20 @@ MixedPartOfSpeechTagger::~MixedPartOfSpeechTagger() {
   crf_tagger_ = NULL;
 
   delete hmm_tagger_;
-  hmm_tagger_ = NULL; 
+  hmm_tagger_ = NULL;
 }
 
 void MixedPartOfSpeechTagger::Tag(
-    PartOfSpeechTagInstance *part_of_speech_tag_instance, 
+    PartOfSpeechTagInstance *part_of_speech_tag_instance,
     TermInstance *term_instance) {
   hmm_tagger_->Tag(part_of_speech_tag_instance, term_instance);
   for (int i = 0; i < term_instance->size(); ++i) {
-
     // if the word is a oov word and type is a word
     if (part_of_speech_tag_instance->is_out_of_vocabulary_word_at(i) == true) {
       // puts(term_instance->term_text_at(i));
       crf_tagger_->TagRange(one_instance_, term_instance, i, i + 1);
       part_of_speech_tag_instance->set_value_at(
-        i, 
+        i,
         one_instance_->part_of_speech_tag_at(0));
     }
   }

@@ -25,8 +25,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef MILKCAT_CONFIG_H
-#define MILKCAT_CONFIG_H
+#ifndef SRC_MILKCAT_MILKCAT_CONFIG_H_
+#define SRC_MILKCAT_MILKCAT_CONFIG_H_
 
 #include <stdlib.h>
 
@@ -38,4 +38,4 @@ const int kHMMSegmentAndPOSTaggingNBest = 3;
 const int kUserTermIdStart = 0x40000000;
 const double kDefaultCost = 16.0;
 
-#endif
+#endif  // SRC_MILKCAT_MILKCAT_CONFIG_H_

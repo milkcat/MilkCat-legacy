@@ -25,12 +25,13 @@
 // THE SOFTWARE.
 //
 
-#ifndef READABLE_FILE_H
-#define READABLE_FILE_H 
+#ifndef SRC_UTILS_READABLE_FILE_H_
+#define SRC_UTILS_READABLE_FILE_H_
 
 #include <stdio.h>
 #include <stdint.h>
-#include "status.h"
+#include <string>
+#include "utils/status.h"
 
 // open a random access file for read
 class ReadableFile {
@@ -43,8 +44,8 @@ class ReadableFile {
 
   // Read an type T from file
   template<typename T>
-  bool ReadValue(T &data, Status *status) {
-    return Read(&data, sizeof(T), status);
+  bool ReadValue(T *data, Status *status) {
+    return Read(data, sizeof(T), status);
   }
 
   // Read a line from file, if failed return false
@@ -67,4 +68,4 @@ class ReadableFile {
 };
 
 
-#endif // RANDOM_ACCESS_FILE_H
+#endif  // SRC_UTILS_READABLE_FILE_H_

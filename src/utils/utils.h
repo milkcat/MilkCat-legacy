@@ -26,11 +26,11 @@
 
 
 
-#ifndef UTILS_H
-#define UTILS_H 
+#ifndef SRC_UTILS_UTILS_H_
+#define SRC_UTILS_UTILS_H_
 
 #include <stdio.h>
-#include "status.h"
+#include "utils/status.h"
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
             TypeName(const TypeName&); \
@@ -40,4 +40,4 @@ size_t strlcpy(char *dst, const char *src, size_t siz);
 char *trim(char *str);
 
 
-#endif // UTILS_H
+#endif  // SRC_UTILS_UTILS_H_

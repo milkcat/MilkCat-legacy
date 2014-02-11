@@ -26,26 +26,26 @@
 //
 
 
-#ifndef OUT_OF_VOCABULARY_WORD_RECOGNITION_H
-#define OUT_OF_VOCABULARY_WORD_RECOGNITION_H
+#ifndef SRC_MILKCAT_OUT_OF_VOCABULARY_WORD_RECOGNITION_H_
+#define SRC_MILKCAT_OUT_OF_VOCABULARY_WORD_RECOGNITION_H_
 
 #include <stdio.h>
 #include "utils/utils.h"
-#include "darts.h"
-#include "crf_segmenter.h"
-#include "part_of_speech_tag_instance.h"
-#include "crf_model.h"
-#include "trie_tree.h"
-#include "token_instance.h"
+#include "milkcat/darts.h"
+#include "milkcat/crf_segmenter.h"
+#include "milkcat/part_of_speech_tag_instance.h"
+#include "milkcat/crf_model.h"
+#include "milkcat/trie_tree.h"
+#include "milkcat/token_instance.h"
 
 class OutOfVocabularyWordRecognition {
  public:
-  static OutOfVocabularyWordRecognition *New(const CRFModel *crf_model, 
+  static OutOfVocabularyWordRecognition *New(const CRFModel *crf_model,
                                              const TrieTree *oov_property,
                                              Status *status);
   ~OutOfVocabularyWordRecognition();
   void Process(TermInstance *term_instance,
-               TermInstance *in_term_instance, 
+               TermInstance *in_term_instance,
                TokenInstance *in_token_instance);
 
   static const int kOOVBeginOfWord = 1;
@@ -60,13 +60,13 @@ class OutOfVocabularyWordRecognition {
 
   void RecognizeRange(TokenInstance *token_instance, int begin, int end);
 
-  void CopyTermValue(TermInstance *dest_term_instance, 
-                     int dest_postion, 
-                     TermInstance *src_term_instance, 
+  void CopyTermValue(TermInstance *dest_term_instance,
+                     int dest_postion,
+                     TermInstance *src_term_instance,
                      int src_position);
 
   DISALLOW_COPY_AND_ASSIGN(OutOfVocabularyWordRecognition);
 };
 
 
-#endif
+#endif  // SRC_MILKCAT_OUT_OF_VOCABULARY_WORD_RECOGNITION_H_

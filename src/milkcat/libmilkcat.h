@@ -25,8 +25,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef LIBMILKCAT_H
-#define LIBMILKCAT_H
+#ifndef SRC_MILKCAT_LIBMILKCAT_H_
+#define SRC_MILKCAT_LIBMILKCAT_H_
 
 #include <string.h>
 #include <stdlib.h>
@@ -38,19 +38,19 @@
 #include "utils/utils.h"
 #include "utils/status.h"
 #include "utils/readable_file.h"
-#include "hmm_model.h"
-#include "crf_model.h"
-#include "trie_tree.h"
-#include "static_array.h"
-#include "static_hashtable.h"
-#include "configuration.h"
-#include "milkcat.h"
-#include "segmenter.h"
-#include "part_of_speech_tagger.h"
-#include "tokenizer.h"
-#include "milkcat_config.h"
-#include "term_instance.h"
-#include "part_of_speech_tag_instance.h"
+#include "milkcat/hmm_model.h"
+#include "milkcat/crf_model.h"
+#include "milkcat/trie_tree.h"
+#include "milkcat/static_array.h"
+#include "milkcat/static_hashtable.h"
+#include "milkcat/configuration.h"
+#include "milkcat/milkcat.h"
+#include "milkcat/segmenter.h"
+#include "milkcat/part_of_speech_tagger.h"
+#include "milkcat/tokenizer.h"
+#include "milkcat/milkcat_config.h"
+#include "milkcat/term_instance.h"
+#include "milkcat/part_of_speech_tag_instance.h"
 
 // Model filenames
 constexpr const char *UNIGRAM_INDEX = "unigram.idx";
@@ -87,7 +87,7 @@ struct milkcat_t {
 
   Segmenter *segmenter;
   PartOfSpeechTagger *part_of_speech_tagger;
-  
+
   std::vector<Cursor *> cursor_pool;
 };
 
@@ -96,7 +96,7 @@ struct milkcat_t {
 // in singleton mode. All the getXX fucnctions are thread safe
 class ModelFactory {
  public:
-  ModelFactory(const char *model_dir_path);
+  explicit ModelFactory(const char *model_dir_path);
   ~ModelFactory();
 
   // Get the index for word which were used in unigram cost, bigram cost
@@ -149,22 +149,24 @@ class ModelFactory {
 // A factory function to create tokenizers
 Tokenization *TokenizerFactory(int tokenizer_id);
 
-// A factory function to create segmenters. On success, return the instance of 
+// A factory function to create segmenters. On success, return the instance of
 // Segmenter, on failed, set status != Status::OK()
-Segmenter *SegmenterFactory(ModelFactory *factory, int segmenter_id, Status *status);
+Segmenter *SegmenterFactory(ModelFactory *factory,
+                           int segmenter_id,
+                           Status *status);
 
-// A factory function to create part-of-speech taggers. On success, return the 
+// A factory function to create part-of-speech taggers. On success, return the
 // instance of part-of-speech tagger, on failed, set status != Status::OK()
 PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
-                                              int part_of_speech_tagger_id, 
+                                              int part_of_speech_tagger_id,
                                               Status *status);
 
 
 // Cursor class save the internal state of the analyzing result, such as
-// the current word and current sentence. 
+// the current word and current sentence.
 class Cursor {
  public:
-  Cursor(milkcat_t *analyzer);
+  explicit Cursor(milkcat_t *analyzer);
   ~Cursor();
 
   // Start to scan a text and use this->analyzer_ to analyze it
@@ -177,20 +179,25 @@ class Cursor {
   void MoveToNext();
 
   // These function return the data of current position
-  const char *word() const { return term_instance_->term_text_at(current_position_); }
+  const char *word() const {
+    return term_instance_->term_text_at(current_position_);
+  }
   const char *part_of_speech_tag() const {
     if (analyzer_->part_of_speech_tagger != NULL)
-      return part_of_speech_tag_instance_->part_of_speech_tag_at(current_position_);
+      return part_of_speech_tag_instance_->part_of_speech_tag_at(
+          current_position_);
     else
       return "NONE";
   }
-  const int word_type() const { return term_instance_->term_type_at(current_position_); }
+  const int word_type() const {
+    return term_instance_->term_type_at(current_position_);
+  }
 
   // If reaches the end of text
   bool end() const { return end_; }
 
   milkcat_t *analyzer() const { return analyzer_; }
-  
+
  private:
   milkcat_t *analyzer_;
 
@@ -204,4 +211,4 @@ class Cursor {
   bool end_;
 };
 
-#endif
+#endif  // SRC_MILKCAT_LIBMILKCAT_H_

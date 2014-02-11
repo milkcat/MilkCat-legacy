@@ -24,11 +24,11 @@
 // THE SOFTWARE.
 //
 
-#ifndef MIXED_PART_OF_SPEECH_TAGGER_H
-#define MIXED_PART_OF_SPEECH_TAGGER_H
+#ifndef SRC_MILKCAT_MIXED_PART_OF_SPEECH_TAGGER_H_
+#define SRC_MILKCAT_MIXED_PART_OF_SPEECH_TAGGER_H_
 
 #include "utils/utils.h"
-#include "part_of_speech_tagger.h"
+#include "milkcat/part_of_speech_tagger.h"
 
 class CRFPartOfSpeechTagger;
 class HMMPartOfSpeechTagger;
@@ -51,7 +51,7 @@ class MixedPartOfSpeechTagger: public PartOfSpeechTagger {
       const CRFModel *crf_model,
       Status *status);
 
-  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, 
+  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance,
            TermInstance *term_instance);
 
  private:
@@ -63,4 +63,4 @@ class MixedPartOfSpeechTagger: public PartOfSpeechTagger {
 };
 
 
-#endif
+#endif  // SRC_MILKCAT_MIXED_PART_OF_SPEECH_TAGGER_H_

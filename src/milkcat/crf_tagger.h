@@ -31,27 +31,32 @@
 // Copyright(C) 2005-2007 Taku Kudo <taku@chasen.org>
 //
 
-#ifndef CRFPP_TAGGER_H
-#define CRFPP_TAGGER_H
+#ifndef SRC_MILKCAT_CRF_TAGGER_H_
+#define SRC_MILKCAT_CRF_TAGGER_H_
 
 #include <string>
-#include "milkcat_config.h"
-#include "feature_extractor.h"
-#include "crf_model.h"
+#include "milkcat/milkcat_config.h"
+#include "milkcat/feature_extractor.h"
+#include "milkcat/crf_model.h"
 
 class CRFTagger {
  public:
-  CRFTagger(const CRFModel *model);
+  explicit CRFTagger(const CRFModel *model);
   ~CRFTagger();
   static const int kMaxBucket = kTokenMax;
   static const int kMaxFeature = 24;
 
-  // Tag a range of instance with the begin tag before the result and the end tag after the result
-  void TagRange(FeatureExtractor *feature_extractor, int begin, int end, int begin_tag, int end_tag);
+  // Tag a range of instance with the begin tag before the result and the end
+  // tag after the result
+  void TagRange(FeatureExtractor *feature_extractor,
+                int begin,
+                int end,
+                int begin_tag,
+                int end_tag);
 
   // Tag a range of instance
   void TagRange(FeatureExtractor *feature_extractor, int begin, int end) {
-  	TagRange(feature_extractor, begin, end, -1, -1);
+    TagRange(feature_extractor, begin, end, -1, -1);
   }
 
   // Tag a sentence the result could retrive by GetTagAt
@@ -66,22 +71,22 @@ class CRFTagger {
 
   // Get the number of tags in model
   int GetTagSize() const {
-  	return model_->GetTagNumber();
+    return model_->GetTagNumber();
   }
 
   // Get Tag's id by its text, return -1 if it not exists
   int GetTagId(const char *tag_text) const {
-  	return model_->GetTagId(tag_text);
+    return model_->GetTagId(tag_text);
   }
 
   // Get Tag's string text by its id
   const char *GetTagText(int tag_id) {
-  	return model_->GetTagText(tag_id);
+    return model_->GetTagText(tag_id);
   }
 
  private:
   struct Node;
-  
+
   const CRFModel *model_;
   Node *buckets_[kMaxBucket];
   int result_[kMaxBucket];
@@ -98,10 +103,12 @@ class CRFTagger {
   // Clear the Feature cache
   void ClearFeatureCache();
 
-  // Get the id list of bigram features in position, returns the size of the list
+  // Get the id list of bigram features in position, returns the size of the
+  // list
   int GetBigramFeatureIds(int position, int *feature_ids);
 
-  // Get the id list of unigram features in position, returns the size of the list
+  // Get the id list of unigram features in position, returns the size of the
+  // list
   int GetUnigramFeatureIds(int position, int *feature_ids);
 
   // CLear the decode bucket
@@ -122,10 +129,11 @@ class CRFTagger {
   // Get the best tag sequence from Viterbi result
   void FindBestResult(int begin, int end, int end_tag);
 
-  const char *GetIndex(const char *&p, int position);
-  bool ApplyRule(std::string &output_str, const char *template_str, size_t position);
-  
+  const char *GetIndex(const char **pp, int position);
+  bool ApplyRule(std::string *output_str,
+                 const char *template_str,
+                 size_t position);
 };
 
 
-#endif
+#endif  // SRC_MILKCAT_CRF_TAGGER_H_

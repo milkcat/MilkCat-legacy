@@ -24,15 +24,15 @@
 // THE SOFTWARE.
 //
 
-#ifndef MIXED_SEGMENTER_H
-#define MIXED_SEGMENTER_H
+#ifndef SRC_MILKCAT_MIXED_SEGMENTER_H_
+#define SRC_MILKCAT_MIXED_SEGMENTER_H_
 
 #include "utils/utils.h"
-#include "segmenter.h"
-#include "trie_tree.h"
-#include "static_array.h"
-#include "static_hashtable.h"
-#include "crf_model.h"
+#include "milkcat/segmenter.h"
+#include "milkcat/trie_tree.h"
+#include "milkcat/static_array.h"
+#include "milkcat/static_hashtable.h"
+#include "milkcat/crf_model.h"
 
 class OutOfVocabularyWordRecognition;
 class BigramSegmenter;
@@ -65,4 +65,4 @@ class MixedSegmenter: public Segmenter {
   MixedSegmenter();
 };
 
-#endif
+#endif  // SRC_MILKCAT_MIXED_SEGMENTER_H_

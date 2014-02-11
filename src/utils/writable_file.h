@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef WRITABLE_FILE_H
-#define WRITABLE_FILE_H
+#ifndef SRC_UTILS_WRITABLE_FILE_H_
+#define SRC_UTILS_WRITABLE_FILE_H_
 
 #include <stdio.h>
 #include <string>
@@ -57,4 +57,4 @@ class WritableFile {
   WritableFile();
 };
 
-#endif
+#endif  // SRC_UTILS_WRITABLE_FILE_H_

@@ -24,20 +24,20 @@
 // THE SOFTWARE.
 //
 
-#include <string>
+#include "milkcat/configuration.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include "utils/utils.h"
-#include "configuration.h"
 
 Configuration::Configuration() {}
 
 Configuration *Configuration::New(const char *path, Status *status) {
-  char line[2048], 
+  char line[2048],
        key[2048],
        value[2048],
-       *p, 
+       *p,
        error_messge[1024];
   int line_number = 0;
   FILE *fp = fopen(path, "r");
@@ -55,7 +55,11 @@ Configuration *Configuration::New(const char *path, Status *status) {
     p = line;
     while (*p != '=' && *p != '\0') p++;
     if (*p == '\0') {
-      sprintf(error_messge, "missing '=' in %s line %d.", path, line_number);
+      snprintf(error_messge,
+               sizeof(error_messge),
+               "missing '=' in %s line %d.",
+               path,
+               line_number);
       *status = Status::Corruption(error_messge);
     }
 
@@ -65,10 +69,10 @@ Configuration *Configuration::New(const char *path, Status *status) {
       trim(key);
       trim(value);
 
-      self->data_[key] = value;      
+      self->data_[key] = value;
     }
   }
-  
+
   if (fp != NULL) fclose(fp);
 
   if (status->ok()) {
@@ -83,7 +87,7 @@ bool Configuration::SaveToPath(const char *path) {
   FILE *fp = fopen(path, "w");
   if (fp == NULL) return false;
 
-  for (auto &x: data_) {
+  for (auto &x : data_) {
     fprintf(fp, "%s = %s\n", x.first.c_str(), x.second.c_str());
   }
 
@@ -110,7 +114,7 @@ const char *Configuration::GetString(const char *key) const {
 
 void Configuration::SetInteger(const char *key, int value) {
   char buf[1024];
-  sprintf(buf, "%d", value);
+  snprintf(buf, sizeof(buf), "%d", value);
   data_[key] = buf;
 }
 

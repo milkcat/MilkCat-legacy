@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef HMM_MODEL_H
-#define HMM_MODEL_H
+#ifndef SRC_MILKCAT_HMM_MODEL_H_
+#define SRC_MILKCAT_HMM_MODEL_H_
 
 #include "utils/status.h"
 
@@ -45,12 +45,12 @@ class HMMModel {
 
   // Get the emit row (tag, cost) of a term, if no data return NULL
   EmitRow *GetEmitRow(int term_id) const {
-    if (term_id > max_term_id_ || term_id < 0) 
+    if (term_id > max_term_id_ || term_id < 0)
       return NULL;
     else
       return emit_matrix_[term_id];
   }
-  
+
   // Get the transition cost from left_tag to right_tag
   double GetTransCost(int left_tag, int right_tag) const {
     return transition_matrix_[left_tag * tag_num_ + right_tag];
@@ -72,4 +72,4 @@ struct HMMModel::EmitRow {
   EmitRow *next;
 };
 
-#endif
+#endif  // SRC_MILKCAT_HMM_MODEL_H_

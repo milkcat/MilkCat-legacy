@@ -34,15 +34,20 @@ uninstall:
 
 
 CPPLINT_EXCLUDE ?=
-CPPLINT_EXCLUDE += src/node_dtrace.cc
-CPPLINT_EXCLUDE += src/node_dtrace.cc
-CPPLINT_EXCLUDE += src/node_root_certs.h
-CPPLINT_EXCLUDE += src/node_win32_perfctr_provider.cc
-CPPLINT_EXCLUDE += src/queue.h
-CPPLINT_EXCLUDE += src/tree.h
-CPPLINT_EXCLUDE += src/v8abbr.h
+CPPLINT_EXCLUDE += src/milkcat/token_lex.cc
+CPPLINT_EXCLUDE += src/milkcat/token_lex.h
+CPPLINT_EXCLUDE += src/milkcat/darts.h
+CPPLINT_EXCLUDE += src/neko/utf8.h
 
-CPPLINT_FILES = $(filter-out $(CPPLINT_EXCLUDE), $(wildcard src/*.cc src/*.h src/*.c))
+ALL_CPP_FILES = $(wildcard src/*.cc \
+	                         src/*.h \
+	                         src/milkcat/*.cc \
+	                         src/milkcat/*.h \
+	                         src/utils/*.cc \
+	                         src/utils/*.h \
+	                         src/neko/*.cc \
+	                         src/neko/*.h)
+CPPLINT_FILES = $(filter-out $(CPPLINT_EXCLUDE), $(ALL_CPP_FILES))
 
 lint:
 	$(PYTHON) tools/cpplint.py $(CPPLINT_FILES)

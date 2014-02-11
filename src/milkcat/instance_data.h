@@ -33,13 +33,13 @@
  *
  */
 
-#ifndef INSTANCE_DATA_H
-#define INSTANCE_DATA_H
+#ifndef SRC_MILKCAT_INSTANCE_DATA_H_
+#define SRC_MILKCAT_INSTANCE_DATA_H_
 
 #include <assert.h>
 #include <string.h>
 #include "utils/utils.h"
-#include "milkcat_config.h"
+#include "milkcat/milkcat_config.h"
 
 
 class InstanceData {
@@ -89,4 +89,4 @@ class InstanceData {
 };
 
 
-#endif
+#endif  // SRC_MILKCAT_INSTANCE_DATA_H_

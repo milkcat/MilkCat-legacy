@@ -24,14 +24,15 @@
 // THE SOFTWARE.
 //
 
+#include "milkcat/hmm_part_of_speech_tagger.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <string>
 #include "utils/utils.h"
-#include "hmm_part_of_speech_tagger.h"
-#include "part_of_speech_tag_instance.h"
-#include "term_instance.h"
-#include "configuration.h"
-#include "hmm_model.h"
+#include "milkcat/part_of_speech_tag_instance.h"
+#include "milkcat/term_instance.h"
+#include "milkcat/configuration.h"
+#include "milkcat/hmm_model.h"
 
 struct HMMPartOfSpeechTagger::Node {
   int left_tag;
@@ -47,7 +48,7 @@ HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): model_(NULL),
 
 HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
   for (int i = 0; i < kMaxBucket; ++i) {
-    if (buckets_[i] != NULL) 
+    if (buckets_[i] != NULL)
       delete[] buckets_[i];
     buckets_[i] = NULL;
   }
@@ -62,12 +63,12 @@ HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
 }
 
 HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(
-    const HMMModel *model, 
+    const HMMModel *model,
     const TrieTree *index,
     const Configuration *default_tag,
     Status *status) {
   HMMPartOfSpeechTagger *self = new HMMPartOfSpeechTagger();
-  
+
   Configuration *default_tag_conf = NULL;
   char error_message[1024];
   FILE *fd = NULL;
@@ -122,9 +123,9 @@ int HMMPartOfSpeechTagger::GetTagIdByStr(const char *tag_str) {
 }
 
 void HMMPartOfSpeechTagger::LoadDefaultTags(
-    const Configuration *conf, 
-    const char *key, 
-    int *emit_tag, 
+    const Configuration *conf,
+    const char *key,
+    int *emit_tag,
     Status *status) {
   std::string msg;
   int tag;
@@ -134,7 +135,7 @@ void HMMPartOfSpeechTagger::LoadDefaultTags(
                       key + "' in default tag configuration file";
     *status = Status::Corruption(msg.c_str());
   }
-  
+
   if (status->ok()) {
     const char *tag_str = conf->GetString(key);
     tag = GetTagIdByStr(tag_str);
@@ -161,7 +162,7 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
     int term_type = term_instance->term_type_at(i);
     if (emit_node == NULL) {
       term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_type]];
-      has_data_[i] = false; 
+      has_data_[i] = false;
     } else {
       term_tags_[i] = emit_node;
       has_data_[i] = true;
@@ -170,7 +171,7 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
 }
 
 void HMMPartOfSpeechTagger::Tag(
-    PartOfSpeechTagInstance *part_of_speech_tag_instance, 
+    PartOfSpeechTagInstance *part_of_speech_tag_instance,
     TermInstance *term_instance) {
   // Get each term's plausible emit tags
   BuildEmitTagfForNode(term_instance);
@@ -205,8 +206,8 @@ void HMMPartOfSpeechTagger::Tag(
     bool is_chinese_word = term_type == TermInstance::kChineseWord;
 
     part_of_speech_tag_instance->set_value_at(
-        position, 
-        model_->GetTagStr(tag), 
+        position,
+        model_->GetTagStr(tag),
         is_chinese_word && has_data_[position] == false);
     tag = buckets_[position][tag].left_tag;
   }

@@ -24,11 +24,9 @@
 // THE SOFTWARE.
 //
 
-#ifndef STATIC_ARRAY_H
-#define STATIC_ARRAY_H
+#ifndef SRC_MILKCAT_STATIC_ARRAY_H_
+#define SRC_MILKCAT_STATIC_ARRAY_H_
 
-#include <fstream>
-#include <stdexcept>
 #include <assert.h>
 #include <stdio.h>
 #include "utils/utils.h"
@@ -45,10 +43,10 @@ class StaticArray {
     if (status->ok()) {
       if (fd->Size() % type_size != 0) *status = Status::Corruption(file_path);
     }
-    
+
     if (status->ok()) {
       self->data_ = new T[fd->Size() / type_size];
-      self->size_ = fd->Size() / type_size;      
+      self->size_ = fd->Size() / type_size;
     }
 
     if (status->ok()) fd->Read(self->data_, fd->Size(), status);
@@ -94,4 +92,4 @@ class StaticArray {
   DISALLOW_COPY_AND_ASSIGN(StaticArray);
 };
 
-#endif
+#endif  // SRC_MILKCAT_STATIC_ARRAY_H_

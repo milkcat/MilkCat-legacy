@@ -31,11 +31,11 @@
 #include <unordered_map>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
-#include "darts.h"
-#include "trie_tree.h"
-#include "milkcat_config.h"
+#include "milkcat/darts.h"
+#include "milkcat/trie_tree.h"
+#include "milkcat/milkcat_config.h"
 
-DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, 
+DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path,
                                               Status *status) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
 
@@ -55,7 +55,7 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(
   std::vector<int> word_ids;
 
   // Note: the std::map is sorted by key, so it is unnecessary to sort the word
-  for (auto &x: src_map) {
+  for (auto &x : src_map) {
     word_strs.push_back(x.first.c_str());
     word_ids.push_back(x.second);
   }
@@ -71,8 +71,8 @@ int DoubleArrayTrieTree::Search(const char *text) const {
   return double_array_.exactMatchSearch<int>(text);
 }
 
-int DoubleArrayTrieTree::Traverse(const char *text, size_t &node) const {
+int DoubleArrayTrieTree::Traverse(const char *text, size_t *node) const {
   size_t key_pos = 0;
-  return double_array_.traverse(text, node, key_pos);
+  return double_array_.traverse(text, *node, key_pos);
 }
 

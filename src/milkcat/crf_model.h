@@ -30,12 +30,12 @@
 // Copyright(C) 2005-2007 Taku Kudo <taku@chasen.org>
 //
 
-#ifndef CRFPP_MODEL_H
-#define CRFPP_MODEL_H
+#ifndef SRC_MILKCAT_CRF_MODEL_H_
+#define SRC_MILKCAT_CRF_MODEL_H_
 
 #include <vector>
 #include "utils/utils.h"
-#include "darts.h"
+#include "milkcat/darts.h"
 
 class CRFModel {
  public:
@@ -48,7 +48,7 @@ class CRFModel {
   int GetFeatureId(const char *feature_str) const {
     return double_array_->exactMatchSearch<int>(feature_str);
   }
-  
+
   // Get Tag's string text by its id
   const char *GetTagText(int tag_id) const {
     return y_[tag_id];
@@ -87,7 +87,7 @@ class CRFModel {
   int GetTagNumber() const {
     return y_.size();
   }
-  
+
   // Get the cost for feature with current tag
   double GetUnigramCost(int feature_id, int tag_id) const {
     return cost_data_[feature_id + tag_id];
@@ -117,4 +117,4 @@ class CRFModel {
   CRFModel();
 };
 
-#endif 
+#endif  // SRC_MILKCAT_CRF_MODEL_H_

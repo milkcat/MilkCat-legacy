@@ -25,10 +25,10 @@
 // THE SOFTWARE.
 //
 
-#ifndef TOKENIZATION_H
-#define TOKENIZATION_H
+#ifndef SRC_MILKCAT_TOKENIZER_H_
+#define SRC_MILKCAT_TOKENIZER_H_
 
-#include "token_lex.h"
+#include "milkcat/token_lex.h"
 
 class TokenInstance;
 
@@ -41,11 +41,11 @@ class Tokenization {
   void Scan(const char *buffer_string);
 
   bool GetSentence(TokenInstance *token_instance);
-  
-private:
+
+ private:
   YY_BUFFER_STATE yy_buffer_state_;
   yyscan_t yyscanner;
   bool buffer_alloced_;
 };
 
-#endif
+#endif  // SRC_MILKCAT_TOKENIZER_H_

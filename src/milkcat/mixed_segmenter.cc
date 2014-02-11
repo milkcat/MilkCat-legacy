@@ -24,15 +24,15 @@
 // THE SOFTWARE.
 //
 
-#include "mixed_segmenter.h"
-#include "bigram_segmenter.h"
-#include "out_of_vocabulary_word_recognition.h"
-#include "term_instance.h"
-#include "token_instance.h"
+#include "milkcat/mixed_segmenter.h"
+#include "milkcat/bigram_segmenter.h"
+#include "milkcat/out_of_vocabulary_word_recognition.h"
+#include "milkcat/term_instance.h"
+#include "milkcat/token_instance.h"
 
-MixedSegmenter::MixedSegmenter(): 
-    bigram_(NULL), 
-    oov_recognizer_(NULL), 
+MixedSegmenter::MixedSegmenter():
+    bigram_(NULL),
+    oov_recognizer_(NULL),
     bigram_result_(NULL) {
 }
 
@@ -47,14 +47,14 @@ MixedSegmenter *MixedSegmenter::New(
     Status *status) {
 
   MixedSegmenter *self = new MixedSegmenter();
-  self->bigram_ = new BigramSegmenter(index, 
-                                      user_index, 
-                                      unigram_cost, 
-                                      user_unigram_cost, 
+  self->bigram_ = new BigramSegmenter(index,
+                                      user_index,
+                                      unigram_cost,
+                                      user_unigram_cost,
                                       bigram_cost);
   self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(
-      seg_model, 
-      oov_property, 
+      seg_model,
+      oov_property,
       status);
   if (status->ok()) self->bigram_result_ = new TermInstance();
 
@@ -64,7 +64,6 @@ MixedSegmenter *MixedSegmenter::New(
     delete self;
     return NULL;
   }
-  
 }
 
 MixedSegmenter::~MixedSegmenter() {
@@ -78,7 +77,7 @@ MixedSegmenter::~MixedSegmenter() {
   oov_recognizer_ = NULL;
 }
 
-void MixedSegmenter::Segment(TermInstance *term_instance, 
+void MixedSegmenter::Segment(TermInstance *term_instance,
                              TokenInstance *token_instance) {
   bigram_->Segment(bigram_result_, token_instance);
   oov_recognizer_->Process(term_instance, bigram_result_, token_instance);

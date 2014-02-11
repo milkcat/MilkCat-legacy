@@ -25,13 +25,13 @@
 //
 
 
-#include "instance_data.h"
+#include "milkcat/instance_data.h"
 
-InstanceData::InstanceData(int string_number, int integer_number, int capability): 
-    size_(0), 
-    string_data_(NULL), 
-    integer_data_(NULL) {
-
+InstanceData::InstanceData(int string_number,
+                           int integer_number,
+                           int capability): size_(0),
+                                            string_data_(NULL),
+                                            integer_data_(NULL) {
   if (string_number != 0) {
     string_data_ = new char **[string_number];
     for (int i = 0; i < string_number; ++i) {
@@ -41,7 +41,7 @@ InstanceData::InstanceData(int string_number, int integer_number, int capability
       }
     }
   }
-  
+
   if (integer_number != 0) {
     integer_data_ = new int *[integer_number];
     for (int i = 0; i < integer_number; ++i) {
@@ -61,7 +61,7 @@ InstanceData::~InstanceData() {
         delete[] string_data_[i][j];
       }
       delete[] string_data_[i];
-    } 
+    }
     delete[] string_data_;
   }
 

@@ -24,13 +24,13 @@
 // THE SOFTWARE.
 //
 
-#ifndef CRF_SEGMENTER_H
-#define CRF_SEGMENTER_H
+#ifndef SRC_MILKCAT_CRF_SEGMENTER_H_
+#define SRC_MILKCAT_CRF_SEGMENTER_H_
 
 #include "utils/utils.h"
-#include "crf_tagger.h"
-#include "token_instance.h"
-#include "segmenter.h"
+#include "milkcat/crf_tagger.h"
+#include "milkcat/token_instance.h"
+#include "milkcat/segmenter.h"
 
 class SegmentFeatureExtractor;
 class TermInstance;
@@ -40,16 +40,16 @@ class CRFSegmenter: public Segmenter {
   static CRFSegmenter *New(const CRFModel *model, Status *status);
   ~CRFSegmenter();
 
-  // Segment a range [begin, end) of token 
-  void SegmentRange(TermInstance *term_instance, 
-                    TokenInstance *token_instance, 
-                    int begin, 
+  // Segment a range [begin, end) of token
+  void SegmentRange(TermInstance *term_instance,
+                    TokenInstance *token_instance,
+                    int begin,
                     int end);
 
   void Segment(TermInstance *term_instance, TokenInstance *token_instance) {
-  	SegmentRange(term_instance, token_instance, 0, token_instance->size());
+    SegmentRange(term_instance, token_instance, 0, token_instance->size());
   }
- 
+
  private:
   CRFTagger *crf_tagger_;
 
@@ -62,4 +62,4 @@ class CRFSegmenter: public Segmenter {
   DISALLOW_COPY_AND_ASSIGN(CRFSegmenter);
 };
 
-#endif
+#endif  // SRC_MILKCAT_CRF_SEGMENTER_H_
