@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef WRITABLE_FILE_H
-#define WRITABLE_FILE_H
+#ifndef SRC_UTILS_WRITABLE_FILE_H_
+#define SRC_UTILS_WRITABLE_FILE_H_
 
 #include <stdio.h>
 #include <string>
@@ -35,18 +35,18 @@ class WritableFile {
  public:
   // Open a file for write. On success, return an instance of WritableFile.
   // On failed, set status != Status::OK()
-  static WritableFile *New(const char *path, Status &status);
+  static WritableFile *New(const char *path, Status *status);
   ~WritableFile();
 
   // Writes a line to file
-  void WriteLine(const char *line, Status &status);
+  void WriteLine(const char *line, Status *status);
 
   // Writes data to file
-  void Write(const void *data, int size, Status &status);
+  void Write(const void *data, int size, Status *status);
 
   // Write an type T to file
   template<typename T>
-  void WriteValue(const T &data, Status &status) {
+  void WriteValue(const T &data, Status *status) {
     Write(&data, sizeof(data), status);
   }
 
@@ -57,4 +57,4 @@ class WritableFile {
   WritableFile();
 };
 
-#endif
+#endif  // SRC_UTILS_WRITABLE_FILE_H_

@@ -30,25 +30,25 @@
 // Copyright(C) 2005-2007 Taku Kudo <taku@chasen.org>
 //
 
-#ifndef CRFPP_MODEL_H
-#define CRFPP_MODEL_H
+#ifndef SRC_MILKCAT_CRF_MODEL_H_
+#define SRC_MILKCAT_CRF_MODEL_H_
 
 #include <vector>
 #include "utils/utils.h"
-#include "darts.h"
+#include "milkcat/darts.h"
 
 class CRFModel {
  public:
   // Open a CRF++ model file
-  static CRFModel *New(const char *model_path, Status &status);
+  static CRFModel *New(const char *model_path, Status *status);
 
   ~CRFModel();
 
   // Get internal id of feature_str, if not exists return -1
   int GetFeatureId(const char *feature_str) const {
-    return double_array_->exactMatchSearch<Darts::DoubleArray::result_type>(feature_str);
+    return double_array_->exactMatchSearch<int>(feature_str);
   }
-  
+
   // Get Tag's string text by its id
   const char *GetTagText(int tag_id) const {
     return y_[tag_id];
@@ -56,7 +56,7 @@ class CRFModel {
 
   // Get Tag's id by its text, return -1 if it not exists
   int GetTagId(const char *tag_text) const  {
-    for (std::vector<const char *>::const_iterator it = y_.begin(); it != y_.end(); ++it) {
+    for (auto it = y_.begin(); it != y_.end(); ++it) {
       if (strcmp(tag_text, *it) == 0) return it - y_.begin();
     }
 
@@ -87,14 +87,16 @@ class CRFModel {
   int GetTagNumber() const {
     return y_.size();
   }
-  
+
   // Get the cost for feature with current tag
   double GetUnigramCost(int feature_id, int tag_id) const {
     return cost_data_[feature_id + tag_id];
   }
 
   // Get the bigram cost for feature with left tag and right tag
-  double GetBigramCost(int feature_id, int left_tag_id, int right_tag_id) const {
+  double GetBigramCost(int feature_id,
+                       int left_tag_id,
+                       int right_tag_id) const {
     return cost_data_[feature_id + left_tag_id * y_.size() + right_tag_id];
   }
 
@@ -115,4 +117,4 @@ class CRFModel {
   CRFModel();
 };
 
-#endif 
+#endif  // SRC_MILKCAT_CRF_MODEL_H_

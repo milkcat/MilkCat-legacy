@@ -24,18 +24,21 @@
 // THE SOFTWARE.
 //
 
-#ifndef CRF_VOCAB_H
-#define CRF_VOCAB_H
+#ifndef SRC_NEKO_CRF_VOCAB_H_
+#define SRC_NEKO_CRF_VOCAB_H_
 
 #include <unordered_map>
 #include <string>
+#include "utils/status.h"
 
 // Segment the corpus from path and return the vocabulary of chinese words.
 // If any errors occured, status is not Status::OK()
 std::unordered_map<std::string, int> GetCrfVocabulary(
-    const char *path, 
-    int &total_count, 
-    void (* progress)(int64_t bytes_processed, int64_t file_size, int64_t bytes_per_second),
-    Status &status);
+    const char *path,
+    int *total_count,
+    void (* progress)(int64_t bytes_processed,
+                      int64_t file_size,
+                      int64_t bytes_per_second),
+    Status *status);
 
-#endif
+#endif  // SRC_NEKO_CRF_VOCAB_H_

@@ -24,13 +24,13 @@
 // THE SOFTWARE.
 //
 
-#ifndef TOKEN_INSTANCE_H
-#define TOKEN_INSTANCE_H
+#ifndef SRC_MILKCAT_TOKEN_INSTANCE_H_
+#define SRC_MILKCAT_TOKEN_INSTANCE_H_
 
 #include <assert.h>
 #include "utils/utils.h"
-#include "milkcat_config.h"
-#include "instance_data.h"
+#include "milkcat/milkcat_config.h"
+#include "milkcat/instance_data.h"
 
 class TokenInstance {
  public:
@@ -55,19 +55,23 @@ class TokenInstance {
   static const int kTokenUTF8S = 0;
 
   // Get the token's string value at position
-  virtual const char *token_text_at(int position) const { return instance_data_->string_at(position, kTokenUTF8S); }
+  const char *token_text_at(int position) const {
+    return instance_data_->string_at(position, kTokenUTF8S);
+  }
 
   // Get the token type at position
-  virtual int token_type_at(int position) const { return instance_data_->integer_at(position, kTokenTypeI); }
+  int token_type_at(int position) const {
+    return instance_data_->integer_at(position, kTokenTypeI);
+  }
 
   // Set the size of this instance
   void set_size(int size) { instance_data_->set_size(size); }
 
   // Get the size of this instance
-  virtual int size() const { return instance_data_->size(); }
+  int size() const { return instance_data_->size(); }
 
   // Set the value at position
-  void set_value_at(int position, const char *token_text, int token_type) { 
+  void set_value_at(int position, const char *token_text, int token_type) {
     instance_data_->set_string_at(position, kTokenUTF8S, token_text);
     instance_data_->set_integer_at(position, kTokenTypeI, token_type);
   }
@@ -77,5 +81,4 @@ class TokenInstance {
   DISALLOW_COPY_AND_ASSIGN(TokenInstance);
 };
 
-
-#endif
+#endif  // SRC_MILKCAT_TOKEN_INSTANCE_H_

@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#ifndef SRC_MILKCAT_CONFIGURATION_H_
+#define SRC_MILKCAT_CONFIGURATION_H_
 
 #include <string>
 #include <map>
@@ -36,7 +36,7 @@ class Configuration {
   Configuration();
 
   // Load the configuration file of path
-  static Configuration *New(const char *path, Status &status);
+  static Configuration *New(const char *path, Status *status);
 
   // Get integer value by key, default is 0
   int GetInteger(const char *key) const;
@@ -60,4 +60,4 @@ class Configuration {
   std::map<std::string, std::string> data_;
 };
 
-#endif
+#endif  // SRC_MILKCAT_CONFIGURATION_H_

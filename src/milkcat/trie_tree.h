@@ -24,13 +24,13 @@
 // THE SOFTWARE.
 //
 
-#ifndef TRIE_TREE_H
-#define TRIE_TREE_H
+#ifndef SRC_MILKCAT_TRIE_TREE_H_
+#define SRC_MILKCAT_TRIE_TREE_H_
 
 #include <map>
 #include <string>
 #include "utils/utils.h"
-#include "darts.h"
+#include "milkcat/darts.h"
 
 class TrieTree {
  public:
@@ -43,26 +43,27 @@ class TrieTree {
   // else the return value is < 0
   virtual int Search(const char *text) const = 0;
 
-  // Traverse a trie tree the node is the last state and will changed during traversing
-  // for the root node the node = 0, return value > 0 if text exists 
-  // returns kExist if something with text as its prefix exists buf text itself doesn't exist
-  // return kNone it text doesn't exist.
-  virtual int Traverse(const char *text, size_t &node) const = 0;
+  // Traverse a trie tree the node is the last state and will changed during
+  // traversing for the root node the node = 0, return value > 0 if text exists
+  // returns kExist if something with text as its prefix exists buf text itself
+  // doesn't exist return kNone it text doesn't exist.
+  virtual int Traverse(const char *text, size_t *node) const = 0;
 };
 
 inline TrieTree::~TrieTree() {}
 
 class DoubleArrayTrieTree: public TrieTree {
  public:
-  static DoubleArrayTrieTree *New(const char *file_path, Status &status);
-  
-  // Create the double array from the unordered_map data. The key of map is the word
-  // itself, and the value of map is the id of word
-  static DoubleArrayTrieTree *NewFromMap(const std::map<std::string, int> &src_map);
+  static DoubleArrayTrieTree *New(const char *file_path, Status *status);
+
+  // Create the double array from the unordered_map data. The key of map is the
+  // word itself, and the value of map is the id of word
+  static DoubleArrayTrieTree *NewFromMap(
+    const std::map<std::string, int> &src_map);
   DoubleArrayTrieTree() {}
 
   int Search(const char *text) const;
-  int Traverse(const char *text, size_t &node) const;
+  int Traverse(const char *text, size_t *node) const;
 
  private:
   Darts::DoubleArray double_array_;
@@ -71,4 +72,4 @@ class DoubleArrayTrieTree: public TrieTree {
 };
 
 
-#endif
+#endif  // SRC_MILKCAT_TRIE_TREE_H_

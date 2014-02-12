@@ -31,15 +31,16 @@
 #include <unordered_map>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
-#include "darts.h"
-#include "trie_tree.h"
-#include "milkcat_config.h"
+#include "milkcat/darts.h"
+#include "milkcat/trie_tree.h"
+#include "milkcat/milkcat_config.h"
 
-DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &status) {
+DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path,
+                                              Status *status) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
 
   if (-1 == self->double_array_.open(file_path)) {
-    status = Status::IOError(file_path);
+    *status = Status::IOError(file_path);
     delete self;
     return nullptr;
   } else {
@@ -47,18 +48,22 @@ DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path, Status &sta
   }
 }
 
-DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(const std::map<std::string, int> &src_map) {
+DoubleArrayTrieTree *DoubleArrayTrieTree::NewFromMap(
+    const std::map<std::string, int> &src_map) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
   std::vector<const char *> word_strs;
   std::vector<int> word_ids;
 
   // Note: the std::map is sorted by key, so it is unnecessary to sort the word
-  for (auto &x: src_map) {
+  for (auto &x : src_map) {
     word_strs.push_back(x.first.c_str());
     word_ids.push_back(x.second);
   }
 
-  self->double_array_.build(word_strs.size(), word_strs.data(), nullptr, word_ids.data());
+  self->double_array_.build(word_strs.size(),
+                            word_strs.data(),
+                            nullptr,
+                            word_ids.data());
   return self;
 }
 
@@ -66,8 +71,8 @@ int DoubleArrayTrieTree::Search(const char *text) const {
   return double_array_.exactMatchSearch<int>(text);
 }
 
-int DoubleArrayTrieTree::Traverse(const char *text, size_t &node) const {
+int DoubleArrayTrieTree::Traverse(const char *text, size_t *node) const {
   size_t key_pos = 0;
-  return double_array_.traverse(text, node, key_pos);
+  return double_array_.traverse(text, *node, key_pos);
 }
 

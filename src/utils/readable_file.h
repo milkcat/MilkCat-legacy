@@ -25,30 +25,31 @@
 // THE SOFTWARE.
 //
 
-#ifndef READABLE_FILE_H
-#define READABLE_FILE_H 
+#ifndef SRC_UTILS_READABLE_FILE_H_
+#define SRC_UTILS_READABLE_FILE_H_
 
 #include <stdio.h>
 #include <stdint.h>
-#include "status.h"
+#include <string>
+#include "utils/status.h"
 
 // open a random access file for read
 class ReadableFile {
  public:
-  static ReadableFile *New(const char *file_path, Status &status);
+  static ReadableFile *New(const char *file_path, Status *status);
   ~ReadableFile();
 
   // Read n bytes (size) from file and put to *ptr
-  bool Read(void *ptr, int size, Status &status);
+  bool Read(void *ptr, int size, Status *status);
 
   // Read an type T from file
   template<typename T>
-  bool ReadValue(T &data, Status &status) {
-    return Read(&data, sizeof(T), status);
+  bool ReadValue(T *data, Status *status) {
+    return Read(data, sizeof(T), status);
   }
 
   // Read a line from file, if failed return false
-  bool ReadLine(char *buf, int size, Status &status);
+  bool ReadLine(char *buf, int size, Status *status);
 
   bool Eof() { return Tell() >= size_; }
 
@@ -67,4 +68,4 @@ class ReadableFile {
 };
 
 
-#endif // RANDOM_ACCESS_FILE_H
+#endif  // SRC_UTILS_READABLE_FILE_H_

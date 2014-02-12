@@ -24,6 +24,7 @@
 // THE SOFTWARE.
 //
 
+#include "neko/candidate.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -32,10 +33,9 @@
 #include <unordered_map>
 #include "milkcat/libmilkcat.h"
 #include "utils/readable_file.h"
-#include "maxent_classifier.h"
-#include "crf_vocab.h"
-#include "candidate.h"
-#include "utf8.h"
+#include "neko/maxent_classifier.h"
+#include "neko/crf_vocab.h"
+#include "neko/utf8.h"
 
 // Extracts features from name_str for the maxent classifier
 std::vector<std::string> ExtractNameFeature(const char *name_str) {
@@ -52,26 +52,31 @@ std::vector<std::string> ExtractNameFeature(const char *name_str) {
     utf8_chars.push_back(utf8_char);
   }
 
-  if (utf8_chars.size() > 0) {
+  if (utf8_chars.size() >= 2) {
     feature_list.push_back(std::string("B:") + utf8_chars[0]);
-    feature_list.push_back(std::string("E:") + utf8_chars[utf8_chars.size() - 1]);
+    feature_list.push_back(std::string("E:") +
+                           utf8_chars[utf8_chars.size() - 1]);
     for (auto it = utf8_chars.begin() + 1; it < utf8_chars.end() - 1; ++it) {
       feature_list.push_back(std::string("M:") + *it);
     }
   }
-  
+
   return feature_list;
 }
 
+
+
+
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
-// Returns a map the key is the word, and the value is its cost in unigram, which is
-// used for bigram segmentation
-std::unordered_map<std::string, float> GetCandidate(const char *model_path,
-                                                    const std::unordered_map<std::string, int> &crf_vocab, 
-                                                    int total_count,
-                                                    int (* log_func)(const char *message),
-                                                    Status &status,
-                                                    int thres_freq) {
+// Returns a map the key is the word, and the value is its cost in unigram,
+// which is used for bigram segmentation
+std::unordered_map<std::string, float> GetCandidate(
+    const char *model_path,
+    const std::unordered_map<std::string, int> &crf_vocab,
+    int total_count,
+    int (* log_func)(const char *message),
+    Status *status,
+    int thres_freq) {
   std::unordered_map<std::string, float> candidates;
   char msg_text[1024];
 
@@ -79,32 +84,40 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
   const TrieTree *index = model_factory->Index(status);
 
   MaxentModel *name_model = nullptr;
-  if (status.ok()) name_model = MaxentModel::New(model_path, status);
+  if (status->ok()) name_model = MaxentModel::New(model_path, status);
 
   MaxentClassifier *classifier = nullptr;
-  if (status.ok()) classifier = new MaxentClassifier(name_model);
+  if (status->ok()) classifier = new MaxentClassifier(name_model);
 
   // Calculate the thres_freq via total_count if thres_freq = kDefaultThresFreq
   if (thres_freq == kDefaultThresFreq)
     thres_freq = static_cast<int>(atan(1e-7 * total_count) * 50) + 2;
 
-  if (status.ok() && log != nullptr) {
-    sprintf(msg_text, "Threshold frequency of candidates is %d", thres_freq);
+  if (status->ok() && log != nullptr) {
+    snprintf(msg_text,
+             sizeof(msg_text),
+             "Threshold frequency of candidates is %d",
+             thres_freq);
     log_func(msg_text);
   }
 
   int person_name = 0;
-  if (status.ok()) {
-    for (auto &x: crf_vocab) {
-
-      // If the word frequency is greater than the threshold value and it not exists in 
-      // the original vocabulary 
+  std::vector<std::string> feature;
+  if (status->ok()) {
+    for (auto &x : crf_vocab) {
+      // If the word frequency is greater than the threshold value and it not
+      // exists in the original vocabulary
       if (x.second > thres_freq && index->Search(x.first.c_str()) < 0) {
-        const char *y = classifier->Classify(ExtractNameFeature(x.first.c_str()));
+        feature = ExtractNameFeature(x.first.c_str());
 
-        // And if it is not a name 
-        if (strcmp(y, "F") == 0) {  
-          candidates[x.first] = -log(static_cast<float>(x.second) / total_count);
+        // Filter one character word
+        if (feature.size() == 0) continue;
+        const char *y = classifier->Classify(feature);
+
+        // And if it is not a name
+        if (strcmp(y, "F") == 0) {
+          candidates[x.first] = -log(
+              static_cast<float>(x.second) / total_count);
         } else {
           person_name++;
         }
@@ -112,8 +125,11 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
     }
   }
 
-  if (status.ok() && log != nullptr) {
-    sprintf(msg_text, "Filtered %d person names.", person_name);
+  if (status->ok() && log != nullptr) {
+    snprintf(msg_text,
+             sizeof(msg_text),
+             "Filtered %d person names.",
+             person_name);
     log_func(msg_text);
   }
 

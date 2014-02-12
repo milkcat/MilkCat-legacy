@@ -24,16 +24,18 @@
 // THE SOFTWARE.
 //
 
-#ifndef FEATURE_EXTRACTOR_H
-#define FEATURE_EXTRACTOR_H
+#ifndef SRC_MILKCAT_FEATURE_EXTRACTOR_H_
+#define SRC_MILKCAT_FEATURE_EXTRACTOR_H_
 
 #include <stdlib.h>
-#include "milkcat_config.h"
+#include "milkcat/milkcat_config.h"
 
 class FeatureExtractor {
  public:
-  virtual void ExtractFeatureAt(size_t position, char (*feature_list)[kFeatureLengthMax], int list_size) = 0;
+  virtual void ExtractFeatureAt(size_t position,
+                                char (*feature_list)[kFeatureLengthMax],
+                                int list_size) = 0;
   virtual size_t size() const = 0;
 };
 
-#endif
+#endif  // SRC_MILKCAT_FEATURE_EXTRACTOR_H_

@@ -2,6 +2,7 @@ PREFIX ?= /usr/local
 MODEL_DIR ?= $(PREFIX)/share/milkcat
 LIBRARY_DIR ?= $(PREFIX)/lib
 BINARY_DIR ?= $(PREFIX)/bin
+PYTHON ?= python
 V ?= 0
 
 all: milkcat
@@ -32,3 +33,21 @@ uninstall:
 	rm $(LIBRARY_DIR)/libmilkcat.*
 
 
+CPPLINT_EXCLUDE ?=
+CPPLINT_EXCLUDE += src/milkcat/token_lex.cc
+CPPLINT_EXCLUDE += src/milkcat/token_lex.h
+CPPLINT_EXCLUDE += src/milkcat/darts.h
+CPPLINT_EXCLUDE += src/neko/utf8.h
+
+ALL_CPP_FILES = $(wildcard src/*.cc \
+	                         src/*.h \
+	                         src/milkcat/*.cc \
+	                         src/milkcat/*.h \
+	                         src/utils/*.cc \
+	                         src/utils/*.h \
+	                         src/neko/*.cc \
+	                         src/neko/*.h)
+CPPLINT_FILES = $(filter-out $(CPPLINT_EXCLUDE), $(ALL_CPP_FILES))
+
+lint:
+	$(PYTHON) tools/cpplint.py $(CPPLINT_FILES)

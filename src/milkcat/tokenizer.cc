@@ -25,11 +25,11 @@
 // THE SOFTWARE.
 //
 
+#include "milkcat/tokenizer.h"
 #include <stdio.h>
-#include "token_instance.h"
-#include "tokenizer.h"
-#include "token_lex.h"
-#include "milkcat_config.h"
+#include "milkcat/token_instance.h"
+#include "milkcat/token_lex.h"
+#include "milkcat/milkcat_config.h"
 
 Tokenization::Tokenization(): buffer_alloced_(false) {
   yylex_init(&yyscanner);
@@ -60,10 +60,13 @@ bool Tokenization::GetSentence(TokenInstance *token_instance) {
 
     if (token_type == TokenInstance::kEnd) break;
 
-    token_instance->set_value_at(token_count, yyget_text(yyscanner), token_type);
+    token_instance->set_value_at(token_count,
+                                 yyget_text(yyscanner),
+                                 token_type);
     token_count++;
-    
-    if (token_type == TokenInstance::kPeriod || token_type == TokenInstance::kCrLf) 
+
+    if (token_type == TokenInstance::kPeriod ||
+        token_type == TokenInstance::kCrLf)
       break;
   }
 

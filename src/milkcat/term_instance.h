@@ -25,13 +25,13 @@
 //
 
 
-#ifndef TERM_INSTANCE_H
-#define TERM_INSTANCE_H
+#ifndef SRC_MILKCAT_TERM_INSTANCE_H_
+#define SRC_MILKCAT_TERM_INSTANCE_H_
 
 #include <stdio.h>
-#include "instance_data.h"
-#include "token_instance.h"
 #include "utils/utils.h"
+#include "milkcat/instance_data.h"
+#include "milkcat/token_instance.h"
 
 class TagSequence;
 
@@ -58,19 +58,29 @@ class TermInstance {
   };
 
   // Get the term's string value at position
-  const char *term_text_at(int position) const { return instance_data_->string_at(position, kTermTextS); }
+  const char *term_text_at(int position) const {
+    return instance_data_->string_at(position, kTermTextS);
+  }
 
   // Get the term type at position
-  int term_type_at(int position) const { return instance_data_->integer_at(position, kTermTypeI); }
+  int term_type_at(int position) const {
+    return instance_data_->integer_at(position, kTermTypeI);
+  }
 
   // Get the token number of this term at position
-  int token_number_at(int position) const { return instance_data_->integer_at(position, kTermTokenNumberI); }
+  int token_number_at(int position) const {
+    return instance_data_->integer_at(position, kTermTokenNumberI);
+  }
 
   // Get the id of term (in unigram index)
-  int term_id_at(int position) const { return instance_data_->integer_at(position, kTermIdI); }
+  int term_id_at(int position) const {
+    return instance_data_->integer_at(position, kTermIdI);
+  }
 
   // Set the term id at position
-  void set_term_id_at(int position, int term_id) { instance_data_->set_integer_at(position, kTermIdI, term_id); }
+  void set_term_id_at(int position, int term_id) {
+    instance_data_->set_integer_at(position, kTermIdI, term_id);
+  }
 
   // Set the size of this instance
   void set_size(int size) { instance_data_->set_size(size); }
@@ -79,7 +89,11 @@ class TermInstance {
   int size() const { return instance_data_->size(); }
 
   // Set the value at position
-  void set_value_at(int position, const char *term, int token_number, int term_type, int term_id = kTermIdNone) {
+  void set_value_at(int position,
+                    const char *term,
+                    int token_number,
+                    int term_type,
+                    int term_id = kTermIdNone) {
     instance_data_->set_string_at(position, kTermTextS, term);
     instance_data_->set_integer_at(position, kTermTokenNumberI, token_number);
     instance_data_->set_integer_at(position, kTermTypeI, term_type);
@@ -94,24 +108,24 @@ class TermInstance {
 
 inline int TokenTypeToTermType(int token_type) {
   switch (token_type) {
-   case TokenInstance::kChineseChar:
-    return TermInstance::kChineseWord;
-   case TokenInstance::kSpace:
-   case TokenInstance::kCrLf:
-    return TermInstance::kOther;
-   case TokenInstance::kPeriod:
-   case TokenInstance::kPunctuation:
-   case TokenInstance::kOther:
-    return TermInstance::kPunction;
-   case TokenInstance::kEnglishWord:
-    return TermInstance::kEnglishWord;
-   case TokenInstance::kSymbol:
-    return TermInstance::kSymbol;
-   case TokenInstance::kNumber:
-    return TermInstance::kNumber;
-   default:
-    return TermInstance::kOther;
+    case TokenInstance::kChineseChar:
+      return TermInstance::kChineseWord;
+    case TokenInstance::kSpace:
+    case TokenInstance::kCrLf:
+      return TermInstance::kOther;
+    case TokenInstance::kPeriod:
+    case TokenInstance::kPunctuation:
+    case TokenInstance::kOther:
+      return TermInstance::kPunction;
+    case TokenInstance::kEnglishWord:
+      return TermInstance::kEnglishWord;
+    case TokenInstance::kSymbol:
+      return TermInstance::kSymbol;
+    case TokenInstance::kNumber:
+      return TermInstance::kNumber;
+    default:
+      return TermInstance::kOther;
   }
 }
 
-#endif
+#endif  // SRC_MILKCAT_TERM_INSTANCE_H_

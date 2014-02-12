@@ -28,35 +28,32 @@
 
 
 #include <stdio.h>
-#include <iostream>
 #include <string.h>
 #include "utils/utils.h"
-#include "darts.h"
-#include "out_of_vocabulary_word_recognition.h"
-#include "token_instance.h"
-#include "crf_segmenter.h"
+#include "milkcat/darts.h"
+#include "milkcat/out_of_vocabulary_word_recognition.h"
+#include "milkcat/token_instance.h"
+#include "milkcat/crf_segmenter.h"
 
 OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::New(
-    const CRFModel *crf_model, 
+    const CRFModel *crf_model,
     const TrieTree *oov_property,
-    Status &status) {
-
+    Status *status) {
   OutOfVocabularyWordRecognition *self = new OutOfVocabularyWordRecognition();
 
   self->crf_segmenter_ = CRFSegmenter::New(crf_model, status);
 
-  if (status.ok()) {
+  if (status->ok()) {
     self->term_instance_ = new TermInstance();
     self->oov_property_ = oov_property;
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
     return NULL;
   }
-  
 }
 
 OutOfVocabularyWordRecognition::~OutOfVocabularyWordRecognition() {
@@ -67,12 +64,13 @@ OutOfVocabularyWordRecognition::~OutOfVocabularyWordRecognition() {
   term_instance_ = NULL;
 }
 
-OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition(): term_instance_(NULL),
-                                                                  crf_segmenter_(NULL) {
+OutOfVocabularyWordRecognition::OutOfVocabularyWordRecognition():
+    term_instance_(NULL),
+    crf_segmenter_(NULL) {
 }
 
 void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
-                                             TermInstance *in_term_instance, 
+                                             TermInstance *in_term_instance,
                                              TokenInstance *in_token_instance) {
   int ner_begin_token = 0;
   int current_token = 0;
@@ -119,11 +117,10 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
       ner_term_number++;
 
     } else {
-
       // Recognize token from ner_begin_token to current_token
       if (ner_term_number > 1) {
         RecognizeRange(in_token_instance, ner_begin_token, current_token);
-        
+
         for (size_t j = 0; j < term_instance_->size(); ++j) {
           CopyTermValue(term_instance, current_term, term_instance_, j);
           current_term++;
@@ -140,8 +137,8 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
     }
 
     current_token += term_token_number;
-  } 
-  
+  }
+
   // Recognize remained tokens
   if (ner_term_number > 1) {
     RecognizeRange(in_token_instance, ner_begin_token, current_token);
@@ -151,25 +148,33 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
     }
     ner_begin_token = current_token + term_token_number;
   } else if (ner_term_number == 1) {
-    CopyTermValue(term_instance, current_term, in_term_instance, in_term_instance->size() - 1);
+    CopyTermValue(term_instance,
+                  current_term,
+                  in_term_instance,
+                  in_term_instance->size() - 1);
     current_term++;
   }
 
   term_instance->set_size(current_term);
 }
 
-void OutOfVocabularyWordRecognition::CopyTermValue(TermInstance *dest_term_instance, 
-                                                   int dest_postion, 
-                                                   TermInstance *src_term_instance, 
-                                                   int src_position)  {
+void OutOfVocabularyWordRecognition::CopyTermValue(
+    TermInstance *dest_term_instance,
+    int dest_postion,
+    TermInstance *src_term_instance,
+    int src_position)  {
 
-  dest_term_instance->set_value_at(dest_postion,
-                                   src_term_instance->term_text_at(src_position),
-                                   src_term_instance->token_number_at(src_position),
-                                   src_term_instance->term_type_at(src_position),
-                                   src_term_instance->term_id_at(src_position));
+  dest_term_instance->set_value_at(
+      dest_postion,
+      src_term_instance->term_text_at(src_position),
+      src_term_instance->token_number_at(src_position),
+      src_term_instance->term_type_at(src_position),
+      src_term_instance->term_id_at(src_position));
 }
 
-void OutOfVocabularyWordRecognition::RecognizeRange(TokenInstance *token_instance, int begin, int end) {
+void OutOfVocabularyWordRecognition::RecognizeRange(
+    TokenInstance *token_instance,
+    int begin,
+    int end) {
   crf_segmenter_->SegmentRange(term_instance_, token_instance, begin, end);
 }

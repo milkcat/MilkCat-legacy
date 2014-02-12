@@ -24,16 +24,16 @@
 // THE SOFTWARE.
 //
 
-#ifndef HMM_PART_OF_SPEECH_TAGGER_H
-#define HMM_PART_OF_SPEECH_TAGGER_H
+#ifndef SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_
+#define SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_
 
 #include "utils/utils.h"
-#include "darts.h"
-#include "milkcat_config.h"
-#include "part_of_speech_tagger.h"
-#include "hmm_model.h"
-#include "trie_tree.h"
-#include "configuration.h"
+#include "milkcat/darts.h"
+#include "milkcat/milkcat_config.h"
+#include "milkcat/part_of_speech_tagger.h"
+#include "milkcat/hmm_model.h"
+#include "milkcat/trie_tree.h"
+#include "milkcat/configuration.h"
 
 class PartOfSpeechTagInstance;
 class TermInstance;
@@ -44,12 +44,13 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   static const int kMaxBucket = kTokenMax;
 
   ~HMMPartOfSpeechTagger();
-  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance);
+  void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance,
+           TermInstance *term_instance);
 
-  static HMMPartOfSpeechTagger *New(const HMMModel *model, 
+  static HMMPartOfSpeechTagger *New(const HMMModel *model,
                                     const TrieTree *index,
                                     const Configuration *default_tag,
-                                    Status &status);
+                                    Status *status);
 
  private:
   struct Node;
@@ -81,8 +82,12 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   // Get the tag's id by its text if the tag not exists return -1
   int GetTagIdByStr(const char *tag_str);
 
-  // Load the default tag key from configuration file and put in term_type_emit_tag_
-  void LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag, Status &status);
+  // Load the default tag key from configuration file and put in
+  // term_type_emit_tag_
+  void LoadDefaultTags(const Configuration *conf,
+                       const char *key,
+                       int *emit_tag,
+                       Status *status);
 
   // Get each term's emit tag and save it in term_tags_
   void BuildEmitTagfForNode(TermInstance *term_instance);
@@ -91,4 +96,4 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
 };
 
 
-#endif
+#endif  // SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_

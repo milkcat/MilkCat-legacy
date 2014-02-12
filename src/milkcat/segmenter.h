@@ -24,8 +24,8 @@
 // THE SOFTWARE.
 //
 
-#ifndef SEGMENTER_H
-#define SEGMENTER_H
+#ifndef SRC_MILKCAT_SEGMENTER_H_
+#define SRC_MILKCAT_SEGMENTER_H_
 
 class TermInstance;
 class TokenInstance;
@@ -36,9 +36,10 @@ class Segmenter {
   virtual ~Segmenter() = 0;
 
   // Segment a token instance into term instance
-  virtual void Segment(TermInstance *term_instance, TokenInstance *token_instance) = 0;
+  virtual void Segment(TermInstance *term_instance,
+                       TokenInstance *token_instance) = 0;
 };
 
 inline Segmenter::~Segmenter() {}
 
-#endif
+#endif  // SRC_MILKCAT_SEGMENTER_H_

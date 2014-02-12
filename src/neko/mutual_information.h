@@ -24,15 +24,16 @@
 // THE SOFTWARE.
 //
 
-#ifndef MUTUAL_INFORMATION_H
-#define MUTUAL_INFORMATION_H
+#ifndef SRC_NEKO_MUTUAL_INFORMATION_H_
+#define SRC_NEKO_MUTUAL_INFORMATION_H_
 
 #include <unordered_map>
 #include <string>
+#include "utils/status.h"
 
 std::unordered_map<std::string, double> GetMutualInformation(
     const std::unordered_map<std::string, int> &bigram_vocab,
     const std::unordered_map<std::string, float> &candidate,
-    Status &status);
+    Status *status);
 
-#endif
+#endif  // SRC_NEKO_MUTUAL_INFORMATION_H_

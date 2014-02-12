@@ -32,12 +32,12 @@
 namespace {
 
 // Reversed sort by second value
-bool CmpPairByValue(const std::pair<std::string, double> &v1, 
+bool CmpPairByValue(const std::pair<std::string, double> &v1,
                     const std::pair<std::string, double> &v2) {
   return v1.second > v2.second;
 }
 
-std::vector<std::pair<std::string, double>> 
+std::vector<std::pair<std::string, double>>
 SortMapByValue(const std::unordered_map<std::string, double> &map) {
   std::vector<std::pair<std::string, double>> pair_vec(map.begin(), map.end());
   sort(pair_vec.begin(), pair_vec.end(), CmpPairByValue);
@@ -45,7 +45,7 @@ SortMapByValue(const std::unordered_map<std::string, double> &map) {
   return pair_vec;
 }
 
-} // namespace
+}  // namespace
 
 std::vector<std::pair<std::string, double>> FinalRank(
     const std::unordered_map<std::string, double> &adjecent_entropy,
@@ -53,27 +53,29 @@ std::vector<std::pair<std::string, double>> FinalRank(
     double remove_ratio = 0.1,
     double alpha = 0.6) {
 
-  // Remove the minimal N values in each map, the ratio is specified by remove_ratio. And normalize
-  // the values in each map to [0, 1]
+  // Remove the minimal N values in each map, the ratio is specified by
+  // remove_ratio. And normalize the values in each map to [0, 1]
   auto adjent_vec = SortMapByValue(adjecent_entropy);
   auto mutinf_vec = SortMapByValue(mutual_information);
 
   int n_remove = adjent_vec.size() * remove_ratio;
   adjent_vec.erase(adjent_vec.end() - n_remove, adjent_vec.end());
   int max_value = adjent_vec[0].second;
-  for (auto &x: adjent_vec) x.second /= max_value;
+  for (auto &x : adjent_vec) x.second /= max_value;
 
   n_remove = mutinf_vec.size() * remove_ratio;
   mutinf_vec.erase(mutinf_vec.end() - n_remove, mutinf_vec.end());
   max_value = mutinf_vec[0].second;
-  for (auto &x: mutinf_vec) x.second /= max_value;
+  for (auto &x : mutinf_vec) x.second /= max_value;
 
   // Calculate the final value
-  std::unordered_map<std::string, double> adjent_new(adjent_vec.begin(), adjent_vec.end());
-  std::unordered_map<std::string, double> mutinf_new(mutinf_vec.begin(), mutinf_vec.end());
+  std::unordered_map<std::string, double> adjent_new(adjent_vec.begin(),
+                                                     adjent_vec.end());
+  std::unordered_map<std::string, double> mutinf_new(mutinf_vec.begin(),
+                                                     mutinf_vec.end());
   std::unordered_map<std::string, double> final;
 
-  for (auto &x: adjent_new) {
+  for (auto &x : adjent_new) {
     if (mutinf_new.find(x.first) != mutinf_new.end()) {
       final[x.first] = alpha * x.second + (1 - alpha) * mutinf_new[x.first];
     }

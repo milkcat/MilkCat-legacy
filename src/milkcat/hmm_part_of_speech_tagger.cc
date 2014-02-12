@@ -24,14 +24,15 @@
 // THE SOFTWARE.
 //
 
+#include "milkcat/hmm_part_of_speech_tagger.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <string>
 #include "utils/utils.h"
-#include "hmm_part_of_speech_tagger.h"
-#include "part_of_speech_tag_instance.h"
-#include "term_instance.h"
-#include "configuration.h"
-#include "hmm_model.h"
+#include "milkcat/part_of_speech_tag_instance.h"
+#include "milkcat/term_instance.h"
+#include "milkcat/configuration.h"
+#include "milkcat/hmm_model.h"
 
 struct HMMPartOfSpeechTagger::Node {
   int left_tag;
@@ -47,7 +48,7 @@ HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): model_(NULL),
 
 HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
   for (int i = 0; i < kMaxBucket; ++i) {
-    if (buckets_[i] != NULL) 
+    if (buckets_[i] != NULL)
       delete[] buckets_[i];
     buckets_[i] = NULL;
   }
@@ -61,12 +62,13 @@ HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
   }
 }
 
-HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(const HMMModel *model, 
-                                                  const TrieTree *index,
-                                                  const Configuration *default_tag,
-                                                  Status &status) {
+HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(
+    const HMMModel *model,
+    const TrieTree *index,
+    const Configuration *default_tag,
+    Status *status) {
   HMMPartOfSpeechTagger *self = new HMMPartOfSpeechTagger();
-  
+
   Configuration *default_tag_conf = NULL;
   char error_message[1024];
   FILE *fd = NULL;
@@ -89,14 +91,20 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(const HMMModel *model,
 
   // Note that LoadDefaultTags will throw runtime_error
   int *p = self->term_type_emit_tag_;
-  if (status.ok()) self->LoadDefaultTags(default_tag, "word", p + TermInstance::kChineseWord, status);
-  if (status.ok()) self->LoadDefaultTags(default_tag, "english", p + TermInstance::kEnglishWord, status);
-  if (status.ok()) self->LoadDefaultTags(default_tag, "number", p + TermInstance::kNumber, status);
-  if (status.ok()) self->LoadDefaultTags(default_tag, "symbol", p + TermInstance::kSymbol, status);
-  if (status.ok()) self->LoadDefaultTags(default_tag, "punction", p + TermInstance::kPunction, status);
-  if (status.ok()) self->LoadDefaultTags(default_tag, "other", p + TermInstance::kOther, status);
+  if (status->ok()) self->LoadDefaultTags(
+      default_tag, "word", p + TermInstance::kChineseWord, status);
+  if (status->ok()) self->LoadDefaultTags(
+      default_tag, "english", p + TermInstance::kEnglishWord, status);
+  if (status->ok()) self->LoadDefaultTags(
+      default_tag, "number", p + TermInstance::kNumber, status);
+  if (status->ok()) self->LoadDefaultTags(
+      default_tag, "symbol", p + TermInstance::kSymbol, status);
+  if (status->ok()) self->LoadDefaultTags(
+      default_tag, "punction", p + TermInstance::kPunction, status);
+  if (status->ok()) self->LoadDefaultTags(
+      default_tag, "other", p + TermInstance::kOther, status);
 
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
@@ -114,25 +122,30 @@ int HMMPartOfSpeechTagger::GetTagIdByStr(const char *tag_str) {
   return -1;
 }
 
-void HMMPartOfSpeechTagger::LoadDefaultTags(const Configuration *conf, const char *key, int *emit_tag, Status &status) {
+void HMMPartOfSpeechTagger::LoadDefaultTags(
+    const Configuration *conf,
+    const char *key,
+    int *emit_tag,
+    Status *status) {
   std::string msg;
   int tag;
 
   if (conf->HasKey(key) == false) {
-    msg = std::string("unable to find key '") + key + "' in default tag configuration file";
-    status = Status::Corruption(msg.c_str());
+    msg = std::string("unable to find key '") +
+                      key + "' in default tag configuration file";
+    *status = Status::Corruption(msg.c_str());
   }
-  
-  if (status.ok()) {
+
+  if (status->ok()) {
     const char *tag_str = conf->GetString(key);
     tag = GetTagIdByStr(tag_str);
     if (tag < 0) {
       msg = std::string(tag_str) + " not exists in tag set";
-      status = Status::Corruption(msg.c_str());
+      *status = Status::Corruption(msg.c_str());
     }
   }
 
-  if (status.ok()) *emit_tag = tag;
+  if (status->ok()) *emit_tag = tag;
 }
 
 void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
@@ -146,9 +159,10 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
     }
 
     emit_node = model_->GetEmitRow(term_id);
+    int term_type = term_instance->term_type_at(i);
     if (emit_node == NULL) {
-      term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_instance->term_type_at(i)]];
-      has_data_[i] = false; 
+      term_tags_[i] = one_tag_emit_[term_type_emit_tag_[term_type]];
+      has_data_[i] = false;
     } else {
       term_tags_[i] = emit_node;
       has_data_[i] = true;
@@ -156,7 +170,9 @@ void HMMPartOfSpeechTagger::BuildEmitTagfForNode(TermInstance *term_instance) {
   }
 }
 
-void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance, TermInstance *term_instance) {
+void HMMPartOfSpeechTagger::Tag(
+    PartOfSpeechTagInstance *part_of_speech_tag_instance,
+    TermInstance *term_instance) {
   // Get each term's plausible emit tags
   BuildEmitTagfForNode(term_instance);
 
@@ -186,10 +202,13 @@ void HMMPartOfSpeechTagger::Tag(PartOfSpeechTagInstance *part_of_speech_tag_inst
 
   int tag = min_tag;
   for (int position = last_position; position >= 0; --position) {
+    int term_type = term_instance->term_type_at(position);
+    bool is_chinese_word = term_type == TermInstance::kChineseWord;
+
     part_of_speech_tag_instance->set_value_at(
-        position, 
-        model_->GetTagStr(tag), 
-        term_instance->term_type_at(position) == TermInstance::kChineseWord && has_data_[position] == false);
+        position,
+        model_->GetTagStr(tag),
+        is_chinese_word && has_data_[position] == false);
     tag = buckets_[position][tag].left_tag;
   }
 
@@ -216,8 +235,9 @@ void HMMPartOfSpeechTagger::CalculateArcCost(int position) {
   while (emit_node) {
     p = left_emit_node;
     while (p) {
-      cost = buckets_[position - 1][p->tag].cost + model_->GetTransCost(p->tag, emit_node->tag);
-      // printf("%s %s %lf\n", tag_str_[p->tag_id], tag_str_[emit_node->tag_id], transition_matrix_[p->tag_id * tag_num_ + emit_node->tag_id]);
+      double prior_cost = buckets_[position - 1][p->tag].cost;
+      cost = prior_cost + model_->GetTransCost(p->tag, emit_node->tag);
+
       if (cost < min_cost) {
         min_cost = cost;
         min_tag = p->tag;

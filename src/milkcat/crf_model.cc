@@ -30,13 +30,13 @@
 // Copyright(C) 2005-2007 Taku Kudo <taku@chasen.org>
 //
 
+#include "milkcat/crf_model.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
 #include "utils/utils.h"
 #include "utils/readable_file.h"
-#include "crf_model.h"
 
 inline const char *read_data(const char **ptr, size_t size) {
   const char *r = *ptr;
@@ -44,14 +44,14 @@ inline const char *read_data(const char **ptr, size_t size) {
   return r;
 }
 
-template <class T> 
+template <class T>
 void read_value(const char **ptr, T *value) {
   const char *r = read_data(ptr, sizeof(T));
   memcpy(value, r, sizeof(T));
 }
 
 CRFModel::CRFModel(): data_(NULL), cost_num_(0), cost_data_(NULL),
-                          double_array_(NULL), cost_factor_(0.0) {
+                      double_array_(NULL), cost_factor_(0.0) {
 }
 
 CRFModel::~CRFModel() {
@@ -69,27 +69,27 @@ CRFModel::~CRFModel() {
   }
 }
 
-CRFModel *CRFModel::New(const char *model_path, Status &status) {
+CRFModel *CRFModel::New(const char *model_path, Status *status) {
   CRFModel *self = new CRFModel();
 
   ReadableFile *fd = ReadableFile::New(model_path, status);
-  if (status.ok()) {
+  if (status->ok()) {
     self->data_ = new char[fd->Size()];
     fd->Read(self->data_, fd->Size(), status);
   }
 
   const char *ptr, *end;
 
-  if (status.ok()) {
+  if (status->ok()) {
     ptr = self->data_;
     end = ptr + fd->Size();
 
     int32_t version = 0;
     read_value<int32_t>(&ptr, &version);
-    if (version != 100) status = Status::Corruption(model_path);
+    if (version != 100) *status = Status::Corruption(model_path);
   }
 
-  if (status.ok()) {
+  if (status->ok()) {
     int32_t type = 0;
     read_value<int32_t>(&ptr, &type);
     read_value<double>(&ptr, &(self->cost_factor_));
@@ -125,21 +125,21 @@ CRFModel *CRFModel::New(const char *model_path, Status &status) {
       }
       while (tmpl_str[pos++] != '\0') {}
     }
-    
+
     self->double_array_ = new Darts::DoubleArray();
     self->double_array_->set_array(const_cast<char *>(ptr));
     ptr += dsize;
 
     self->cost_data_ = reinterpret_cast<const float *>(ptr);
-    ptr += sizeof(float) * self->cost_num_;    
+    ptr += sizeof(float) * self->cost_num_;
   }
 
-  if (status.ok() && ptr != end) {
-    status = Status::Corruption(model_path);  
+  if (status->ok() && ptr != end) {
+    *status = Status::Corruption(model_path);
   }
 
   delete fd;
-  if (status.ok()) {
+  if (status->ok()) {
     return self;
   } else {
     delete self;
