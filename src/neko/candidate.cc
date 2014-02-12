@@ -64,6 +64,9 @@ std::vector<std::string> ExtractNameFeature(const char *name_str) {
   return feature_list;
 }
 
+
+
+
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
 // Returns a map the key is the word, and the value is its cost in unigram,
 // which is used for bigram segmentation

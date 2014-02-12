@@ -37,6 +37,7 @@
 #include "utils/readable_file.h"
 #include "utils/status.h"
 #include "milkcat/milkcat.h"
+#include "milkcat/libmilkcat.h"
 
 namespace {
 
@@ -45,12 +46,23 @@ struct Adjacent {
   std::map<int, int> right;
 };
 
-int GetOrInsert(std::unordered_map<std::string, int> *dict,
-                const std::string &word) {
-  auto it = dict->find(word);
-  if (it == dict->end()) {
-    dict->emplace(word, dict->size());
-    return dict->size();
+constexpr int kSystemWordIdStart = 0x20000000;
+constexpr int kNotCjk = 0x30000000;
+
+// Get a word's id from dict or system unigram index. If the word in system
+// unigram index, return word-id in index + kSystemWordIdStart. If the word not
+// exist, return kNotCjk
+int GetWordId(const std::unordered_map<std::string, int> &candidate_id,
+              const TrieTree *index,
+              const std::string &word) {
+  auto it = candidate_id.find(word);
+  if (it == candidate_id.end()) {
+    int system_word_id = index->Search(word.c_str());
+    if (system_word_id >= 0) {
+      return kSystemWordIdStart + system_word_id;
+    } else {
+      return kNotCjk;
+    }
   } else {
     return it->second;
   }
@@ -114,15 +126,18 @@ double CalculateAdjacentEntropy(const std::map<int, int> &adjacent) {
 
 // Its a thread that using bigram to segment the text from fd, and update the
 // adjacent_entropy and the vocab data
-void BigramAnalyzeThread(milkcat_model_t *model,
-                         ReadableFile *fd,
-                         int candidate_size,
-                         std::mutex *fd_mutex,
-                         std::vector<Adjacent> *word_adjacent,
-                         std::unordered_map<std::string, int> *vocab,
-                         std::unordered_map<std::string, int> *dict,
-                         std::mutex *update_mutex,
-                         Status *status) {
+void BigramAnalyzeThread(
+    milkcat_model_t *model,
+    const std::unordered_map<std::string, int> &candidate_id,
+    const TrieTree *index,
+    ReadableFile *fd,
+    int candidate_size,
+    std::mutex *fd_mutex,
+    std::vector<Adjacent> *word_adjacent,
+    std::unordered_map<std::string, int> *vocab,
+    std::mutex *vocab_mutex,
+    std::mutex *adjent_mutex,
+    Status *status) {
   milkcat_t *analyzer = milkcat_new(model, BIGRAM_SEGMENTER);
   if (analyzer == nullptr) *status = Status::Corruption(milkcat_last_error());
 
@@ -141,10 +156,7 @@ void BigramAnalyzeThread(milkcat_model_t *model,
     if (status->ok() && !eof) {
       // Using bigram model to segment the corpus
       words = SegmentText(buf, analyzer);
-
-      // Now start to update the data
-      word_ids.clear();
-      update_mutex->lock();
+      vocab_mutex->lock();
       for (auto &word : words) {
         auto it = vocab->find(word);
         if (it == vocab->end()) {
@@ -152,10 +164,17 @@ void BigramAnalyzeThread(milkcat_model_t *model,
         } else {
           it->second += 1;
         }
-        word_ids.push_back(GetOrInsert(dict, word));
       }
+      vocab_mutex->unlock();
+
+      // Now start to update the data
+      word_ids.clear();
+      for (auto &word : words) {
+        word_ids.push_back(GetWordId(candidate_id, index, word));
+      }
+      adjent_mutex->lock();
       UpdateAdjacent(word_ids, candidate_size, word_adjacent);
-      update_mutex->unlock();
+      adjent_mutex->unlock();
     }
   }
 
@@ -204,20 +223,21 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                                      int64_t file_size,
                                      int64_t bytes_per_second),
                    Status *status) {
-  std::unordered_map<std::string, int> dict;
-  dict.reserve(500000);
+  std::unordered_map<std::string, int> candidate_id;
 
   int candidate_size = candidate.size();
   std::vector<Adjacent> word_adjacent(candidate_size);
 
   // Put each candidate word into dictionary and assign its word-id
   for (auto &x : candidate) {
-    dict.insert(std::pair<std::string, int>(x.first, dict.size()));
+    candidate_id.emplace(x.first, candidate_id.size());
   }
 
   // The model file
   milkcat_model_t *model = milkcat_model_new(nullptr);
   milkcat_model_set_userdict(model, "candidate_cost.txt");
+
+  const TrieTree *index = model->model_factory->Index(status);
 
   ReadableFile *fd = nullptr;
   if (status->ok()) {
@@ -228,20 +248,22 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
     int n_threads = std::thread::hardware_concurrency();
     std::vector<Status> status_vec(n_threads);
     std::vector<std::thread> threads;
-    std::mutex update_mutex, fd_mutex;
+    std::mutex vocab_mutex, adjent_mutex, fd_mutex;
     std::thread progress_thread;
     std::atomic_bool task_finished;
 
     for (int i = 0; i < n_threads; ++i) {
       threads.push_back(std::thread(BigramAnalyzeThread,
                                     model,
+                                    std::ref(candidate_id),
+                                    index,
                                     fd,
                                     candidate_size,
                                     &fd_mutex,
                                     &word_adjacent,
                                     vocab,
-                                    &dict,
-                                    &update_mutex,
+                                    &vocab_mutex,
+                                    &adjent_mutex,
                                     &status_vec[i]));
     }
 
@@ -265,8 +287,8 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
   }
 
   if (status->ok()) {
-    std::vector<std::string> id_to_str(dict.size());
-    for (auto &x : dict) id_to_str[x.second] = x.first;
+    std::vector<std::string> id_to_str(candidate_id.size());
+    for (auto &x : candidate_id) id_to_str[x.second] = x.first;
 
     // Calculate the candidates' adjacent entropy and store in adjacent_entropy
     std::string word;

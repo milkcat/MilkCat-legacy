@@ -35,6 +35,9 @@
 #include "neko/final_rank.h"
 #include "utils/writable_file.h"
 
+constexpr const char *MUTUALINFO_DEBUG_FILE = "mi.txt";
+constexpr const char *ADJENT_DEBUG_FILE = "adjent.txt";
+
 void DisplayProgress(int64_t bytes_processed,
                      int64_t file_size,
                      int64_t bytes_per_second) {
@@ -108,10 +111,35 @@ int main(int argc, char **argv) {
                   DisplayProgress,
                   &status);
   }
+  puts("");
 
   if (status.ok()) {
-    printf("\nCalculate mutual information.\n");
+    printf("Write adjacent entropy to %s\n", ADJENT_DEBUG_FILE);
+    WritableFile *wf = WritableFile::New(ADJENT_DEBUG_FILE, &status);
+    for (auto &x : adjacent_entropy) {
+      if (!status.ok()) break;
+
+      snprintf(line, sizeof(line), "%s %.3f", x.first.c_str(), x.second);
+      wf->WriteLine(line, &status);
+    }
+    delete wf;
+  }
+
+  if (status.ok()) {
+    printf("Calculate mutual information.\n");
     mutual_information = GetMutualInformation(vocab, candidates, &status);
+  }
+
+  if (status.ok()) {
+    printf("Write mutual information to %s\n", MUTUALINFO_DEBUG_FILE);
+    WritableFile *wf = WritableFile::New(MUTUALINFO_DEBUG_FILE, &status);
+    for (auto &x : mutual_information) {
+      if (!status.ok()) break;
+
+      snprintf(line, sizeof(line), "%s %.3f", x.first.c_str(), x.second);
+      wf->WriteLine(line, &status);
+    }
+    delete wf;
   }
 
   std::vector<std::pair<std::string, double>> final_rank;
