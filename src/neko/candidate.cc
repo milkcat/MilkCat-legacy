@@ -52,7 +52,7 @@ std::vector<std::string> ExtractNameFeature(const char *name_str) {
     utf8_chars.push_back(utf8_char);
   }
 
-  if (utf8_chars.size() > 0) {
+  if (utf8_chars.size() >= 2) {
     feature_list.push_back(std::string("B:") + utf8_chars[0]);
     feature_list.push_back(std::string("E:") +
                            utf8_chars[utf8_chars.size() - 1]);
@@ -102,13 +102,17 @@ std::unordered_map<std::string, float> GetCandidate(
   }
 
   int person_name = 0;
+  std::vector<std::string> feature;
   if (status->ok()) {
     for (auto &x : crf_vocab) {
       // If the word frequency is greater than the threshold value and it not
       // exists in the original vocabulary
       if (x.second > thres_freq && index->Search(x.first.c_str()) < 0) {
-        const char *y = classifier->Classify(
-            ExtractNameFeature(x.first.c_str()));
+        feature = ExtractNameFeature(x.first.c_str());
+
+        // Filter one character word
+        if (feature.size() == 0) continue;
+        const char *y = classifier->Classify(feature);
 
         // And if it is not a name
         if (strcmp(y, "F") == 0) {
