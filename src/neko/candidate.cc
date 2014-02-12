@@ -85,7 +85,7 @@ std::unordered_map<std::string, float> GetCandidate(const char *model_path,
   if (status.ok()) classifier = new MaxentClassifier(name_model);
 
   // Calculate the thres_freq via total_count if thres_freq = kDefaultThresFreq
-  if (thres_freq = kDefaultThresFreq)
+  if (thres_freq == kDefaultThresFreq)
     thres_freq = static_cast<int>(atan(1e-7 * total_count) * 50) + 2;
 
   if (status.ok() && log != nullptr) {

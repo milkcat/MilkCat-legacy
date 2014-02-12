@@ -64,9 +64,6 @@ void CrfSegmentThread(milkcat_model_t *model,
     fd_mutex.lock();
     eof = fd->Eof();
     if (!eof) fd->ReadLine(buf, buf_size, status);
-    if (!status.ok()) {
-      printf("err: %d %d\n", fd->Tell(), !eof);
-    }
     fd_mutex.unlock();
 
     // Segment the line and store the results into words
@@ -141,8 +138,6 @@ std::unordered_map<std::string, int> GetCrfVocabulary(const char *path,
     std::thread progress_thread;
     std::mutex fd_mutex, vocab_mutex;
     std::atomic_bool task_finished;
-
-    printf("file_size %d\n", fd->Size());
 
     for (int i = 0; i < n_threads; ++i) {
       threads.push_back(std::thread(CrfSegmentThread, 
