@@ -39,6 +39,7 @@
 #include "utils/readable_file.h"
 #include "utils/status.h"
 
+namespace milkcat {
 
 // To analyze the corpus in multi-threading
 void CrfSegmentThread(milkcat_model_t *model,
@@ -185,3 +186,5 @@ std::unordered_map<std::string, int> GetCrfVocabulary(
 
   return vocab;
 }
+
+}  // namespace milkcat

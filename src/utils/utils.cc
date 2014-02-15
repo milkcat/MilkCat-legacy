@@ -30,6 +30,8 @@
 #include <string.h>
 #include <ctype.h>
 
+namespace milkcat {
+
 char *trim(char *s) {
   char *p = s;
   int l = strlen(p);
@@ -40,3 +42,5 @@ char *trim(char *s) {
   memmove(s, p, l + 1);
   return s;
 }
+
+}  // namespace milkcat

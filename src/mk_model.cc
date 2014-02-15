@@ -41,6 +41,8 @@
 #include "milkcat/darts.h"
 #include "neko/maxent_classifier.h"
 
+namespace milkcat {
+
 #pragma pack(1)
 struct BigramRecord {
   int32_t word_left;
@@ -503,6 +505,8 @@ int MakeMaxentFile(int argc, char **argv) {
   }
 }
 
+}  // namespace milkcat
+
 int main(int argc, char **argv) {
   if (argc < 2) {
     fprintf(stderr, "Usage: mc_model [dict|gram|hmm|maxent]\n");
@@ -512,13 +516,13 @@ int main(int argc, char **argv) {
   char *tool = argv[1];
 
   if (strcmp(tool, "dict") == 0) {
-    return MakeIndexFile(argc, argv);
+    return milkcat::MakeIndexFile(argc, argv);
   } else if (strcmp(tool, "gram") == 0) {
-    return MakeGramModel(argc, argv);
+    return milkcat::MakeGramModel(argc, argv);
   } else if (strcmp(tool, "hmm") == 0) {
-    return MakeHMMTaggerModel(argc, argv);
+    return milkcat::MakeHMMTaggerModel(argc, argv);
   } else if (strcmp(tool, "maxent") == 0) {
-    return MakeMaxentFile(argc, argv);
+    return milkcat::MakeMaxentFile(argc, argv);
   } else {
     fprintf(stderr, "Usage: mc_model [dict|gram|hmm|maxent]\n");
     return 1;
@@ -526,3 +530,4 @@ int main(int argc, char **argv) {
 
   return 0;
 }
+

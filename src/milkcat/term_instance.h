@@ -33,6 +33,8 @@
 #include "milkcat/instance_data.h"
 #include "milkcat/token_instance.h"
 
+namespace milkcat {
+
 class TagSequence;
 
 class TermInstance {
@@ -127,5 +129,7 @@ inline int TokenTypeToTermType(int token_type) {
       return TermInstance::kOther;
   }
 }
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_TERM_INSTANCE_H_

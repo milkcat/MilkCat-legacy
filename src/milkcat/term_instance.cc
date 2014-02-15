@@ -28,6 +28,8 @@
 #include "milkcat/term_instance.h"
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
+
 TermInstance::TermInstance() {
   instance_data_ = new InstanceData(1, 3, kTokenMax);
 }
@@ -35,3 +37,5 @@ TermInstance::TermInstance() {
 TermInstance::~TermInstance() {
   delete instance_data_;
 }
+
+}  // namespace milkcat

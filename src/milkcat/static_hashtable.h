@@ -37,6 +37,8 @@
 #include "utils/writable_file.h"
 #include "utils/status.h"
 
+namespace milkcat {
+
 template <class K, class V>
 class StaticHashTable {
  public:
@@ -272,5 +274,6 @@ class StaticHashTable {
   DISALLOW_COPY_AND_ASSIGN(StaticHashTable);
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_STATIC_HASHTABLE_H_

@@ -38,6 +38,8 @@
 #include "utils/utils.h"
 #include "utils/readable_file.h"
 
+namespace milkcat {
+
 inline const char *read_data(const char **ptr, size_t size) {
   const char *r = *ptr;
   *ptr += size;
@@ -146,3 +148,5 @@ CRFModel *CRFModel::New(const char *model_path, Status *status) {
     return NULL;
   }
 }
+
+}  // namespace milkcat

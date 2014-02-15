@@ -33,6 +33,8 @@
 #include "milkcat/instance_data.h"
 #include "milkcat/term_instance.h"
 
+namespace milkcat {
+
 class PartOfSpeechTagInstance {
  public:
   PartOfSpeechTagInstance();
@@ -69,5 +71,6 @@ class PartOfSpeechTagInstance {
   DISALLOW_COPY_AND_ASSIGN(PartOfSpeechTagInstance);
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_PART_OF_SPEECH_TAG_INSTANCE_H_

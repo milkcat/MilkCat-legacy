@@ -32,6 +32,8 @@
 #include <stdio.h>
 #include "utils/status.h"
 
+namespace milkcat {
+
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
             TypeName(const TypeName&); \
             void operator=(const TypeName&)
@@ -39,5 +41,6 @@
 size_t strlcpy(char *dst, const char *src, size_t siz);
 char *trim(char *str);
 
+}  // namespace milkcat
 
 #endif  // SRC_UTILS_UTILS_H_

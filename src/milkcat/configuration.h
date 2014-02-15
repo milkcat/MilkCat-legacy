@@ -31,6 +31,8 @@
 #include <map>
 #include "utils/utils.h"
 
+namespace milkcat {
+
 class Configuration {
  public:
   Configuration();
@@ -59,5 +61,7 @@ class Configuration {
  private:
   std::map<std::string, std::string> data_;
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_CONFIGURATION_H_

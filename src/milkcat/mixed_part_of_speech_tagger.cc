@@ -35,6 +35,8 @@
 #include "milkcat/configuration.h"
 #include "milkcat/crf_model.h"
 
+namespace milkcat {
+
 MixedPartOfSpeechTagger::MixedPartOfSpeechTagger():
     crf_tagger_(NULL),
     hmm_tagger_(NULL),
@@ -90,3 +92,5 @@ void MixedPartOfSpeechTagger::Tag(
     }
   }
 }
+
+}  // namespace milkcat

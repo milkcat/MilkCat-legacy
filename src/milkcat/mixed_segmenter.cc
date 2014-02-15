@@ -30,6 +30,8 @@
 #include "milkcat/term_instance.h"
 #include "milkcat/token_instance.h"
 
+namespace milkcat {
+
 MixedSegmenter::MixedSegmenter():
     bigram_(NULL),
     oov_recognizer_(NULL),
@@ -82,3 +84,5 @@ void MixedSegmenter::Segment(TermInstance *term_instance,
   bigram_->Segment(bigram_result_, token_instance);
   oov_recognizer_->Process(term_instance, bigram_result_, token_instance);
 }
+
+}  // namespace milkcat

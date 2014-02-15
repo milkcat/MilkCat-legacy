@@ -27,6 +27,8 @@
 #include "utils/writable_file.h"
 #include <string>
 
+namespace milkcat {
+
 WritableFile::WritableFile(): fd_(nullptr) {
 }
 
@@ -72,3 +74,5 @@ void WritableFile::Write(const void *data, int size, Status *status) {
     *status = Status::IOError(error_message.c_str());
   }
 }
+
+}  // namespace milkcat

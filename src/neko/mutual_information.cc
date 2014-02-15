@@ -35,6 +35,7 @@
 #include "milkcat/libmilkcat.h"
 #include "milkcat/bigram_segmenter.h"
 
+namespace milkcat {
 
 std::unordered_map<std::string, double> GetMutualInformation(
     const std::unordered_map<std::string, int> &bigram_vocab,
@@ -106,3 +107,5 @@ std::unordered_map<std::string, double> GetMutualInformation(
 
   return mutual_information;
 }
+
+}  // namespace milkcat

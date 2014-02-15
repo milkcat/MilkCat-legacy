@@ -31,6 +31,8 @@
 #include <string>
 #include "utils/utils.h"
 
+namespace milkcat {
+
 Configuration::Configuration() {}
 
 Configuration *Configuration::New(const char *path, Status *status) {
@@ -121,3 +123,5 @@ void Configuration::SetInteger(const char *key, int value) {
 void Configuration::SetString(const char *key, const char * value) {
   data_[key] = value;
 }
+
+}  // namespace milkcat

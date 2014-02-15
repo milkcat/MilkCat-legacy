@@ -35,6 +35,8 @@
 #include "milkcat/token_instance.h"
 #include "milkcat/feature_extractor.h"
 
+namespace milkcat {
+
 class SegmentFeatureExtractor: public FeatureExtractor {
  public:
   void set_token_instance(const TokenInstance *token_instance) {
@@ -148,3 +150,5 @@ void CRFSegmenter::SegmentRange(TermInstance *term_instance,
 
   term_instance->set_size(term_count);
 }
+
+}  // namespace milkcat

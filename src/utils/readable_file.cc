@@ -30,6 +30,8 @@
 #include <string>
 #include "utils/status.h"
 
+namespace milkcat {
+
 ReadableFile *ReadableFile::New(const char *file_path, Status *status) {
   ReadableFile *self = new ReadableFile();
   self->file_path_ = file_path;
@@ -80,3 +82,5 @@ ReadableFile::~ReadableFile() {
 int64_t ReadableFile::Tell() {
   return ftello(fd_);
 }
+
+}  // namespace milkcat

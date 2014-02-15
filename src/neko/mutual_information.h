@@ -31,9 +31,13 @@
 #include <string>
 #include "utils/status.h"
 
+namespace milkcat {
+
 std::unordered_map<std::string, double> GetMutualInformation(
     const std::unordered_map<std::string, int> &bigram_vocab,
     const std::unordered_map<std::string, float> &candidate,
     Status *status);
+
+}  // namespace milkcat
 
 #endif  // SRC_NEKO_MUTUAL_INFORMATION_H_

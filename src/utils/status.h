@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <string>
 
+namespace milkcat {
+
 class Status {
  public:
   Status(): code_(0) {}
@@ -95,5 +97,7 @@ class Status {
     message_ = message;
   }
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_UTILS_STATUS_H_

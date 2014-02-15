@@ -32,6 +32,8 @@
 #include <string>
 #include "utils/status.h"
 
+namespace milkcat {
+
 constexpr int kDefaultThresFreq = -1;
 
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
@@ -44,5 +46,7 @@ std::unordered_map<std::string, float> GetCandidate(
     int (* log_func)(const char *message),
     Status *status,
     int thres_freq = kDefaultThresFreq);
+
+}  // namespace milkcat
 
 #endif  // SRC_NEKO_CANDIDATE_H_

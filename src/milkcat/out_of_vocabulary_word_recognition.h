@@ -38,6 +38,8 @@
 #include "milkcat/trie_tree.h"
 #include "milkcat/token_instance.h"
 
+namespace milkcat {
+
 class OutOfVocabularyWordRecognition {
  public:
   static OutOfVocabularyWordRecognition *New(const CRFModel *crf_model,
@@ -68,5 +70,6 @@ class OutOfVocabularyWordRecognition {
   DISALLOW_COPY_AND_ASSIGN(OutOfVocabularyWordRecognition);
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_OUT_OF_VOCABULARY_WORD_RECOGNITION_H_

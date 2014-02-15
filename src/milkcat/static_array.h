@@ -32,6 +32,8 @@
 #include "utils/utils.h"
 #include "utils/readable_file.h"
 
+namespace milkcat {
+
 template<class T>
 class StaticArray {
  public:
@@ -91,5 +93,7 @@ class StaticArray {
 
   DISALLOW_COPY_AND_ASSIGN(StaticArray);
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_STATIC_ARRAY_H_

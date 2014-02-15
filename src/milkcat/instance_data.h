@@ -33,6 +33,7 @@
 #include "utils/utils.h"
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
 
 class InstanceData {
  public:
@@ -80,5 +81,6 @@ class InstanceData {
   DISALLOW_COPY_AND_ASSIGN(InstanceData);
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_INSTANCE_DATA_H_

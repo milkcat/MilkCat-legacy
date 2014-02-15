@@ -37,6 +37,8 @@
 #include "neko/crf_vocab.h"
 #include "neko/utf8.h"
 
+namespace milkcat {
+
 // Extracts features from name_str for the maxent classifier
 std::vector<std::string> ExtractNameFeature(const char *name_str) {
   std::vector<std::string> feature_list;
@@ -63,9 +65,6 @@ std::vector<std::string> ExtractNameFeature(const char *name_str) {
 
   return feature_list;
 }
-
-
-
 
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
 // Returns a map the key is the word, and the value is its cost in unigram,
@@ -139,3 +138,5 @@ std::unordered_map<std::string, float> GetCandidate(
 
   return candidates;
 }
+
+}  // namespace milkcat

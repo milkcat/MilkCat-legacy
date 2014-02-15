@@ -1,6 +1,4 @@
 //
-// instance_data.cc --- Created at 2013-10-20
-//
 // The MIT License (MIT)
 //
 // Copyright 2013-2014 The MilkCat Project Developers
@@ -23,9 +21,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+// instance_data.cc --- Created at 2013-10-20
+//
 
 
 #include "milkcat/instance_data.h"
+
+namespace milkcat {
 
 InstanceData::InstanceData(int string_number,
                            int integer_number,
@@ -72,3 +74,5 @@ InstanceData::~InstanceData() {
     delete[] integer_data_;
   }
 }
+
+}  // namespace milkcat

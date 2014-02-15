@@ -39,6 +39,8 @@
 #include "milkcat/milkcat.h"
 #include "milkcat/libmilkcat.h"
 
+namespace milkcat {
+
 namespace {
 
 struct Adjacent {
@@ -303,3 +305,5 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
   delete fd;
   milkcat_model_destroy(model);
 }
+
+}  // namespace milkcat

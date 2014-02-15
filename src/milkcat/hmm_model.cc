@@ -31,6 +31,8 @@
 #include "utils/utils.h"
 #include "utils/readable_file.h"
 
+namespace milkcat {
+
 #pragma pack(1)
 struct HMMEmitRecord {
   int32_t term_id;
@@ -124,3 +126,5 @@ HMMModel::~HMMModel() {
   }
   delete[] emit_matrix_;
 }
+
+}  // namespace milkcat

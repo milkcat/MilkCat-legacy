@@ -29,6 +29,8 @@
 #include <vector>
 #include <algorithm>
 
+namespace milkcat {
+
 namespace {
 
 // Reversed sort by second value
@@ -83,3 +85,5 @@ std::vector<std::pair<std::string, double>> FinalRank(
 
   return SortMapByValue(final);
 }
+
+}  // namespace milkcat

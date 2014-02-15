@@ -31,24 +31,26 @@
 #include "milkcat/token_lex.h"
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
+
 Tokenization::Tokenization(): buffer_alloced_(false) {
-  yylex_init(&yyscanner);
+  milkcat_yylex_init(&yyscanner);
 }
 
 Tokenization::~Tokenization() {
   if (buffer_alloced_ == true) {
-    yy_delete_buffer(yy_buffer_state_, yyscanner);
+    milkcat_yy_delete_buffer(yy_buffer_state_, yyscanner);
   }
 
-  yylex_destroy(yyscanner);
+  milkcat_yylex_destroy(yyscanner);
 }
 
 void Tokenization::Scan(const char *buffer_string) {
   if (buffer_alloced_ == true) {
-    yy_delete_buffer(yy_buffer_state_, yyscanner);
+    milkcat_yy_delete_buffer(yy_buffer_state_, yyscanner);
   }
   buffer_alloced_ = true;
-  yy_buffer_state_ = yy_scan_string(buffer_string, yyscanner);
+  yy_buffer_state_ = milkcat_yy_scan_string(buffer_string, yyscanner);
 }
 
 bool Tokenization::GetSentence(TokenInstance *token_instance) {
@@ -56,12 +58,12 @@ bool Tokenization::GetSentence(TokenInstance *token_instance) {
   int token_count = 0;
 
   while (token_count < kTokenMax - 1) {
-    token_type = yylex(yyscanner);
+    token_type = milkcat_yylex(yyscanner);
 
     if (token_type == TokenInstance::kEnd) break;
 
     token_instance->set_value_at(token_count,
-                                 yyget_text(yyscanner),
+                                 milkcat_yyget_text(yyscanner),
                                  token_type);
     token_count++;
 
@@ -73,3 +75,5 @@ bool Tokenization::GetSentence(TokenInstance *token_instance) {
   token_instance->set_size(token_count);
   return token_count != 0;
 }
+
+}  // namespace milkcat

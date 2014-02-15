@@ -33,6 +33,8 @@
 #include <string>
 #include "utils/status.h"
 
+namespace milkcat {
+
 // open a random access file for read
 class ReadableFile {
  public:
@@ -67,5 +69,6 @@ class ReadableFile {
   ReadableFile();
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_UTILS_READABLE_FILE_H_

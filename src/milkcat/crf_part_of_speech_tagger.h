@@ -36,6 +36,8 @@
 #include "milkcat/milkcat_config.h"
 #include "milkcat/part_of_speech_tagger.h"
 
+namespace milkcat {
+
 class FeatureExtractor;
 class PartOfSpeechFeatureExtractor;
 
@@ -72,6 +74,6 @@ class CRFPartOfSpeechTagger: public PartOfSpeechTagger {
   DISALLOW_COPY_AND_ASSIGN(CRFPartOfSpeechTagger);
 };
 
-
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_CRF_PART_OF_SPEECH_TAGGER_H_

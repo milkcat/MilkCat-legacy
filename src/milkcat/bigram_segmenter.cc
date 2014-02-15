@@ -38,6 +38,8 @@
 #include "milkcat/term_instance.h"
 #include "milkcat/trie_tree.h"
 
+namespace milkcat {
+
 struct BigramSegmenter::Node {
   // The bucket contains this node
   int bucket_id;
@@ -409,3 +411,5 @@ void BigramSegmenter::Segment(TermInstance *term_instance,
   }
   node_pool_->ReleaseAll();
 }
+
+}  // namespace milkcat

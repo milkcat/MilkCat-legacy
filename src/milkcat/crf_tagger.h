@@ -39,6 +39,8 @@
 #include "milkcat/feature_extractor.h"
 #include "milkcat/crf_model.h"
 
+namespace milkcat {
+
 class CRFTagger {
  public:
   explicit CRFTagger(const CRFModel *model);
@@ -135,5 +137,6 @@ class CRFTagger {
                  size_t position);
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_CRF_TAGGER_H_

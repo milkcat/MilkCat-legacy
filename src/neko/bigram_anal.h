@@ -32,6 +32,8 @@
 #include <unordered_map>
 #include "utils/status.h"
 
+namespace milkcat {
+
 // Use bigram segmentation to analyze a corpus. Candidate to analyze is
 // specified by candidate, and the corpus is specified by corpus_path. It would
 // use a temporary file called 'candidate_cost.txt' as user dictionary file for
@@ -46,5 +48,7 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
                                      int64_t file_size,
                                      int64_t bytes_per_second),
                    Status *status);
+
+}  // namespace milkcat
 
 #endif  // SRC_NEKO_BIGRAM_ANAL_H_

@@ -30,6 +30,8 @@
 
 #include "milkcat/token_lex.h"
 
+namespace milkcat {
+
 class TokenInstance;
 
 class Tokenization {
@@ -47,5 +49,7 @@ class Tokenization {
   yyscan_t yyscanner;
   bool buffer_alloced_;
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_TOKENIZER_H_

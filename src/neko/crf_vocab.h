@@ -31,6 +31,8 @@
 #include <string>
 #include "utils/status.h"
 
+namespace milkcat {
+
 // Segment the corpus from path and return the vocabulary of chinese words.
 // If any errors occured, status is not Status::OK()
 std::unordered_map<std::string, int> GetCrfVocabulary(
@@ -40,5 +42,7 @@ std::unordered_map<std::string, int> GetCrfVocabulary(
                       int64_t file_size,
                       int64_t bytes_per_second),
     Status *status);
+
+}  // namespace milkcat
 
 #endif  // SRC_NEKO_CRF_VOCAB_H_

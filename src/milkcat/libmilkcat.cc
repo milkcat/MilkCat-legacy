@@ -46,6 +46,8 @@
 #include "milkcat/mixed_part_of_speech_tagger.h"
 #include "milkcat/crf_part_of_speech_tagger.h"
 
+namespace milkcat {
+
 Tokenization *TokenizerFactory(int tokenizer_id) {
   switch (tokenizer_id) {
     case kDefaultTokenizer:
@@ -445,21 +447,22 @@ void Cursor::MoveToNext() {
   }
 }
 
+}  // namespace milkcat
+
 // ---------- Fucntions in milkcat.h ----------
+
 
 milkcat_model_t *milkcat_model_new(const char *model_path) {
   if (model_path == NULL) model_path = MODEL_PATH;
 
   milkcat_model_t *model = new milkcat_model_t;
-  model->model_factory = new ModelFactory(model_path);
+  model->model_factory = new milkcat::ModelFactory(model_path);
 
   return model;
 }
 
-
-
 milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
-  global_status = Status::OK();
+  milkcat::global_status = milkcat::Status::OK();
 
   milkcat_t *analyzer = new milkcat_t;
   memset(analyzer, 0, sizeof(milkcat_t));
@@ -468,64 +471,64 @@ milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
 
   switch (analyzer_type) {
     case DEFAULT_PROCESSOR:
-      if (global_status.ok())
-        analyzer->segmenter = SegmenterFactory(
+      if (milkcat::global_status.ok())
+        analyzer->segmenter = milkcat::SegmenterFactory(
             analyzer->model->model_factory,
-            kMixedSegmenter,
-            &global_status);
-      if (global_status.ok())
-        analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
+            milkcat::kMixedSegmenter,
+            &milkcat::global_status);
+      if (milkcat::global_status.ok())
+        analyzer->part_of_speech_tagger = milkcat::PartOfSpeechTaggerFactory(
             analyzer->model->model_factory,
-            kMixedPartOfSpeechTagger,
-            &global_status);
+            milkcat::kMixedPartOfSpeechTagger,
+            &milkcat::global_status);
       break;
 
     case CRF_SEGMENTER:
-      if (global_status.ok())
-        analyzer->segmenter = SegmenterFactory(
+      if (milkcat::global_status.ok())
+        analyzer->segmenter = milkcat::SegmenterFactory(
             analyzer->model->model_factory,
-            kCrfSegmenter,
-            &global_status);
+            milkcat::kCrfSegmenter,
+            &milkcat::global_status);
       analyzer->part_of_speech_tagger = NULL;
       break;
 
     case CRF_PROCESSOR:
-      if (global_status.ok())
-        analyzer->segmenter = SegmenterFactory(
+      if (milkcat::global_status.ok())
+        analyzer->segmenter = milkcat::SegmenterFactory(
             analyzer->model->model_factory,
-            kCrfSegmenter,
-            &global_status);
-      if (global_status.ok())
-        analyzer->part_of_speech_tagger = PartOfSpeechTaggerFactory(
+            milkcat::kCrfSegmenter,
+            &milkcat::global_status);
+      if (milkcat::global_status.ok())
+        analyzer->part_of_speech_tagger = milkcat::PartOfSpeechTaggerFactory(
             analyzer->model->model_factory,
-            kCrfPartOfSpeechTagger,
-            &global_status);
+            milkcat::kCrfPartOfSpeechTagger,
+            &milkcat::global_status);
       break;
 
     case DEFAULT_SEGMENTER:
-      if (global_status.ok())
-        analyzer->segmenter = SegmenterFactory(
+      if (milkcat::global_status.ok())
+        analyzer->segmenter = milkcat::SegmenterFactory(
             analyzer->model->model_factory,
-            kMixedSegmenter,
-            &global_status);
+            milkcat::kMixedSegmenter,
+            &milkcat::global_status);
       analyzer->part_of_speech_tagger = NULL;
       break;
 
     case BIGRAM_SEGMENTER:
-      if (global_status.ok())
-        analyzer->segmenter = SegmenterFactory(
+      if (milkcat::global_status.ok())
+        analyzer->segmenter = milkcat::SegmenterFactory(
             analyzer->model->model_factory,
-            kBigramSegmenter,
-            &global_status);
+            milkcat::kBigramSegmenter,
+            &milkcat::global_status);
       analyzer->part_of_speech_tagger = nullptr;
       break;
 
     default:
-      global_status = Status::NotImplemented("");
+      milkcat::global_status = milkcat::Status::NotImplemented("");
       break;
   }
 
-  if (!global_status.ok()) {
+  if (!milkcat::global_status.ok()) {
     milkcat_destroy(analyzer);
     return nullptr;
   } else {
@@ -568,10 +571,10 @@ void milkcat_model_set_userdict(milkcat_model_t *model, const char *path) {
 
 milkcat_cursor_t milkcat_analyze(milkcat_t *analyzer, const char *text) {
   milkcat_cursor_t cursor;
-  Cursor *internal_cursor;
+  milkcat::Cursor *internal_cursor;
 
   if (analyzer->cursor_pool.empty()) {
-    internal_cursor = new Cursor(analyzer);
+    internal_cursor = new milkcat::Cursor(analyzer);
   } else {
     internal_cursor = analyzer->cursor_pool.back();
     analyzer->cursor_pool.pop_back();
@@ -585,7 +588,8 @@ milkcat_cursor_t milkcat_analyze(milkcat_t *analyzer, const char *text) {
 
 int milkcat_cursor_get_next(milkcat_cursor_t *cursor,
                             milkcat_item_t *next_item) {
-  Cursor *internal_cursor = reinterpret_cast<Cursor *>(cursor->internal_cursor);
+  milkcat::Cursor *internal_cursor = reinterpret_cast<milkcat::Cursor *>(
+      cursor->internal_cursor);
 
   // If the cursor is already released
   if (internal_cursor == NULL) return MC_NONE;
@@ -608,5 +612,6 @@ int milkcat_cursor_get_next(milkcat_cursor_t *cursor,
 }
 
 const char *milkcat_last_error() {
-  return global_status.what();
+  return milkcat::global_status.what();
 }
+

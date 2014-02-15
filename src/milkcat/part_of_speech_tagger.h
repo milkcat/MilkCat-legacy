@@ -27,6 +27,8 @@
 #ifndef SRC_MILKCAT_PART_OF_SPEECH_TAGGER_H_
 #define SRC_MILKCAT_PART_OF_SPEECH_TAGGER_H_
 
+namespace milkcat {
+
 class PartOfSpeechTagInstance;
 class TermInstance;
 
@@ -41,5 +43,7 @@ class PartOfSpeechTagger {
 };
 
 inline PartOfSpeechTagger::~PartOfSpeechTagger() {}
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_PART_OF_SPEECH_TAGGER_H_

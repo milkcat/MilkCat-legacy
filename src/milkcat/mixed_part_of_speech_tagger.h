@@ -30,6 +30,8 @@
 #include "utils/utils.h"
 #include "milkcat/part_of_speech_tagger.h"
 
+namespace milkcat {
+
 class CRFPartOfSpeechTagger;
 class HMMPartOfSpeechTagger;
 class PartOfSpeechTagInstance;
@@ -62,5 +64,6 @@ class MixedPartOfSpeechTagger: public PartOfSpeechTagger {
   MixedPartOfSpeechTagger();
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_MIXED_PART_OF_SPEECH_TAGGER_H_

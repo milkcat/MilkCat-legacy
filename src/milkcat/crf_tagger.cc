@@ -39,6 +39,8 @@
 #include <string>
 #include "utils/utils.h"
 
+namespace milkcat {
+
 struct CRFTagger::Node {
   double cost;
   int left_tag_id;
@@ -345,3 +347,5 @@ bool CRFTagger::ApplyRule(std::string *output_str,
   }
   return true;
 }
+
+}  // namespace milkcat

@@ -120,5 +120,4 @@ EXPORT_API const char *milkcat_last_error();
 }
 #endif
 
-// ~endif of ifndef MILKCAT_H
 #endif  // SRC_MILKCAT_MILKCAT_H_

@@ -37,6 +37,8 @@
 #include "utils/utils.h"
 #include "milkcat/darts.h"
 
+namespace milkcat {
+
 class CRFModel {
  public:
   // Open a CRF++ model file
@@ -116,5 +118,7 @@ class CRFModel {
 
   CRFModel();
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_CRF_MODEL_H_

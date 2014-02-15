@@ -35,6 +35,8 @@
 #include "neko/final_rank.h"
 #include "utils/writable_file.h"
 
+namespace milkcat {
+
 constexpr const char *MUTUALINFO_DEBUG_FILE = "mi.txt";
 constexpr const char *ADJENT_DEBUG_FILE = "adjent.txt";
 
@@ -167,4 +169,10 @@ int main(int argc, char **argv) {
   }
 
   return 0;
+}
+
+}  // namespace milkcat
+
+int main(int argc, char **argv) {
+  return milkcat::main(argc, argv);
 }

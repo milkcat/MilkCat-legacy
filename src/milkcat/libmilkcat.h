@@ -52,6 +52,28 @@
 #include "milkcat/term_instance.h"
 #include "milkcat/part_of_speech_tag_instance.h"
 
+namespace milkcat {
+
+class ModelFactory;
+class Cursor;
+
+}  // namespace milkcat
+
+struct milkcat_model_t {
+  milkcat::ModelFactory *model_factory;
+};
+
+struct milkcat_t {
+  milkcat_model_t *model;
+
+  milkcat::Segmenter *segmenter;
+  milkcat::PartOfSpeechTagger *part_of_speech_tagger;
+
+  std::vector<milkcat::Cursor *> cursor_pool;
+};
+
+namespace milkcat {
+
 // Model filenames
 constexpr const char *UNIGRAM_INDEX = "unigram.idx";
 constexpr const char *UNIGRAM_DATA = "unigram.bin";
@@ -77,19 +99,6 @@ const int kMixedPartOfSpeechTagger = 2;
 
 class Cursor;
 class ModelFactory;
-
-struct milkcat_model_t {
-  ModelFactory *model_factory;
-};
-
-struct milkcat_t {
-  milkcat_model_t *model;
-
-  Segmenter *segmenter;
-  PartOfSpeechTagger *part_of_speech_tagger;
-
-  std::vector<Cursor *> cursor_pool;
-};
 
 
 // A factory class that can obtain any model data class needed by MilkCat
@@ -210,5 +219,7 @@ class Cursor {
   int current_position_;
   bool end_;
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_LIBMILKCAT_H_

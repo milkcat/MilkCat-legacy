@@ -32,10 +32,14 @@
 #include <string>
 #include <utility>
 
+namespace milkcat {
+
 std::vector<std::pair<std::string, double>> FinalRank(
     const std::unordered_map<std::string, double> &adjecent_entropy,
     const std::unordered_map<std::string, double> &mutual_information,
     double remove_ratio = 0.1,
     double alpha = 0.6);
+
+}  // namespace milkcat
 
 #endif  // SRC_NEKO_FINAL_RANK_H_

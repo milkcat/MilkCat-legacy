@@ -27,6 +27,8 @@
 #include "milkcat/part_of_speech_tag_instance.h"
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
+
 PartOfSpeechTagInstance::PartOfSpeechTagInstance() {
   instance_data_ = new InstanceData(1, 1, kTokenMax);
 }
@@ -34,3 +36,5 @@ PartOfSpeechTagInstance::PartOfSpeechTagInstance() {
 PartOfSpeechTagInstance::~PartOfSpeechTagInstance() {
   delete instance_data_;
 }
+
+}  // namespace milkcat

@@ -31,6 +31,8 @@
 #include "milkcat/feature_extractor.h"
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
+
 class PartOfSpeechFeatureExtractor: public FeatureExtractor {
  public:
   void set_term_instance(const TermInstance *term_instance) {
@@ -116,3 +118,5 @@ void CRFPartOfSpeechTagger::TagRange(
   }
   part_of_speech_tag_instance->set_size(end - begin);
 }
+
+}  // namespace milkcat

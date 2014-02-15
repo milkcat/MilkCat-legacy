@@ -32,6 +32,8 @@
 #include "milkcat/token_instance.h"
 #include "milkcat/segmenter.h"
 
+namespace milkcat {
+
 class SegmentFeatureExtractor;
 class TermInstance;
 
@@ -61,5 +63,7 @@ class CRFSegmenter: public Segmenter {
 
   DISALLOW_COPY_AND_ASSIGN(CRFSegmenter);
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_CRF_SEGMENTER_H_

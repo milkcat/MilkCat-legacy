@@ -36,6 +36,8 @@
 #include "milkcat/segmenter.h"
 #include "milkcat/static_array.h"
 
+namespace milkcat {
+
 class TrieTree;
 class TokenInstance;
 class TermInstance;
@@ -130,5 +132,7 @@ class BigramSegmenter: public Segmenter {
                               size_t *user_node,
                               double *right_cost);
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_BIGRAM_SEGMENTER_H_

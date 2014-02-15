@@ -33,6 +33,8 @@
 #include "utils/status.h"
 #include "milkcat/darts.h"
 
+namespace milkcat {
+
 class MaxentModel {
  public:
   // Load and create the maximum entropy model data from the model file
@@ -95,5 +97,7 @@ class MaxentClassifier {
   double *y_cost_;
   int y_size_;
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_NEKO_MAXENT_CLASSIFIER_H_

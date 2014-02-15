@@ -28,6 +28,8 @@
 #include "milkcat/token_instance.h"
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
+
 TokenInstance::TokenInstance() {
   instance_data_ = new InstanceData(1, 1, kTokenMax);
 }
@@ -35,3 +37,5 @@ TokenInstance::TokenInstance() {
 TokenInstance::~TokenInstance() {
   delete instance_data_;
 }
+
+}  // namespace milkcat

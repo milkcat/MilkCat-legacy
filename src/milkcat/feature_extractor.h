@@ -30,6 +30,8 @@
 #include <stdlib.h>
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
+
 class FeatureExtractor {
  public:
   virtual void ExtractFeatureAt(size_t position,
@@ -37,5 +39,7 @@ class FeatureExtractor {
                                 int list_size) = 0;
   virtual size_t size() const = 0;
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_FEATURE_EXTRACTOR_H_

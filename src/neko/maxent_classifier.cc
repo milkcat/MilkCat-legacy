@@ -37,6 +37,8 @@
 #include "utils/utils.h"
 #include "milkcat/darts.h"
 
+namespace milkcat {
+
 MaxentModel::MaxentModel(): xsize_(0),
                             ysize_(0),
                             yname_(nullptr),
@@ -225,3 +227,5 @@ const char *MaxentClassifier::Classify(
   int maximum_yid = maximum_y - y_cost_;
   return model_->yname(maximum_yid);
 }
+
+}  // namespace milkcat

@@ -27,6 +27,8 @@
 #ifndef SRC_MILKCAT_SEGMENTER_H_
 #define SRC_MILKCAT_SEGMENTER_H_
 
+namespace milkcat {
+
 class TermInstance;
 class TokenInstance;
 
@@ -41,5 +43,7 @@ class Segmenter {
 };
 
 inline Segmenter::~Segmenter() {}
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_SEGMENTER_H_

@@ -35,6 +35,8 @@
 #include "milkcat/trie_tree.h"
 #include "milkcat/configuration.h"
 
+namespace milkcat {
+
 class PartOfSpeechTagInstance;
 class TermInstance;
 class Configuration;
@@ -95,5 +97,6 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   DISALLOW_COPY_AND_ASSIGN(HMMPartOfSpeechTagger);
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_

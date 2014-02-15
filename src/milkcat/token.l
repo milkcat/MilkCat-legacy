@@ -28,11 +28,13 @@
 
 #include "token_instance.h"
 
+using milkcat::TokenInstance;
+
 #define U3CHAR_TO_UCS2(input) ((input[0] & 0x0F) << 12 | (input[1] & 0x3F) << 6 | (input[2] & 0x3F))
 
 %}
 
-%option reentrant noyywrap
+%option reentrant noyywrap prefix="milkcat_yy"
 
 ASC     [\x00-\x7f]
 HALFWIDTH_ALPHA [A-Za-z]
@@ -81,27 +83,27 @@ QUOTE \"|\'|“|”
 }
 
 {PERIOD} {
-    return TokenInstance::kPeriod;    
+    return TokenInstance::kPeriod;
 }
 
 {COMMA} {
-    return TokenInstance::kPunctuation;      
+    return TokenInstance::kPunctuation;
 }
 
 {EXCLAMATION} {
-    return TokenInstance::kPeriod;        
+    return TokenInstance::kPeriod;
 }
 
 {QUESTION} {
-    return TokenInstance::kPeriod;      
+    return TokenInstance::kPeriod;
 }
 
 {QUOTE} {
-    return TokenInstance::kPunctuation;      
+    return TokenInstance::kPunctuation;
 }
 
 {INTERPUNCT} {
-    return TokenInstance::kPunctuation; 
+    return TokenInstance::kPunctuation;
 }
 
 {U3}{U}{U} {
@@ -110,15 +112,15 @@ QUOTE \"|\'|“|”
         return TokenInstance::kChineseChar;
     } else {
         return TokenInstance::kOther;
-    }   
+    }
 }
 
 {U2}{U} {
-    return TokenInstance::kOther; 
+    return TokenInstance::kOther;
 }
 
 {U4}{U}{U}{U} {
-    return TokenInstance::kOther; 
+    return TokenInstance::kOther;
 }
 
 {SPACE}+ {
@@ -126,7 +128,7 @@ QUOTE \"|\'|“|”
 }
 
 {ASC} {
-    return TokenInstance::kOther;     
+    return TokenInstance::kOther;
 }
 
 <<EOF>> {
@@ -136,5 +138,3 @@ QUOTE \"|\'|“|”
 
 
 %%
-
-

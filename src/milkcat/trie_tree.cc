@@ -35,6 +35,8 @@
 #include "milkcat/trie_tree.h"
 #include "milkcat/milkcat_config.h"
 
+namespace milkcat {
+
 DoubleArrayTrieTree *DoubleArrayTrieTree::New(const char *file_path,
                                               Status *status) {
   DoubleArrayTrieTree *self = new DoubleArrayTrieTree();
@@ -76,3 +78,4 @@ int DoubleArrayTrieTree::Traverse(const char *text, size_t *node) const {
   return double_array_.traverse(text, *node, key_pos);
 }
 
+}  // namespace milkcat

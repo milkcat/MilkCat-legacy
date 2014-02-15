@@ -32,6 +32,8 @@
 #include "utils/utils.h"
 #include "milkcat/darts.h"
 
+namespace milkcat {
+
 class TrieTree {
  public:
   static const int kExist = -1;
@@ -71,5 +73,6 @@ class DoubleArrayTrieTree: public TrieTree {
   DISALLOW_COPY_AND_ASSIGN(DoubleArrayTrieTree);
 };
 
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_TRIE_TREE_H_

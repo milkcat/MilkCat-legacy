@@ -25,8 +25,6 @@
 // out_of_vocabulary_word_recognitioin.cc --- Created at 2013-09-03
 //
 
-
-
 #include <stdio.h>
 #include <string.h>
 #include "utils/utils.h"
@@ -34,6 +32,8 @@
 #include "milkcat/out_of_vocabulary_word_recognition.h"
 #include "milkcat/token_instance.h"
 #include "milkcat/crf_segmenter.h"
+
+namespace milkcat {
 
 OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::New(
     const CRFModel *crf_model,
@@ -178,3 +178,5 @@ void OutOfVocabularyWordRecognition::RecognizeRange(
     int end) {
   crf_segmenter_->SegmentRange(term_instance_, token_instance, begin, end);
 }
+
+}  // namespace milkcat

@@ -32,6 +32,8 @@
 #include "milkcat/milkcat_config.h"
 #include "milkcat/instance_data.h"
 
+namespace milkcat {
+
 class TokenInstance {
  public:
   TokenInstance();
@@ -80,5 +82,7 @@ class TokenInstance {
   InstanceData *instance_data_;
   DISALLOW_COPY_AND_ASSIGN(TokenInstance);
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_TOKEN_INSTANCE_H_

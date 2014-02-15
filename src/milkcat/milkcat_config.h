@@ -30,6 +30,8 @@
 
 #include <stdlib.h>
 
+namespace milkcat {
+
 const int kTokenMax = 1000;
 const int kFeatureLengthMax = 100;
 const int kTermLengthMax = kFeatureLengthMax;
@@ -37,5 +39,7 @@ const int kPOSTagLengthMax = 10;
 const int kHMMSegmentAndPOSTaggingNBest = 3;
 const int kUserTermIdStart = 0x40000000;
 const double kDefaultCost = 16.0;
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_MILKCAT_CONFIG_H_

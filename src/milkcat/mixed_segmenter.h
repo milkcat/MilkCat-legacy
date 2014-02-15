@@ -34,6 +34,8 @@
 #include "milkcat/static_hashtable.h"
 #include "milkcat/crf_model.h"
 
+namespace milkcat {
+
 class OutOfVocabularyWordRecognition;
 class BigramSegmenter;
 class TermInstance;
@@ -64,5 +66,7 @@ class MixedSegmenter: public Segmenter {
 
   MixedSegmenter();
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_MIXED_SEGMENTER_H_

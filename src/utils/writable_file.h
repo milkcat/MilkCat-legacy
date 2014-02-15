@@ -31,6 +31,8 @@
 #include <string>
 #include "utils/status.h"
 
+namespace milkcat {
+
 class WritableFile {
  public:
   // Open a file for write. On success, return an instance of WritableFile.
@@ -56,5 +58,7 @@ class WritableFile {
 
   WritableFile();
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_UTILS_WRITABLE_FILE_H_

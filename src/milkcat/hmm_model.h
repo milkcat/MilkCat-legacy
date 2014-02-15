@@ -29,6 +29,8 @@
 
 #include "utils/status.h"
 
+namespace milkcat {
+
 class HMMModel {
  public:
   struct EmitRow;
@@ -71,5 +73,7 @@ struct HMMModel::EmitRow {
   float cost;
   EmitRow *next;
 };
+
+}  // namespace milkcat
 
 #endif  // SRC_MILKCAT_HMM_MODEL_H_

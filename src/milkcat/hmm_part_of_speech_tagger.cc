@@ -34,6 +34,8 @@
 #include "milkcat/configuration.h"
 #include "milkcat/hmm_model.h"
 
+namespace milkcat {
+
 struct HMMPartOfSpeechTagger::Node {
   int left_tag;
   double cost;
@@ -249,3 +251,5 @@ void HMMPartOfSpeechTagger::CalculateArcCost(int position) {
     emit_node = emit_node->next;
   }
 }
+
+}  // namespace milkcat
