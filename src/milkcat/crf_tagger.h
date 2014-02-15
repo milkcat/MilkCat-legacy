@@ -1,11 +1,7 @@
 //
-// [original] crf_tagger.h --- Created at 2013-02-12
-// crfpp_tagger.h --- Created at 2013-10-30
-// crf_tagger.h --- Created at 2013-11-02
-//
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2013-2014 The MilkCat Project Developers
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +25,10 @@
 //
 // CRF++ -- Yet Another CRF toolkit
 // Copyright(C) 2005-2007 Taku Kudo <taku@chasen.org>
+//
+// [original] crf_tagger.h --- Created at 2013-02-12
+// crfpp_tagger.h --- Created at 2013-10-30
+// crf_tagger.h --- Created at 2013-11-02
 //
 
 #ifndef SRC_MILKCAT_CRF_TAGGER_H_

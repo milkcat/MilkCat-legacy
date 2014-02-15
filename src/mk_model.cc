@@ -1,11 +1,7 @@
 //
-// mkgram.cc --- Created at 2013-10-21
-// (with) mkdict.cc --- Created at 2013-06-08
-// mk_model.cc -- Created at 2013-11-08
-//
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2013-2014 The MilkCat Project Developers
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +20,10 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+//
+// mkgram.cc --- Created at 2013-10-21
+// (with) mkdict.cc --- Created at 2013-06-08
+// mk_model.cc -- Created at 2013-11-08
 //
 
 #include <stdio.h>

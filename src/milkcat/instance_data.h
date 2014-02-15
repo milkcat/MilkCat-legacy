@@ -1,10 +1,7 @@
 //
-// instance.h --- Created at 2013-06-09
-// instance_data.h --- Created at 2013-10-20
-//
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2013-2014 The MilkCat Project Developers
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +21,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-
-/*
- * instance.h
- * instance_data.h
- *
- * by ling0322 at 2013-10-20
- *
- */
+// instance.h --- Created at 2013-06-09
+// instance_data.h --- Created at 2013-10-20
+//
 
 #ifndef SRC_MILKCAT_INSTANCE_DATA_H_
 #define SRC_MILKCAT_INSTANCE_DATA_H_

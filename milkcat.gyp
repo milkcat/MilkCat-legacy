@@ -4,11 +4,15 @@
       '-g',
       '-fPIC',
       '-O2',
+      '-pthread',
     ],
     'cflags_cc': [
       '-std=c++11',
       '-fno-rtti',
       '-fno-exceptions',
+    ],
+    'ldflags': [
+      '-pthread'
     ],
     'xcode_settings': {
         'OTHER_CFLAGS': [

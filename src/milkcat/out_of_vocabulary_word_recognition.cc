@@ -1,10 +1,7 @@
 //
-// named_entity_recognitioin.cc --- Created at 2013-08-26
-// out_of_vocabulary_word_recognitioin.cc --- Created at 2013-09-03
-//
 // The MIT License (MIT)
 //
-// Copyright (c) 2013 ling0322 <ling032x@gmail.com>
+// Copyright 2013-2014 The MilkCat Project Developers
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +20,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+//
+// named_entity_recognitioin.cc --- Created at 2013-08-26
+// out_of_vocabulary_word_recognitioin.cc --- Created at 2013-09-03
 //
 
 
