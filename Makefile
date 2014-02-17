@@ -11,7 +11,6 @@ export PYTHONPATH
 all: milkcat
 
 gyp_build: milkcat.gyp
-
 	if [ ! -d build ];then mkdir build; fi
 	tools/gyp/gyp --depth=. milkcat.gyp -f make --generator-output=build -D model_path=$(MODEL_DIR)/
 	make -C build

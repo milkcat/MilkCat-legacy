@@ -136,6 +136,7 @@ int main(int argc, char **argv) {
 
   char *input_buffer = (char *)malloc(1048576);
   milkcat_model_t *model = milkcat_model_new(*model_path == '\0'? NULL: model_path);
+  milkcat_cursor_t *cursor = milkcat_cursor_new();
 
   if (*user_dict) {
     milkcat_model_set_userdict(model, user_dict);
@@ -154,10 +155,9 @@ int main(int argc, char **argv) {
   char ch;
 
   milkcat_item_t item;
-  milkcat_cursor_t cursor;
   while (NULL != fgets(input_buffer, 1048576, fp)) {
-    cursor = milkcat_analyze(m, input_buffer);
-    while (MC_OK == milkcat_cursor_get_next(&cursor, &item)) {
+    milkcat_analyze(m, cursor, input_buffer);
+    while (MC_OK == milkcat_cursor_get_next(cursor, &item)) {
       // printf("22222222\n");
       switch (item.word[0]) {
        case '\r':
@@ -184,6 +184,7 @@ int main(int argc, char **argv) {
   }
 
   milkcat_destroy(m);
+  milkcat_cursor_destroy(cursor);
   milkcat_model_destroy(model);
   free(input_buffer);
   if (use_stdin_flag == 0)

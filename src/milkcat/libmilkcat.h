@@ -63,16 +63,19 @@ struct milkcat_model_t {
   milkcat::ModelFactory *model_factory;
 };
 
+struct milkcat_cursor_t {
+  milkcat::Cursor *internal_cursor;
+};
+
 struct milkcat_t {
   milkcat_model_t *model;
-
   milkcat::Segmenter *segmenter;
   milkcat::PartOfSpeechTagger *part_of_speech_tagger;
-
-  std::vector<milkcat::Cursor *> cursor_pool;
 };
 
 namespace milkcat {
+
+constexpr int32_t kCursorMagic = 0x63727372;
 
 // Model filenames
 constexpr const char *UNIGRAM_INDEX = "unigram.idx";
@@ -175,7 +178,7 @@ PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
 // the current word and current sentence.
 class Cursor {
  public:
-  explicit Cursor(milkcat_t *analyzer);
+  explicit Cursor();
   ~Cursor();
 
   // Start to scan a text and use this->analyzer_ to analyze it
@@ -206,6 +209,9 @@ class Cursor {
   bool end() const { return end_; }
 
   milkcat_t *analyzer() const { return analyzer_; }
+  void set_analyzer(milkcat_t *analyzer) {
+    analyzer_ = analyzer;
+  }
 
  private:
   milkcat_t *analyzer_;

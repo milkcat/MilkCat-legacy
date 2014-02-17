@@ -53,8 +53,8 @@ void CrfSegmentThread(milkcat_model_t *model,
   char *buf = new char[buf_size];
 
   milkcat_t *analyzer = milkcat_new(model, CRF_SEGMENTER);
+  milkcat_cursor_t *cursor = milkcat_cursor_new();
   milkcat_item_t item;
-  milkcat_cursor_t cursor;
   if (analyzer == nullptr) *status = Status::Corruption(milkcat_last_error());
 
   bool eof = false;
@@ -69,8 +69,8 @@ void CrfSegmentThread(milkcat_model_t *model,
     // Segment the line and store the results into words
     if (status->ok() && !eof) {
       words.clear();
-      cursor = milkcat_analyze(analyzer, buf);
-      while (milkcat_cursor_get_next(&cursor, &item)) {
+      milkcat_analyze(analyzer, cursor, buf);
+      while (milkcat_cursor_get_next(cursor, &item)) {
         if (item.word_type == MC_CHINESE_WORD)
           words.push_back(item.word);
         else
@@ -93,7 +93,8 @@ void CrfSegmentThread(milkcat_model_t *model,
       vocab_mutex->unlock();
     }
   }
-
+  
+  milkcat_cursor_destroy(cursor);
   milkcat_destroy(analyzer);
   delete[] buf;
 }

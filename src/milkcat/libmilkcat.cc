@@ -392,8 +392,8 @@ const Configuration *ModelFactory::DefaultTag(Status *status) {
 
 // ---------- Cursor ----------
 
-Cursor::Cursor(milkcat_t *analyzer):
-    analyzer_(analyzer),
+Cursor::Cursor():
+    analyzer_(nullptr),
     tokenizer_(TokenizerFactory(kDefaultTokenizer)),
     token_instance_(new TokenInstance()),
     term_instance_(new TermInstance()),
@@ -556,11 +556,6 @@ void milkcat_destroy(milkcat_t *analyzer) {
   delete analyzer->part_of_speech_tagger;
   analyzer->part_of_speech_tagger = nullptr;
 
-  // Clear the cursor pool
-  for (auto &cursor : analyzer->cursor_pool) {
-    delete cursor;
-  }
-
   delete analyzer;
 }
 
@@ -569,46 +564,48 @@ void milkcat_model_set_userdict(milkcat_model_t *model, const char *path) {
 }
 
 
-milkcat_cursor_t milkcat_analyze(milkcat_t *analyzer, const char *text) {
-  milkcat_cursor_t cursor;
-  milkcat::Cursor *internal_cursor;
+void milkcat_analyze(milkcat_t *analyzer, 
+                     milkcat_cursor_t *cursor,
+                     const char *text) {
+  milkcat::Cursor *internal_cursor = cursor->internal_cursor;
 
-  if (analyzer->cursor_pool.empty()) {
-    internal_cursor = new milkcat::Cursor(analyzer);
-  } else {
-    internal_cursor = analyzer->cursor_pool.back();
-    analyzer->cursor_pool.pop_back();
-  }
-
+  internal_cursor->set_analyzer(analyzer);
   internal_cursor->Scan(text);
-  cursor.internal_cursor = reinterpret_cast<void *>(internal_cursor);
-
-  return cursor;
 }
 
 int milkcat_cursor_get_next(milkcat_cursor_t *cursor,
                             milkcat_item_t *next_item) {
-  milkcat::Cursor *internal_cursor = reinterpret_cast<milkcat::Cursor *>(
-      cursor->internal_cursor);
+  milkcat::Cursor *internal_cursor = cursor->internal_cursor;
 
-  // If the cursor is already released
-  if (internal_cursor == NULL) return MC_NONE;
+  // If the cursor has not used or already reaches the end
+  if (internal_cursor->analyzer() == nullptr) return MC_NONE;
 
   internal_cursor->MoveToNext();
 
   // If reached the end of text, collect back the cursor then return
   // MC_NONE
-  if (internal_cursor->end()) {
-    cursor->internal_cursor = NULL;
-    internal_cursor->analyzer()->cursor_pool.push_back(internal_cursor);
-    return MC_NONE;
-  }
+  if (internal_cursor->end()) return MC_NONE;
 
   next_item->word = internal_cursor->word();
   next_item->part_of_speech_tag = internal_cursor->part_of_speech_tag();
   next_item->word_type = internal_cursor->word_type();
 
   return MC_OK;
+}
+
+milkcat_cursor_t *milkcat_cursor_new() {
+  milkcat_cursor_t *cursor = new milkcat_cursor_t;
+  cursor->internal_cursor = new milkcat::Cursor();
+  return cursor;
+}
+
+void milkcat_cursor_destroy(milkcat_cursor_t *cursor) {
+  if (cursor == nullptr) return;
+
+  delete cursor->internal_cursor;
+  cursor->internal_cursor = nullptr;
+
+  delete cursor;
 }
 
 const char *milkcat_last_error() {

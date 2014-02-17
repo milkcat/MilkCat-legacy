@@ -43,6 +43,7 @@
 
 typedef struct milkcat_t milkcat_t;
 typedef struct milkcat_model_t milkcat_model_t;
+typedef struct milkcat_cursor_t milkcat_cursor_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,10 +84,6 @@ enum {
 #define MC_NONE 0
 
 typedef struct {
-  void *internal_cursor;
-} milkcat_cursor_t;
-
-typedef struct {
   const char *word;
   const char *part_of_speech_tag;
   int word_type;
@@ -99,7 +96,13 @@ EXPORT_API milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type);
 EXPORT_API void milkcat_destroy(milkcat_t *m);
 
 // Start to Process a text
-EXPORT_API milkcat_cursor_t milkcat_analyze(milkcat_t *m, const char *text);
+EXPORT_API void milkcat_analyze(milkcat_t *m, 
+                                milkcat_cursor_t *cursor,
+                                const char *text);
+
+EXPORT_API milkcat_cursor_t *milkcat_cursor_new();
+
+EXPORT_API void milkcat_cursor_destroy(milkcat_cursor_t *cursor);
 
 // Goto the next word in the text, if end of the text reached return 0 else
 // return 1

@@ -73,12 +73,13 @@ std::unordered_map<std::string, double> GetMutualInformation(
   BigramSegmenter *segmenter;
   milkcat_model_t *model;
   milkcat_t *analyzer;
-  milkcat_cursor_t cursor;
+  milkcat_cursor_t *cursor;
   milkcat_item_t item;
   if (status->ok()) {
     model = milkcat_model_new(nullptr);
     milkcat_model_set_userdict(model, "bigram_vocab.txt");
     analyzer = milkcat_new(model, BIGRAM_SEGMENTER);
+    cursor = milkcat_cursor_new();
     if (analyzer == nullptr)
       *status = Status::RuntimeError(milkcat_last_error());
   }
@@ -92,8 +93,8 @@ std::unordered_map<std::string, double> GetMutualInformation(
       segmenter->ClearAllDisabledTermIds();
       segmenter->AddDisabledTermId(term_id);
 
-      cursor = milkcat_analyze(analyzer, word);
-      while (milkcat_cursor_get_next(&cursor, &item)) {}
+      milkcat_analyze(analyzer, cursor, word);
+      while (milkcat_cursor_get_next(cursor, &item)) {}
 
       double word_cost = -log(static_cast<double>(x.second) / total_frequency);
       double bigram_cost = segmenter->RecentSegCost();
@@ -103,6 +104,7 @@ std::unordered_map<std::string, double> GetMutualInformation(
   }
 
   milkcat_destroy(analyzer);
+  milkcat_cursor_destroy(cursor);
   milkcat_model_destroy(model);
 
   return mutual_information;
