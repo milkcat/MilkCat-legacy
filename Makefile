@@ -5,9 +5,13 @@ BINARY_DIR ?= $(PREFIX)/bin
 PYTHON ?= python
 V ?= 0
 
+PYTHONPATH := tools/gyp/pylib/
+export PYTHONPATH
+
 all: milkcat
 
 gyp_build: milkcat.gyp
+
 	if [ ! -d build ];then mkdir build; fi
 	tools/gyp/gyp --depth=. milkcat.gyp -f make --generator-output=build -D model_path=$(MODEL_DIR)/
 	make -C build
@@ -40,13 +44,13 @@ CPPLINT_EXCLUDE += src/milkcat/darts.h
 CPPLINT_EXCLUDE += src/neko/utf8.h
 
 ALL_CPP_FILES = $(wildcard src/*.cc \
-	                         src/*.h \
-	                         src/milkcat/*.cc \
-	                         src/milkcat/*.h \
-	                         src/utils/*.cc \
-	                         src/utils/*.h \
-	                         src/neko/*.cc \
-	                         src/neko/*.h)
+                           src/*.h \
+                           src/milkcat/*.cc \
+                           src/milkcat/*.h \
+                           src/utils/*.cc \
+                           src/utils/*.h \
+                           src/neko/*.cc \
+                           src/neko/*.h)
 CPPLINT_FILES = $(filter-out $(CPPLINT_EXCLUDE), $(ALL_CPP_FILES))
 
 lint:
