@@ -42,7 +42,8 @@ namespace milkcat {
 MaxentModel::MaxentModel(): xsize_(0),
                             ysize_(0),
                             yname_(nullptr),
-                            cost_(nullptr) {
+                            cost_(nullptr),
+                            index_data_(nullptr) {
 }
 
 MaxentModel *MaxentModel::NewFromText(const char *model_path, Status *status) {
@@ -137,9 +138,9 @@ MaxentModel *MaxentModel::New(const char *model_path, Status *status) {
   int index_size = 0;
   if (status->ok()) fd->ReadValue<int32_t>(&index_size, status);
   if (status->ok()) {
-    char *index_data = new char[index_size];
-    fd->Read(index_data, index_size, status);
-    if (status->ok()) self->double_array_.set_array(index_data);
+    self->index_data_ = new char[index_size];
+    fd->Read(self->index_data_, index_size, status);
+    if (status->ok()) self->double_array_.set_array(self->index_data_);
   }
 
   if (status->ok()) {
@@ -147,6 +148,7 @@ MaxentModel *MaxentModel::New(const char *model_path, Status *status) {
     fd->Read(self->cost_, sizeof(float) * self->xsize_ * self->ysize_, status);
   }
 
+  delete fd;
   if (status->ok()) {
     return self;
   } else {
@@ -193,6 +195,9 @@ MaxentModel::~MaxentModel() {
 
   delete[] yname_;
   yname_ = nullptr;
+
+  delete[] index_data_;
+  index_data_ = nullptr;
 }
 
 MaxentClassifier::MaxentClassifier(MaxentModel *model):

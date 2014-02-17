@@ -77,6 +77,7 @@ class MaxentModel {
 
  private:
   Darts::DoubleArray double_array_;
+  char *index_data_;
   int xsize_;
   int ysize_;
   char (*yname_)[kYNameMax];

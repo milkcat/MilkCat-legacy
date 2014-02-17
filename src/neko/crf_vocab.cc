@@ -149,7 +149,7 @@ std::unordered_map<std::string, int> GetCrfVocabulary(
     std::vector<std::thread> threads;
     std::thread progress_thread;
     std::mutex fd_mutex, vocab_mutex;
-    std::atomic_bool task_finished;
+    std::atomic_bool task_finished(false);
 
     for (int i = 0; i < n_threads; ++i) {
       threads.push_back(std::thread(CrfSegmentThread,

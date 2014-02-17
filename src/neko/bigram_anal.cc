@@ -184,7 +184,7 @@ void BigramAnalyzeThread(
 
   milkcat_destroy(analyzer);
   milkcat_cursor_destroy(cursor);
-  delete buf;
+  delete[] buf;
 }
 
 // Thread to update progress information via calling callback function progress
@@ -255,7 +255,7 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
     std::vector<std::thread> threads;
     std::mutex vocab_mutex, adjent_mutex, fd_mutex;
     std::thread progress_thread;
-    std::atomic_bool task_finished;
+    std::atomic_bool task_finished(false);
 
     for (int i = 0; i < n_threads; ++i) {
       threads.push_back(std::thread(BigramAnalyzeThread,
