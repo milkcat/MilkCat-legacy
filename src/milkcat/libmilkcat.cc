@@ -563,7 +563,6 @@ void milkcat_model_set_userdict(milkcat_model_t *model, const char *path) {
   model->model_factory->SetUserDictionary(path);
 }
 
-
 void milkcat_analyze(milkcat_t *analyzer, 
                      milkcat_cursor_t *cursor,
                      const char *text) {

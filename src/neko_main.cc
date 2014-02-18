@@ -44,9 +44,9 @@ void DisplayProgress(int64_t bytes_processed,
                      int64_t file_size,
                      int64_t bytes_per_second) {
   fprintf(stderr,
-          "\rprogress %ld/%ld -- %2.1f%% %.3fMB/s",
-          static_cast<int64_t>(bytes_processed),
-          static_cast<int64_t>(file_size),
+          "\rprogress %dMB/%dMB -- %2.1f%% %.3fMB/s",
+          static_cast<int>(bytes_processed / (1024 * 1024)),
+          static_cast<int>(bytes_processed / (1024 * 1024)),
           100.0 * bytes_processed / file_size,
           bytes_per_second / static_cast<double>(1024 * 1024));
 }

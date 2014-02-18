@@ -112,6 +112,7 @@ LoadBigramFile(const char *bigram_file, int *total_count, Status *status) {
   }
 
   delete fd;
+  return bigram_data;
 }
 
 // Build Double-Array TrieTree index from unigram, and save the index and the
@@ -502,6 +503,7 @@ int MakeMaxentFile(int argc, char **argv) {
     return 0;
   } else {
     puts(status.what());
+    return -1;
   }
 }
 
