@@ -51,4 +51,5 @@ void BigramAnalyze(const std::unordered_map<std::string, float> &candidate,
 
 }  // namespace milkcat
 
+
 #endif  // SRC_NEKO_BIGRAM_ANAL_H_

@@ -45,7 +45,7 @@ class HMMModel {
     return tag_str_[tag_id];
   }
 
-  // Get the emit row (tag, cost) of a term, if no data return NULL
+  // Get the emit row (tag, cost) of a term, if no data return nullptr
   EmitRow *GetEmitRow(int term_id) const {
     if (term_id > max_term_id_ || term_id < 0)
       return NULL;
