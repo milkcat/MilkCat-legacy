@@ -30,7 +30,7 @@
   'targets': [
     {
       'target_name': 'libmilkcat',
-      'type': 'static_library',
+      'type': 'shared_library',
       'defines': [
         'MODEL_PATH="<(model_path)"',
       ],

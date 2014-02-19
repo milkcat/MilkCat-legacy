@@ -2,6 +2,7 @@ PREFIX ?= /usr/local
 MODEL_DIR ?= $(PREFIX)/share/milkcat
 LIBRARY_DIR ?= $(PREFIX)/lib
 BINARY_DIR ?= $(PREFIX)/bin
+INCLUDE_DIR ?= $(PREFIX)/include
 PYTHON ?= python
 V ?= 0
 
@@ -26,7 +27,8 @@ install:
 	cp build/out/Default/milkcat $(BINARY_DIR)
 	cp build/out/Default/neko $(BINARY_DIR)
 	cp build/out/Default/mk_model $(BINARY_DIR)
-	cp build/out/Default/obj.target/libmilkcat.* $(LIBRARY_DIR)
+	cp build/out/Default/libmilkcat.* $(LIBRARY_DIR)
+	cp src/milkcat/milkcat.h $(INCLUDE_DIR)
 
 uninstall:
 	rm $(MODEL_DIR)/*
