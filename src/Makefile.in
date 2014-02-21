@@ -141,7 +141,7 @@ am_libmilkcat_la_OBJECTS = milkcat/crf_segmenter.lo \
 	utils/readable_file.lo utils/writable_file.lo \
 	neko/crf_vocab.lo neko/candidate.lo neko/maxent_classifier.lo \
 	neko/mutual_information.lo neko/final_rank.lo \
-	neko/bigram_anal.lo
+	neko/bigram_anal.lo common/get_vocabulary.lo
 libmilkcat_la_OBJECTS = $(am_libmilkcat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -347,8 +347,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects
-AM_CXXFLAGS = -DMODEL_PATH=\"$(pkgdatadir)/\" -std=c++11 -fno-rtti \
-              -fno-exceptions
+AM_CXXFLAGS = -DMODEL_PATH=\"$(pkgdatadir)/\" -pthread -std=c++11 -fno-rtti \
+              -fno-exceptions 
 
 ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = milkcat/milkcat.h
@@ -389,7 +389,7 @@ libmilkcat_la_SOURCES = milkcat/milkcat_config.h \
                         milkcat/hmm_part_of_speech_tagger.cc \
                         milkcat/mixed_part_of_speech_tagger.h \
                         milkcat/mixed_part_of_speech_tagger.cc \
-                        milkcat/static_hash_table.h \
+                        milkcat/static_hashtable.h \
                         milkcat/segmenter.h \
                         milkcat/part_of_speech_tagger.h \
                         milkcat/mixed_segmenter.h \
@@ -419,7 +419,9 @@ libmilkcat_la_SOURCES = milkcat/milkcat_config.h \
                         neko/final_rank.h \
                         neko/bigram_anal.cc \
                         neko/bigram_anal.h \
-                        neko/utf8.h
+                        neko/utf8.h \
+                        common/get_vocabulary.cc \
+                        common/get_vocabulary.h
 
 all: all-am
 
@@ -529,12 +531,18 @@ neko/maxent_classifier.lo: neko/$(am__dirstamp)
 neko/mutual_information.lo: neko/$(am__dirstamp)
 neko/final_rank.lo: neko/$(am__dirstamp)
 neko/bigram_anal.lo: neko/$(am__dirstamp)
+common/$(am__dirstamp):
+	@$(MKDIR_P) common
+	@: > common/$(am__dirstamp)
+common/get_vocabulary.lo: common/$(am__dirstamp)
 
 libmilkcat.la: $(libmilkcat_la_OBJECTS) $(libmilkcat_la_DEPENDENCIES) $(EXTRA_libmilkcat_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(libmilkcat_la_OBJECTS) $(libmilkcat_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f common/*.$(OBJEXT)
+	-rm -f common/*.lo
 	-rm -f milkcat/*.$(OBJEXT)
 	-rm -f milkcat/*.lo
 	-rm -f neko/*.$(OBJEXT)
@@ -559,6 +567,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf common/.libs common/_libs
 	-rm -rf milkcat/.libs milkcat/_libs
 	-rm -rf neko/.libs neko/_libs
 	-rm -rf utils/.libs utils/_libs
@@ -699,6 +708,7 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f common/$(am__dirstamp)
 	-rm -f milkcat/$(am__dirstamp)
 	-rm -f neko/$(am__dirstamp)
 	-rm -f utils/$(am__dirstamp)

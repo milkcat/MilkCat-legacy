@@ -2,8 +2,8 @@ AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects
 SUBDIRS = src data
 ACLOCAL_AMFLAGS = -I m4
 
-AM_CPPFLAGS = -I$(top_srcdir)/src -DMODEL_PATH=\"$(pkgdatadir)/\" -std=c++11 -fno-rtti \
-              -fno-exceptions
+AM_CXXFLAGS = -I$(top_srcdir)/src -DMODEL_PATH=\"$(pkgdatadir)/\" -std=c++11 -fno-rtti \
+              -fno-exceptions -pthread
 
 bin_PROGRAMS = milkcat neko mc_model
 

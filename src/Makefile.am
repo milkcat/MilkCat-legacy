@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects
-AM_CXXFLAGS = -DMODEL_PATH=\"$(pkgdatadir)/\" -std=c++11 -fno-rtti \
-              -fno-exceptions
+AM_CXXFLAGS = -DMODEL_PATH=\"$(pkgdatadir)/\" -pthread -std=c++11 -fno-rtti \
+              -fno-exceptions 
 ACLOCAL_AMFLAGS = -I m4
 
 include_HEADERS = milkcat/milkcat.h
@@ -42,7 +42,7 @@ libmilkcat_la_SOURCES = milkcat/milkcat_config.h \
                         milkcat/hmm_part_of_speech_tagger.cc \
                         milkcat/mixed_part_of_speech_tagger.h \
                         milkcat/mixed_part_of_speech_tagger.cc \
-                        milkcat/static_hash_table.h \
+                        milkcat/static_hashtable.h \
                         milkcat/segmenter.h \
                         milkcat/part_of_speech_tagger.h \
                         milkcat/mixed_segmenter.h \
@@ -72,4 +72,6 @@ libmilkcat_la_SOURCES = milkcat/milkcat_config.h \
                         neko/final_rank.h \
                         neko/bigram_anal.cc \
                         neko/bigram_anal.h \
-                        neko/utf8.h
+                        neko/utf8.h \
+                        common/get_vocabulary.cc \
+                        common/get_vocabulary.h
