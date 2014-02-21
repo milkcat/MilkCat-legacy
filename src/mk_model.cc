@@ -24,19 +24,24 @@
 // mkgram.cc --- Created at 2013-10-21
 // (with) mkdict.cc --- Created at 2013-06-08
 // mk_model.cc -- Created at 2013-11-08
+// mctools.cc -- Created at 2014-02-21
 //
 
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
 #include <assert.h>
+#include <unistd.h>
 #include <map>
 #include <string>
 #include <algorithm>
+#include <thread>
 #include <set>
+#include "common/get_vocabulary.h"
 #include "utils/utils.h"
 #include "utils/readable_file.h"
 #include "utils/writable_file.h"
+#include "milkcat/milkcat.h"
 #include "milkcat/static_hashtable.h"
 #include "milkcat/darts.h"
 #include "neko/maxent_classifier.h"
@@ -507,6 +512,115 @@ int MakeMaxentFile(int argc, char **argv) {
   }
 }
 
+void DisplayProgress(int64_t bytes_processed,
+                     int64_t file_size,
+                     int64_t bytes_per_second) {
+  fprintf(stderr,
+          "\rprogress %dMB/%dMB -- %2.1f%% %.3fMB/s",
+          static_cast<int>(bytes_processed / (1024 * 1024)),
+          static_cast<int>(file_size / (1024 * 1024)),
+          100.0 * bytes_processed / file_size,
+          bytes_per_second / static_cast<double>(1024 * 1024));
+}
+
+int CorpusVocabulary(int argc, char **argv) {
+  Status status;
+  char message[1024], 
+       output_file[1024] = "",
+       model_path[1024] = "",
+       user_dict[1024] = "";
+  int c = '\0';
+  int analyzer_type = BIGRAM_SEGMENTER;
+
+  while ((c = getopt(argc, argv, "u:d:m:o:")) != -1 && status.ok()) {
+    switch (c) {
+      case 'd':
+        strcpy(model_path, optarg);
+        if (model_path[strlen(model_path) - 1] != '/') 
+          strcat(model_path, "/");
+        break;
+
+      case 'u':
+        strcpy(user_dict, optarg);
+        break;
+
+      case 'o':
+        strcpy(output_file, optarg);
+        break;
+
+      case 'm':
+        if (strcmp(optarg, "crf_seg") == 0) {
+          analyzer_type = CRF_SEGMENTER;
+        } else if (strcmp(optarg, "bigram_seg") == 0) {
+          analyzer_type = BIGRAM_SEGMENTER;
+        } else {
+          status = Status::Info("Option -m: invalid method");
+        }
+        break;
+
+      case ':':
+        sprintf(message, "Option -%c: requires an operand\n", optopt);
+        status = Status::Info(message);
+        break;
+
+      case '?':
+        sprintf(message, "Unrecognized option: -%c\n", optopt);
+        status = Status::Info(message);
+        break;
+    }
+  }
+
+  if (status.ok() && argc - optind != 1) {
+    status = Status::Info("");
+  }
+
+  if (!status.ok()) {
+    if (*status.what()) puts(status.what());
+    puts("Usage: mctools vocab [-m crf_seg|bigram_seg] [-d model_dir] [-u userdict] -o output_file corpus_file");
+  }
+
+  milkcat_model_t *model = nullptr;
+  std::unordered_map<std::string, int> vocab;
+  if (status.ok()) {
+    const char *corpus_path = argv[optind];
+    int total_count = 0;
+    model = milkcat_model_new(*model_path == '\0'? NULL: model_path);
+    if (*user_dict) milkcat_model_set_userdict(model, user_dict);
+    int n_threads = std::thread::hardware_concurrency();
+    vocab = GetVocabularyFromFile(corpus_path,
+                                  model,
+                                  analyzer_type,
+                                  n_threads,
+                                  &total_count,
+                                  DisplayProgress,
+                                  &status);
+  }
+
+  WritableFile *fd = nullptr;
+  if (status.ok()) {
+    fd = WritableFile::New(output_file, &status);
+  }
+
+  if (status.ok()) {
+    for (auto &x: vocab) {
+      sprintf(message, "%s %d", x.first.c_str(), x.second);
+      fd->WriteLine(message, &status);
+      if (!status.ok()) break;
+    }
+  }
+
+  delete fd;
+  milkcat_model_destroy(model);
+
+  if (status.ok()) {
+    puts("Success!");
+    return 0;
+  } else {
+    if (*status.what()) puts(status.what());
+    return -1;
+  }
+}
+
 }  // namespace milkcat
 
 int main(int argc, char **argv) {
@@ -525,8 +639,10 @@ int main(int argc, char **argv) {
     return milkcat::MakeHMMTaggerModel(argc, argv);
   } else if (strcmp(tool, "maxent") == 0) {
     return milkcat::MakeMaxentFile(argc, argv);
+  } else if (strcmp(tool, "vocab") == 0) {
+    return milkcat::CorpusVocabulary(argc - 1, argv + 1);
   } else {
-    fprintf(stderr, "Usage: mc_model [dict|gram|hmm|maxent]\n");
+    fprintf(stderr, "Usage: mc_model [dict|gram|hmm|maxent|vocab]\n");
     return 1;
   }
 
