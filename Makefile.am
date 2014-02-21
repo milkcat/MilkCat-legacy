@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects
+AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects foreign
 SUBDIRS = src data
 ACLOCAL_AMFLAGS = -I m4
 
