@@ -68,7 +68,9 @@ enum {
   // DEFAULT_SEGMENTER is the Mixed Bigram & CRF segmenter
   DEFAULT_SEGMENTER = 3,
 
-  BIGRAM_SEGMENTER = 4
+  BIGRAM_SEGMENTER = 4,
+
+  UNIGRAM_SEGMENTER = 5
 };
 
 // Word types

@@ -87,6 +87,9 @@ int main(int argc, char **argv) {
       if (strcmp(optarg, "crf_seg") == 0) {
         method = CRF_SEGMENTER;
         display_tag = 0;
+      } else if (strcmp(optarg, "unigram_seg") == 0) {
+        method = UNIGRAM_SEGMENTER;
+        display_tag = 0;
       } else if (strcmp(optarg, "crf") == 0) {
         method = CRF_PROCESSOR;
         display_tag = 1;

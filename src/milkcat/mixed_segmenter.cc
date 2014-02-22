@@ -41,7 +41,7 @@ MixedSegmenter::MixedSegmenter():
 MixedSegmenter *MixedSegmenter::New(ModelFactory *model_factory, 
                                     Status *status) {
   MixedSegmenter *self = new MixedSegmenter();
-  self->bigram_ = BigramSegmenter::New(model_factory, status);
+  self->bigram_ = BigramSegmenter::New(model_factory, true, status);
 
   if (status->ok()) {
     self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(model_factory,

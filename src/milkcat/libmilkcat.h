@@ -94,6 +94,7 @@ const int kDefaultTokenizer = 0;
 const int kBigramSegmenter = 0;
 const int kCrfSegmenter = 1;
 const int kMixedSegmenter = 2;
+const int kUnigramSegmenter = 3;
 
 // Part-of-speech ids for PartOfSpeechTaggerFactory
 const int kCrfPartOfSpeechTagger = 0;

@@ -59,7 +59,9 @@ class BigramSegmenter: public Segmenter {
   // Create the bigram segmenter from a model factory. On success, return an
   // instance of BigramSegmenter. On failed, return nullptr and set status
   // a failed value
-  static BigramSegmenter *New(ModelFactory *model_factory, Status *status);
+  static BigramSegmenter *New(ModelFactory *model_factory,
+                              bool use_bigram,
+                              Status *status);
 
   ~BigramSegmenter();
 

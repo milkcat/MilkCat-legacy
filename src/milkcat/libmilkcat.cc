@@ -27,24 +27,24 @@
 
 
 #include "milkcat/libmilkcat.h"
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 #include <string>
-#include <vector>
 #include <utility>
-#include "utils/utils.h"
-#include "milkcat/milkcat.h"
+#include <vector>
+#include "milkcat/bigram_segmenter.h"
+#include "milkcat/crf_part_of_speech_tagger.h"
 #include "milkcat/crf_tagger.h"
+#include "milkcat/hmm_part_of_speech_tagger.h"
+#include "milkcat/milkcat.h"
+#include "milkcat/mixed_part_of_speech_tagger.h"
+#include "milkcat/mixed_segmenter.h"
+#include "milkcat/out_of_vocabulary_word_recognition.h"
+#include "milkcat/part_of_speech_tag_instance.h"
 #include "milkcat/tokenizer.h"
 #include "milkcat/term_instance.h"
 #include "milkcat/token_instance.h"
-#include "milkcat/part_of_speech_tag_instance.h"
-#include "milkcat/bigram_segmenter.h"
-#include "milkcat/out_of_vocabulary_word_recognition.h"
-#include "milkcat/mixed_segmenter.h"
-#include "milkcat/hmm_part_of_speech_tagger.h"
-#include "milkcat/mixed_part_of_speech_tagger.h"
-#include "milkcat/crf_part_of_speech_tagger.h"
+#include "utils/utils.h"
 
 namespace milkcat {
 
@@ -63,7 +63,10 @@ Segmenter *SegmenterFactory(ModelFactory *factory,
                             Status *status) {
   switch (segmenter_id) {
     case kBigramSegmenter:
-      return BigramSegmenter::New(factory, status);
+      return BigramSegmenter::New(factory, true, status);
+
+    case kUnigramSegmenter:
+      return BigramSegmenter::New(factory, false, status);
 
     case kCrfSegmenter:
       return CRFSegmenter::New(factory, status);
@@ -467,6 +470,15 @@ milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
         analyzer->segmenter = milkcat::SegmenterFactory(
             analyzer->model->model_factory,
             milkcat::kBigramSegmenter,
+            &milkcat::global_status);
+      analyzer->part_of_speech_tagger = nullptr;
+      break;
+
+    case UNIGRAM_SEGMENTER:
+      if (milkcat::global_status.ok())
+        analyzer->segmenter = milkcat::SegmenterFactory(
+            analyzer->model->model_factory,
+            milkcat::kUnigramSegmenter,
             &milkcat::global_status);
       analyzer->part_of_speech_tagger = nullptr;
       break;

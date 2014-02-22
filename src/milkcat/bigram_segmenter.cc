@@ -178,10 +178,11 @@ BigramSegmenter::~BigramSegmenter() {
 }
 
 BigramSegmenter *BigramSegmenter::New(ModelFactory *model_factory,
+                                      bool use_bigram,
                                       Status *status) {
   BigramSegmenter *self = new BigramSegmenter();
 
-  self->beam_size_ = kDefaultBeamSize;
+  self->beam_size_ = use_bigram? kDefaultBeamSize: 1;
   self->node_pool_ = new NodePool(self->beam_size_ * kTokenMax);
 
   // Initialize the beams_
@@ -197,7 +198,8 @@ BigramSegmenter *BigramSegmenter::New(ModelFactory *model_factory,
   }
 
   if (status->ok()) self->unigram_cost_ = model_factory->UnigramCost(status);
-  if (status->ok()) self->bigram_cost_ = model_factory->BigramCost(status);
+  if (status->ok() && use_bigram == true) 
+    self->bigram_cost_ = model_factory->BigramCost(status);
 
   // Default is not use disabled term-ids
   self->use_disabled_term_ids_ = false;
@@ -275,6 +277,9 @@ inline double BigramSegmenter::CalculateBigramCost(int left_id,
                                                    double left_cost,
                                                    double right_cost) {
   double cost;
+
+  // If bigram is disabled
+  if (bigram_cost_ == nullptr) return left_cost + right_cost;
 
   int64_t key = (static_cast<int64_t>(left_id) << 32) + right_id;
   const float *it = bigram_cost_->Find(key);
