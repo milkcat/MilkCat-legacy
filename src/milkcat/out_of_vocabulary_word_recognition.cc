@@ -25,27 +25,26 @@
 // out_of_vocabulary_word_recognitioin.cc --- Created at 2013-09-03
 //
 
+#include "milkcat/out_of_vocabulary_word_recognition.h"
 #include <stdio.h>
 #include <string.h>
-#include "utils/utils.h"
-#include "milkcat/darts.h"
-#include "milkcat/out_of_vocabulary_word_recognition.h"
-#include "milkcat/token_instance.h"
 #include "milkcat/crf_segmenter.h"
+#include "milkcat/darts.h"
+#include "milkcat/libmilkcat.h"
+#include "milkcat/token_instance.h"
+#include "utils/utils.h"
 
 namespace milkcat {
 
 OutOfVocabularyWordRecognition *OutOfVocabularyWordRecognition::New(
-    const CRFModel *crf_model,
-    const TrieTree *oov_property,
+    ModelFactory *model_factory,
     Status *status) {
   OutOfVocabularyWordRecognition *self = new OutOfVocabularyWordRecognition();
-
-  self->crf_segmenter_ = CRFSegmenter::New(crf_model, status);
+  self->crf_segmenter_ = CRFSegmenter::New(model_factory, status);
 
   if (status->ok()) {
     self->term_instance_ = new TermInstance();
-    self->oov_property_ = oov_property;
+    self->oov_property_ = model_factory->OOVProperty(status);
   }
 
   if (status->ok()) {

@@ -40,21 +40,14 @@ class OutOfVocabularyWordRecognition;
 class BigramSegmenter;
 class TermInstance;
 class TokenInstance;
+class ModelFactory;
 
 // Mixed Bigram segmenter and CRF Segmenter of OOV recognition
 class MixedSegmenter: public Segmenter {
  public:
   ~MixedSegmenter();
 
-  static MixedSegmenter *New(
-      const TrieTree *index,
-      const TrieTree *user_index,
-      const StaticArray<float> *unigram_cost,
-      const StaticArray<float> *user_unigram_cost,
-      const StaticHashTable<int64_t, float> *bigram_cost,
-      const CRFModel *seg_model,
-      const TrieTree *oov_property,
-      Status *status);
+  static MixedSegmenter *New(ModelFactory *model_factory, Status *status);
 
   // Segment a token instance into term instance
   void Segment(TermInstance *term_instance, TokenInstance *token_instance);

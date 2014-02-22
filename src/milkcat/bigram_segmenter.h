@@ -29,18 +29,21 @@
 #define SRC_MILKCAT_BIGRAM_SEGMENTER_H_
 
 #include <stdint.h>
+#include <array>
 #include <unordered_set>
-#include "milkcat/milkcat_config.h"
-#include "milkcat/static_hashtable.h"
 #include "milkcat/darts.h"
+#include "milkcat/milkcat_config.h"
 #include "milkcat/segmenter.h"
 #include "milkcat/static_array.h"
+#include "milkcat/static_hashtable.h"
 
 namespace milkcat {
 
 class TrieTree;
 class TokenInstance;
 class TermInstance;
+class ModelFactory;
+class Status;
 
 class BigramSegmenter: public Segmenter {
  public:
@@ -48,16 +51,15 @@ class BigramSegmenter: public Segmenter {
   struct Node;
 
   // A Bucket contains several node
-  class Bucket;
+  class Beam;
 
   // A pool to alloc and release nodes
   class NodePool;
 
-  BigramSegmenter(const TrieTree *index,
-                  const TrieTree *user_index,
-                  const StaticArray<float> *unigram_cost,
-                  const StaticArray<float> *user_unigram_cost,
-                  const StaticHashTable<int64_t, float> *bigram_cost);
+  // Create the bigram segmenter from a model factory. On success, return an
+  // instance of BigramSegmenter. On failed, return nullptr and set status
+  // a failed value
+  static BigramSegmenter *New(ModelFactory *model_factory, Status *status);
 
   ~BigramSegmenter();
 
@@ -86,11 +88,12 @@ class BigramSegmenter: public Segmenter {
   }
 
  private:
+  static constexpr int kDefaultBeamSize = 3;
   // Number of Node in each buckets_
-  static const int kNBest = 3;
+  int beam_size_;
 
   // Buckets contain nodes for viterbi decoding
-  Bucket *buckets_[kTokenMax + 1];
+  std::array<Beam *, kTokenMax + 1> beams_;
 
   // NodePool instance to alloc and release node
   NodePool *node_pool_;
@@ -112,6 +115,8 @@ class BigramSegmenter: public Segmenter {
   // The disabled term-ids variables
   bool use_disabled_term_ids_;
   std::unordered_set<int> disabled_term_ids_;
+
+  BigramSegmenter();
 
   // Add an arc to the decode graph with the weight and term_id
   void AddArcToDecodeGraph(int from_position,

@@ -40,10 +40,11 @@
 
 namespace milkcat {
 
+class ModelFactory;
+
 class OutOfVocabularyWordRecognition {
  public:
-  static OutOfVocabularyWordRecognition *New(const CRFModel *crf_model,
-                                             const TrieTree *oov_property,
+  static OutOfVocabularyWordRecognition *New(ModelFactory *model_factory,
                                              Status *status);
   ~OutOfVocabularyWordRecognition();
   void Process(TermInstance *term_instance,

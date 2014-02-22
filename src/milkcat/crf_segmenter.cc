@@ -31,6 +31,7 @@
 #include <string>
 #include "utils/utils.h"
 #include "milkcat/crf_segmenter.h"
+#include "milkcat/libmilkcat.h"
 #include "milkcat/term_instance.h"
 #include "milkcat/token_instance.h"
 #include "milkcat/feature_extractor.h"
@@ -63,32 +64,35 @@ class SegmentFeatureExtractor: public FeatureExtractor {
   const TokenInstance *token_instance_;
 };
 
-CRFSegmenter *CRFSegmenter::New(const CRFModel *model, Status *status) {
+CRFSegmenter *CRFSegmenter::New(ModelFactory *model_factory, Status *status) {
   char error_message[1024];
   CRFSegmenter *self = new CRFSegmenter();
+  const CRFModel *model = model_factory->CRFSegModel(status);
+  
+  if (status->ok()) {
+    self->crf_tagger_ = new CRFTagger(model);
+    self->feature_extractor_ = new SegmentFeatureExtractor();
 
-  self->crf_tagger_ = new CRFTagger(model);
-  self->feature_extractor_ = new SegmentFeatureExtractor();
+    // Get the tag's value in CRF++ model
+    self->S = self->crf_tagger_->GetTagId("S");
+    self->B = self->crf_tagger_->GetTagId("B");
+    self->B1 = self->crf_tagger_->GetTagId("B1");
+    self->B2 = self->crf_tagger_->GetTagId("B2");
+    self->M = self->crf_tagger_->GetTagId("M");
+    self->E = self->crf_tagger_->GetTagId("E");
 
-  // Get the tag's value in CRF++ model
-  self->S = self->crf_tagger_->GetTagId("S");
-  self->B = self->crf_tagger_->GetTagId("B");
-  self->B1 = self->crf_tagger_->GetTagId("B1");
-  self->B2 = self->crf_tagger_->GetTagId("B2");
-  self->M = self->crf_tagger_->GetTagId("M");
-  self->E = self->crf_tagger_->GetTagId("E");
-
-  if (self->S < 0 || self->B < 0 || self->B1 < 0 || self->B2 < 0 ||
-      self->M < 0 || self->E < 0) {
-    *status = Status::Corruption(
-      "bad CRF++ segmenter model, unable to find S, B, B1, B2, M, E tag.");
+    if (self->S < 0 || self->B < 0 || self->B1 < 0 || self->B2 < 0 ||
+        self->M < 0 || self->E < 0) {
+      *status = Status::Corruption(
+        "bad CRF++ segmenter model, unable to find S, B, B1, B2, M, E tag.");
+    }    
   }
 
   if (status->ok()) {
     return self;
   } else {
     delete self;
-    return NULL;
+    return nullptr;
   }
 }
 

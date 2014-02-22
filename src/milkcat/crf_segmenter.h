@@ -36,10 +36,11 @@ namespace milkcat {
 
 class SegmentFeatureExtractor;
 class TermInstance;
+class ModelFactory;
 
 class CRFSegmenter: public Segmenter {
  public:
-  static CRFSegmenter *New(const CRFModel *model, Status *status);
+  static CRFSegmenter *New(ModelFactory *model_factory, Status *status);
   ~CRFSegmenter();
 
   // Segment a range [begin, end) of token

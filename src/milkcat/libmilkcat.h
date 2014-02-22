@@ -117,8 +117,6 @@ class ModelFactory {
 
   void SetUserDictionary(const char *path) { user_dictionary_path_ = path; }
 
-  // Load and set the user dictionary data specified by path
-  void LoadUserDictionary(Status *status);
   bool HasUserDictionary() const { return user_dictionary_path_.size() != 0; }
 
   const TrieTree *UserIndex(Status *status);
@@ -156,6 +154,9 @@ class ModelFactory {
   const HMMModel *hmm_pos_model_;
   const TrieTree *oov_property_;
   const Configuration *default_tag_;
+
+  // Load and set the user dictionary data specified by path
+  void LoadUserDictionary(Status *status);
 };
 
 // A factory function to create tokenizers

@@ -33,50 +33,39 @@
 namespace milkcat {
 
 MixedSegmenter::MixedSegmenter():
-    bigram_(NULL),
-    oov_recognizer_(NULL),
-    bigram_result_(NULL) {
+    bigram_(nullptr),
+    oov_recognizer_(nullptr),
+    bigram_result_(nullptr) {
 }
 
-MixedSegmenter *MixedSegmenter::New(
-    const TrieTree *index,
-    const TrieTree *user_index,
-    const StaticArray<float> *unigram_cost,
-    const StaticArray<float> *user_unigram_cost,
-    const StaticHashTable<int64_t, float> *bigram_cost,
-    const CRFModel *seg_model,
-    const TrieTree *oov_property,
-    Status *status) {
-
+MixedSegmenter *MixedSegmenter::New(ModelFactory *model_factory, 
+                                    Status *status) {
   MixedSegmenter *self = new MixedSegmenter();
-  self->bigram_ = new BigramSegmenter(index,
-                                      user_index,
-                                      unigram_cost,
-                                      user_unigram_cost,
-                                      bigram_cost);
-  self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(
-      seg_model,
-      oov_property,
-      status);
+  self->bigram_ = BigramSegmenter::New(model_factory, status);
+
+  if (status->ok()) {
+    self->oov_recognizer_ = OutOfVocabularyWordRecognition::New(model_factory,
+                                                                status);    
+  }
   if (status->ok()) self->bigram_result_ = new TermInstance();
 
   if (status->ok()) {
     return self;
   } else {
     delete self;
-    return NULL;
+    return nullptr;
   }
 }
 
 MixedSegmenter::~MixedSegmenter() {
   delete bigram_result_;
-  bigram_result_ = NULL;
+  bigram_result_ = nullptr;
 
   delete bigram_;
-  bigram_ = NULL;
+  bigram_ = nullptr;
 
   delete oov_recognizer_;
-  oov_recognizer_ = NULL;
+  oov_recognizer_ = nullptr;
 }
 
 void MixedSegmenter::Segment(TermInstance *term_instance,

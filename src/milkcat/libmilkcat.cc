@@ -61,67 +61,15 @@ Tokenization *TokenizerFactory(int tokenizer_id) {
 Segmenter *SegmenterFactory(ModelFactory *factory,
                             int segmenter_id,
                             Status *status) {
-  const TrieTree *index = NULL;
-  const TrieTree *user_index = NULL;
-  const StaticArray<float> *unigram_cost = NULL;
-  const StaticArray<float> *user_unigram_cost = nullptr;
-  const StaticHashTable<int64_t, float> *bigram_cost = NULL;
-  const CRFModel *seg_model = NULL;
-  const TrieTree *oov_property = NULL;
-
   switch (segmenter_id) {
     case kBigramSegmenter:
-      if (status->ok()) index = factory->Index(status);
-      if (status->ok() && factory->HasUserDictionary())
-        user_index = factory->UserIndex(status);
-      if (status->ok() && factory->HasUserDictionary())
-        user_unigram_cost = factory->UserCost(status);
-      if (status->ok()) unigram_cost = factory->UnigramCost(status);
-      if (status->ok()) bigram_cost = factory->BigramCost(status);
-
-      if (status->ok()) {
-        return new BigramSegmenter(index,
-                                   user_index,
-                                   unigram_cost,
-                                   user_unigram_cost,
-                                   bigram_cost);
-      } else {
-        return NULL;
-      }
+      return BigramSegmenter::New(factory, status);
 
     case kCrfSegmenter:
-      if (status->ok()) seg_model = factory->CRFSegModel(status);
-
-      if (status->ok()) {
-        return CRFSegmenter::New(seg_model, status);
-      } else {
-        return NULL;
-      }
+      return CRFSegmenter::New(factory, status);
 
     case kMixedSegmenter:
-      if (status->ok()) index = factory->Index(status);
-      if (status->ok() && factory->HasUserDictionary())
-        user_index = factory->UserIndex(status);
-      if (status->ok() && factory->HasUserDictionary())
-        user_unigram_cost = factory->UserCost(status);
-      if (status->ok()) unigram_cost = factory->UnigramCost(status);
-      if (status->ok()) bigram_cost = factory->BigramCost(status);
-      if (status->ok()) seg_model = factory->CRFSegModel(status);
-      if (status->ok()) oov_property = factory->OOVProperty(status);
-
-      if (status->ok()) {
-        return MixedSegmenter::New(
-          index,
-          user_index,
-          unigram_cost,
-          user_unigram_cost,
-          bigram_cost,
-          seg_model,
-          oov_property,
-          status);
-      } else {
-        return NULL;
-      }
+      return MixedSegmenter::New(factory, status);
 
     default:
       *status = Status::NotImplemented("");
