@@ -50,7 +50,8 @@ class ReadableFile {
     return Read(data, sizeof(T), status);
   }
 
-  // Read a line from file, if failed return false
+  // Read a line from file, if failed return false. NOTE: The line string 
+  // contains the CR or CR-LF characters 
   bool ReadLine(char *buf, int size, Status *status);
 
   bool Eof() { return Tell() >= size_; }

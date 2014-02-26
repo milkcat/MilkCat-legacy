@@ -37,7 +37,6 @@
 #include "milkcat/crf_tagger.h"
 #include "milkcat/hmm_part_of_speech_tagger.h"
 #include "milkcat/milkcat.h"
-#include "milkcat/mixed_part_of_speech_tagger.h"
 #include "milkcat/mixed_segmenter.h"
 #include "milkcat/out_of_vocabulary_word_recognition.h"
 #include "milkcat/part_of_speech_tag_instance.h"
@@ -54,7 +53,7 @@ Tokenization *TokenizerFactory(int tokenizer_id) {
       return new Tokenization();
 
     default:
-      return NULL;
+      return nullptr;
   }
 }
 
@@ -76,7 +75,7 @@ Segmenter *SegmenterFactory(ModelFactory *factory,
 
     default:
       *status = Status::NotImplemented("");
-      return NULL;
+      return nullptr;
   }
 }
 
@@ -95,43 +94,19 @@ PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
       if (status->ok()) {
         return new CRFPartOfSpeechTagger(crf_pos_model);
       } else {
-        return NULL;
+        return nullptr;
       }
 
     case kHmmPartOfSpeechTagger:
-      if (status->ok()) hmm_pos_model = factory->HMMPosModel(status);
-      if (status->ok()) index = factory->Index(status);
-      if (status->ok()) default_tag = factory->DefaultTag(status);
-
       if (status->ok()) {
-        return HMMPartOfSpeechTagger::New(hmm_pos_model,
-                                          index,
-                                          default_tag,
-                                          status);
+        return HMMPartOfSpeechTagger::New(factory, status);
       } else {
-        return NULL;
-      }
-
-    case kMixedPartOfSpeechTagger:
-      if (status->ok()) crf_pos_model = factory->CRFPosModel(status);
-      if (status->ok()) hmm_pos_model = factory->HMMPosModel(status);
-      if (status->ok()) index = factory->Index(status);
-      if (status->ok()) default_tag = factory->DefaultTag(status);
-
-      if (status->ok()) {
-        return MixedPartOfSpeechTagger::New(
-          hmm_pos_model,
-          index,
-          default_tag,
-          crf_pos_model,
-          status);
-      } else {
-        return NULL;
+        return nullptr;
       }
 
     default:
       *status = Status::NotImplemented("");
-      return NULL;
+      return nullptr;
   }
 }
 
@@ -152,8 +127,7 @@ ModelFactory::ModelFactory(const char *model_dir_path):
     crf_pos_model_(nullptr),
     hmm_pos_model_(nullptr),
     oov_property_(nullptr),
-    user_index_(nullptr),
-    default_tag_(nullptr) {
+    user_index_(nullptr) {
 }
 
 ModelFactory::~ModelFactory() {
@@ -183,9 +157,6 @@ ModelFactory::~ModelFactory() {
 
   delete oov_property_;
   oov_property_ = nullptr;
-
-  delete default_tag_;
-  default_tag_ = nullptr;
 }
 
 const TrieTree *ModelFactory::Index(Status *status) {
@@ -314,8 +285,12 @@ const CRFModel *ModelFactory::CRFPosModel(Status *status) {
 const HMMModel *ModelFactory::HMMPosModel(Status *status) {
   mutex.lock();
   if (hmm_pos_model_ == NULL) {
-    std::string model_path = model_dir_path_ + HMM_PART_OF_SPEECH_MODEL;
-    hmm_pos_model_ = HMMModel::New(model_path.c_str(), status);
+    std::string index_path = model_dir_path_ + UNIGRAM_INDEX;
+    hmm_pos_model_ = HMMModel::NewFromText("trans.txt", 
+                                           "emit.txt",
+                                           "y_set.txt",
+                                           index_path.c_str(),
+                                           status);
   }
   mutex.unlock();
   return hmm_pos_model_;
@@ -329,16 +304,6 @@ const TrieTree *ModelFactory::OOVProperty(Status *status) {
   }
   mutex.unlock();
   return oov_property_;
-}
-
-const Configuration *ModelFactory::DefaultTag(Status *status) {
-  mutex.lock();
-  if (default_tag_ == NULL) {
-    std::string model_path = model_dir_path_ + DEFAULT_TAG;
-    default_tag_ = Configuration::New(model_path.c_str(), status);
-  }
-  mutex.unlock();
-  return default_tag_;
 }
 
 // ---------- Cursor ----------
@@ -430,7 +395,7 @@ milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
       if (milkcat::global_status.ok())
         analyzer->part_of_speech_tagger = milkcat::PartOfSpeechTaggerFactory(
             analyzer->model->model_factory,
-            milkcat::kMixedPartOfSpeechTagger,
+            milkcat::kHmmPartOfSpeechTagger,
             &milkcat::global_status);
       break;
 

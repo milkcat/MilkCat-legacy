@@ -82,7 +82,7 @@ bin_PROGRAMS = milkcat$(EXEEXT) neko$(EXEEXT) mc_model$(EXEEXT)
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in COPYING scripts/ar-lib scripts/compile \
+	$(srcdir)/config.h.in scripts/ar-lib scripts/compile \
 	scripts/config.guess scripts/config.sub scripts/install-sh \
 	scripts/missing scripts/ltmain.sh $(top_srcdir)/scripts/ar-lib \
 	$(top_srcdir)/scripts/compile \

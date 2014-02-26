@@ -43,7 +43,6 @@
 #include "milkcat/trie_tree.h"
 #include "milkcat/static_array.h"
 #include "milkcat/static_hashtable.h"
-#include "milkcat/configuration.h"
 #include "milkcat/milkcat.h"
 #include "milkcat/segmenter.h"
 #include "milkcat/part_of_speech_tagger.h"
@@ -138,8 +137,6 @@ class ModelFactory {
   // Get the character's property in out-of-vocabulary word recognition
   const TrieTree *OOVProperty(Status *status);
 
-  const Configuration *DefaultTag(Status *status);
-
  private:
   std::string model_dir_path_;
   std::string user_dictionary_path_;
@@ -154,7 +151,6 @@ class ModelFactory {
   const CRFModel *crf_pos_model_;
   const HMMModel *hmm_pos_model_;
   const TrieTree *oov_property_;
-  const Configuration *default_tag_;
 
   // Load and set the user dictionary data specified by path
   void LoadUserDictionary(Status *status);

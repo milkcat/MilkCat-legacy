@@ -92,7 +92,10 @@ int main(int argc, char **argv) {
         display_tag = 0;
       } else if (strcmp(optarg, "crf") == 0) {
         method = CRF_PROCESSOR;
-        display_tag = 1;
+        display_tag = 1;      
+      } else if (strcmp(optarg, "seg") == 0) {
+        method = DEFAULT_SEGMENTER;
+        display_tag = 0;
       } else if (strcmp(optarg, "hmm_crf") == 0) {
         method = DEFAULT_PROCESSOR;
         display_tag = 1;

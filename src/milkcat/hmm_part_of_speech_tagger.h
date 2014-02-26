@@ -27,13 +27,14 @@
 #ifndef SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_
 #define SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_
 
-#include "utils/utils.h"
+#include "milkcat/beam.h"
 #include "milkcat/darts.h"
+#include "milkcat/hmm_model.h"
+#include "milkcat/libmilkcat.h"
 #include "milkcat/milkcat_config.h"
 #include "milkcat/part_of_speech_tagger.h"
-#include "milkcat/hmm_model.h"
 #include "milkcat/trie_tree.h"
-#include "milkcat/configuration.h"
+#include "utils/utils.h"
 
 namespace milkcat {
 
@@ -43,56 +44,49 @@ class Configuration;
 
 class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
  public:
-  static const int kMaxBucket = kTokenMax;
+  struct Node;
+
+  // Beam size, two position for BOS node
+  static const int kMaxBeams = kTokenMax + 2;
+  static const int kBeamSize = 3;
 
   ~HMMPartOfSpeechTagger();
   void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance,
            TermInstance *term_instance);
 
-  static HMMPartOfSpeechTagger *New(const HMMModel *model,
-                                    const TrieTree *index,
-                                    const Configuration *default_tag,
+  static HMMPartOfSpeechTagger *New(ModelFactory *model_factory,
                                     Status *status);
 
  private:
-  struct Node;
+  Beam<Node> *beams_[kMaxBeams];
+  NodePool<Node> *node_pool_;
 
-  Node *buckets_[kMaxBucket];
-  HMMModel::EmitRow *term_tags_[kMaxBucket];
   const HMMModel *model_;
-  int tag_num_;
-
-  // If the word of position has hmm emit data
-  bool has_data_[kMaxBucket];
-
-  // The emit linklist with only one tag
-  HMMModel::EmitRow **one_tag_emit_;
-
-  // the the default emit tag for term type
-  int term_type_emit_tag_[6];
-
   const TrieTree *index_;
+
+  HMMModel::Emit *PU_emit_;
+  HMMModel::Emit *DT_emit_;
+
+  int BOS_tagid_;
+  int NN_tagid_;
+
+  TermInstance *term_instance_;
 
   HMMPartOfSpeechTagger();
 
-  // Calculate the emit cost in position
-  void CalculateBucketCost(int position);
+  // Build the beam
+  void BuildBeam(int position);
 
-  // Calculate the transition cost from position - 1 to position
-  void CalculateArcCost(int position);
+  void AddBOSNodeToBeam();
 
-  // Get the tag's id by its text if the tag not exists return -1
-  int GetTagIdByStr(const char *tag_str);
+  void GetBestPOSTagFromBeam(
+      PartOfSpeechTagInstance *part_of_speech_tag_instance);
 
-  // Load the default tag key from configuration file and put in
-  // term_type_emit_tag_
-  void LoadDefaultTags(const Configuration *conf,
-                       const char *key,
-                       int *emit_tag,
-                       Status *status);
+  HMMModel::Emit *GetEmitAtPosition(int position);
 
-  // Get each term's emit tag and save it in term_tags_
-  void BuildEmitTagfForNode(TermInstance *term_instance);
+  void GuessTag(const Node *leftleft_node, 
+                const Node *left_node, 
+                Beam<Node> *beam);
 
   DISALLOW_COPY_AND_ASSIGN(HMMPartOfSpeechTagger);
 };

@@ -27,51 +27,74 @@
 #ifndef SRC_MILKCAT_HMM_MODEL_H_
 #define SRC_MILKCAT_HMM_MODEL_H_
 
+#include <string.h>
 #include "utils/status.h"
 
 namespace milkcat {
 
 class HMMModel {
  public:
-  struct EmitRow;
+  struct Emit;
 
   static HMMModel *New(const char *model_path, Status *status);
+
+  // Create the HMMModel instance from some text model file
+  static HMMModel *NewFromText(const char *trans_model_path, 
+                               const char *emit_model_path,
+                               const char *yset_model_path,
+                               const char *index_path,
+                               Status *status);
   ~HMMModel();
 
   int tag_num() const { return tag_num_; }
 
   // Get Tag's string by its id
-  const char *GetTagStr(int tag_id) const {
+  const char *tag_str(int tag_id) const {
     return tag_str_[tag_id];
   }
 
+  // Get tag-id by string
+  int tag_id(const char *tag_str) const {
+    for (int i = 0; i < tag_num_; ++i) {
+      if (strcmp(tag_str_[i], tag_str) == 0)
+        return i;
+    }
+
+    return -1;
+  }
+
   // Get the emit row (tag, cost) of a term, if no data return nullptr
-  EmitRow *GetEmitRow(int term_id) const {
+  Emit *emit(int term_id) const {
     if (term_id > max_term_id_ || term_id < 0)
-      return NULL;
+      return nullptr;
     else
-      return emit_matrix_[term_id];
+      return emits_[term_id];
   }
 
   // Get the transition cost from left_tag to right_tag
-  double GetTransCost(int left_tag, int right_tag) const {
-    return transition_matrix_[left_tag * tag_num_ + right_tag];
+  float trans_cost(int leftleft_tag, int left_tag, int right_tag) const {
+    return transition_matrix_[leftleft_tag * tag_num_ * tag_num_ +
+                              left_tag * tag_num_ +
+                              right_tag];
   }
 
  private:
-  EmitRow **emit_matrix_;
+  static constexpr int kTagStrLenMax = 16; 
+  Emit **emits_;
   int max_term_id_;
   int tag_num_;
-  char (* tag_str_)[16];
-  double *transition_matrix_;
+  char (* tag_str_)[kTagStrLenMax];
+  float *transition_matrix_;
 
   HMMModel();
 };
 
-struct HMMModel::EmitRow {
+struct HMMModel::Emit {
   int tag;
   float cost;
-  EmitRow *next;
+  Emit *next;
+
+  Emit(int tag, float cost, Emit *next): tag(tag), cost(cost), next(next) {}
 };
 
 }  // namespace milkcat

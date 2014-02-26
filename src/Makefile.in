@@ -124,24 +124,20 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmilkcat_la_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libmilkcat_la_OBJECTS = milkcat/crf_segmenter.lo \
-	milkcat/instance_data.lo \
+am_libmilkcat_la_OBJECTS = common/get_vocabulary.lo \
+	milkcat/bigram_segmenter.lo milkcat/crf_model.lo \
+	milkcat/crf_part_of_speech_tagger.lo milkcat/crf_segmenter.lo \
+	milkcat/crf_tagger.lo milkcat/hmm_model.lo \
+	milkcat/hmm_part_of_speech_tagger.lo milkcat/instance_data.lo \
+	milkcat/libmilkcat.lo milkcat/mixed_segmenter.lo \
 	milkcat/out_of_vocabulary_word_recognition.lo \
-	milkcat/term_instance.lo \
 	milkcat/part_of_speech_tag_instance.lo \
-	milkcat/token_instance.lo milkcat/token_lex.lo \
-	milkcat/tokenizer.lo milkcat/libmilkcat.lo \
-	milkcat/bigram_segmenter.lo \
-	milkcat/crf_part_of_speech_tagger.lo milkcat/crf_model.lo \
-	milkcat/crf_tagger.lo milkcat/configuration.lo \
-	milkcat/hmm_part_of_speech_tagger.lo \
-	milkcat/mixed_part_of_speech_tagger.lo \
-	milkcat/mixed_segmenter.lo milkcat/hmm_model.lo \
-	milkcat/trie_tree.lo utils/utils.lo utils/strlcpy.lo \
-	utils/readable_file.lo utils/writable_file.lo \
-	neko/crf_vocab.lo neko/candidate.lo neko/maxent_classifier.lo \
-	neko/mutual_information.lo neko/final_rank.lo \
-	neko/bigram_anal.lo common/get_vocabulary.lo
+	milkcat/term_instance.lo milkcat/token_instance.lo \
+	milkcat/token_lex.lo milkcat/tokenizer.lo milkcat/trie_tree.lo \
+	neko/bigram_anal.lo neko/candidate.lo neko/crf_vocab.lo \
+	neko/final_rank.lo neko/maxent_classifier.lo \
+	neko/mutual_information.lo utils/readable_file.lo \
+	utils/strlcpy.lo utils/utils.lo utils/writable_file.lo
 libmilkcat_la_OBJECTS = $(am_libmilkcat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -353,75 +349,71 @@ AM_CXXFLAGS = -DMODEL_PATH=\"$(pkgdatadir)/\" -pthread -std=c++11 -fno-rtti \
 ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = milkcat/milkcat.h
 lib_LTLIBRARIES = libmilkcat.la
-libmilkcat_la_SOURCES = milkcat/milkcat_config.h \
+libmilkcat_la_SOURCES = common/get_vocabulary.cc \
+                        common/get_vocabulary.hmilkcat/beam.h \
+                        milkcat/bigram_segmenter.cc \
+                        milkcat/bigram_segmenter.h \
+                        milkcat/crf_model.cc \
+                        milkcat/crf_model.h \
+                        milkcat/crf_part_of_speech_tagger.cc \
+                        milkcat/crf_part_of_speech_tagger.h \
                         milkcat/crf_segmenter.cc \
                         milkcat/crf_segmenter.h \
-                        milkcat/instance_data.h \
+                        milkcat/crf_tagger.cc \
+                        milkcat/crf_tagger.h \
+                        milkcat/darts.h \
+                        milkcat/feature_extractor.h \
+                        milkcat/hmm_model.cc \
+                        milkcat/hmm_model.h \
+                        milkcat/hmm_part_of_speech_tagger.cc \
+                        milkcat/hmm_part_of_speech_tagger.h \
                         milkcat/instance_data.cc \
+                        milkcat/instance_data.h \
+                        milkcat/libmilkcat.cc \
+                        milkcat/libmilkcat.h \
+                        milkcat/milkcat.h \
+                        milkcat/milkcat_config.h \
+                        milkcat/mixed_segmenter.cc \
+                        milkcat/mixed_segmenter.h \
                         milkcat/out_of_vocabulary_word_recognition.cc \
                         milkcat/out_of_vocabulary_word_recognition.h \
+                        milkcat/part_of_speech_tag_instance.cc \
+                        milkcat/part_of_speech_tag_instance.h \
+                        milkcat/part_of_speech_tagger.h \
                         milkcat/term_instance.h \
                         milkcat/term_instance.cc \
-                        milkcat/part_of_speech_tag_instance.h \
-                        milkcat/part_of_speech_tag_instance.cc \
                         milkcat/token_instance.h \
                         milkcat/token_instance.cc \
                         milkcat/token_lex.cc \
                         milkcat/token_lex.h \
                         milkcat/tokenizer.cc \
                         milkcat/tokenizer.h \
-                        milkcat/milkcat.h \
-                        milkcat/libmilkcat.cc \
-                        milkcat/darts.h \
-                        milkcat/milkcat.h \
-                        milkcat/bigram_segmenter.h \
-                        milkcat/bigram_segmenter.cc \
-                        milkcat/feature_extractor.h \
-                        milkcat/crf_part_of_speech_tagger.h \
-                        milkcat/crf_part_of_speech_tagger.cc \
-                        milkcat/crf_model.h \
-                        milkcat/crf_model.cc \
-                        milkcat/crf_tagger.h \
-                        milkcat/crf_tagger.cc \
-                        milkcat/configuration.h \
-                        milkcat/configuration.cc \
-                        milkcat/hmm_part_of_speech_tagger.h \
-                        milkcat/hmm_part_of_speech_tagger.cc \
-                        milkcat/mixed_part_of_speech_tagger.h \
-                        milkcat/mixed_part_of_speech_tagger.cc \
-                        milkcat/static_hashtable.h \
-                        milkcat/segmenter.h \
-                        milkcat/part_of_speech_tagger.h \
-                        milkcat/mixed_segmenter.h \
-                        milkcat/mixed_segmenter.cc \
-                        milkcat/hmm_model.cc \
-                        milkcat/hmm_model.h \
                         milkcat/trie_tree.h \
                         milkcat/trie_tree.cc \
+                        milkcat/segmenter.h \
                         milkcat/static_array.h \
-                        utils/status.h \
-                        utils/utils.cc \
-                        utils/utils.h \
-                        utils/strlcpy.cc \
-                        utils/readable_file.cc \
-                        utils/readable_file.h \
-                        utils/writable_file.cc \
-                        utils/writable_file.h \
-                        neko/crf_vocab.h \
-                        neko/crf_vocab.cc \
+                        milkcat/static_hashtable.h \
+                        neko/bigram_anal.cc \
+                        neko/bigram_anal.h \
                         neko/candidate.cc \
                         neko/candidate.h \
+                        neko/crf_vocab.cc \
+                        neko/crf_vocab.h \
+                        neko/final_rank.cc \
+                        neko/final_rank.h \
                         neko/maxent_classifier.cc \
                         neko/maxent_classifier.h \
                         neko/mutual_information.cc \
                         neko/mutual_information.h \
-                        neko/final_rank.cc \
-                        neko/final_rank.h \
-                        neko/bigram_anal.cc \
-                        neko/bigram_anal.h \
                         neko/utf8.h \
-                        common/get_vocabulary.cc \
-                        common/get_vocabulary.h
+                        utils/readable_file.cc \
+                        utils/readable_file.h \
+                        utils/status.h \
+                        utils/strlcpy.cc \
+                        utils/utils.cc \
+                        utils/utils.h \
+                        utils/writable_file.cc \
+                        utils/writable_file.h
 
 all: all-am
 
@@ -492,49 +484,47 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
-milkcat/$(am__dirstamp):
-	@$(MKDIR_P) milkcat
-	@: > milkcat/$(am__dirstamp)
-milkcat/crf_segmenter.lo: milkcat/$(am__dirstamp)
-milkcat/instance_data.lo: milkcat/$(am__dirstamp)
-milkcat/out_of_vocabulary_word_recognition.lo:  \
-	milkcat/$(am__dirstamp)
-milkcat/term_instance.lo: milkcat/$(am__dirstamp)
-milkcat/part_of_speech_tag_instance.lo: milkcat/$(am__dirstamp)
-milkcat/token_instance.lo: milkcat/$(am__dirstamp)
-milkcat/token_lex.lo: milkcat/$(am__dirstamp)
-milkcat/tokenizer.lo: milkcat/$(am__dirstamp)
-milkcat/libmilkcat.lo: milkcat/$(am__dirstamp)
-milkcat/bigram_segmenter.lo: milkcat/$(am__dirstamp)
-milkcat/crf_part_of_speech_tagger.lo: milkcat/$(am__dirstamp)
-milkcat/crf_model.lo: milkcat/$(am__dirstamp)
-milkcat/crf_tagger.lo: milkcat/$(am__dirstamp)
-milkcat/configuration.lo: milkcat/$(am__dirstamp)
-milkcat/hmm_part_of_speech_tagger.lo: milkcat/$(am__dirstamp)
-milkcat/mixed_part_of_speech_tagger.lo: milkcat/$(am__dirstamp)
-milkcat/mixed_segmenter.lo: milkcat/$(am__dirstamp)
-milkcat/hmm_model.lo: milkcat/$(am__dirstamp)
-milkcat/trie_tree.lo: milkcat/$(am__dirstamp)
-utils/$(am__dirstamp):
-	@$(MKDIR_P) utils
-	@: > utils/$(am__dirstamp)
-utils/utils.lo: utils/$(am__dirstamp)
-utils/strlcpy.lo: utils/$(am__dirstamp)
-utils/readable_file.lo: utils/$(am__dirstamp)
-utils/writable_file.lo: utils/$(am__dirstamp)
-neko/$(am__dirstamp):
-	@$(MKDIR_P) neko
-	@: > neko/$(am__dirstamp)
-neko/crf_vocab.lo: neko/$(am__dirstamp)
-neko/candidate.lo: neko/$(am__dirstamp)
-neko/maxent_classifier.lo: neko/$(am__dirstamp)
-neko/mutual_information.lo: neko/$(am__dirstamp)
-neko/final_rank.lo: neko/$(am__dirstamp)
-neko/bigram_anal.lo: neko/$(am__dirstamp)
 common/$(am__dirstamp):
 	@$(MKDIR_P) common
 	@: > common/$(am__dirstamp)
 common/get_vocabulary.lo: common/$(am__dirstamp)
+milkcat/$(am__dirstamp):
+	@$(MKDIR_P) milkcat
+	@: > milkcat/$(am__dirstamp)
+milkcat/bigram_segmenter.lo: milkcat/$(am__dirstamp)
+milkcat/crf_model.lo: milkcat/$(am__dirstamp)
+milkcat/crf_part_of_speech_tagger.lo: milkcat/$(am__dirstamp)
+milkcat/crf_segmenter.lo: milkcat/$(am__dirstamp)
+milkcat/crf_tagger.lo: milkcat/$(am__dirstamp)
+milkcat/hmm_model.lo: milkcat/$(am__dirstamp)
+milkcat/hmm_part_of_speech_tagger.lo: milkcat/$(am__dirstamp)
+milkcat/instance_data.lo: milkcat/$(am__dirstamp)
+milkcat/libmilkcat.lo: milkcat/$(am__dirstamp)
+milkcat/mixed_segmenter.lo: milkcat/$(am__dirstamp)
+milkcat/out_of_vocabulary_word_recognition.lo:  \
+	milkcat/$(am__dirstamp)
+milkcat/part_of_speech_tag_instance.lo: milkcat/$(am__dirstamp)
+milkcat/term_instance.lo: milkcat/$(am__dirstamp)
+milkcat/token_instance.lo: milkcat/$(am__dirstamp)
+milkcat/token_lex.lo: milkcat/$(am__dirstamp)
+milkcat/tokenizer.lo: milkcat/$(am__dirstamp)
+milkcat/trie_tree.lo: milkcat/$(am__dirstamp)
+neko/$(am__dirstamp):
+	@$(MKDIR_P) neko
+	@: > neko/$(am__dirstamp)
+neko/bigram_anal.lo: neko/$(am__dirstamp)
+neko/candidate.lo: neko/$(am__dirstamp)
+neko/crf_vocab.lo: neko/$(am__dirstamp)
+neko/final_rank.lo: neko/$(am__dirstamp)
+neko/maxent_classifier.lo: neko/$(am__dirstamp)
+neko/mutual_information.lo: neko/$(am__dirstamp)
+utils/$(am__dirstamp):
+	@$(MKDIR_P) utils
+	@: > utils/$(am__dirstamp)
+utils/readable_file.lo: utils/$(am__dirstamp)
+utils/strlcpy.lo: utils/$(am__dirstamp)
+utils/utils.lo: utils/$(am__dirstamp)
+utils/writable_file.lo: utils/$(am__dirstamp)
 
 libmilkcat.la: $(libmilkcat_la_OBJECTS) $(libmilkcat_la_DEPENDENCIES) $(EXTRA_libmilkcat_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(libmilkcat_la_OBJECTS) $(libmilkcat_la_LIBADD) $(LIBS)

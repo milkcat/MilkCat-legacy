@@ -58,103 +58,15 @@ struct BigramSegmenter::Node {
   int term_position;
 };
 
+namespace {
+
 // Compare two Node in weight
-static inline bool NodePtrCmp(const BigramSegmenter::Node *n1,
-                              const BigramSegmenter::Node *n2) {
+static inline bool NodePtrCmp(BigramSegmenter::Node *n1,
+                              BigramSegmenter::Node *n2) {
   return n1->weight < n2->weight;
 }
 
-class BigramSegmenter::NodePool {
- public:
-  explicit NodePool(int capability): nodes_(capability), alloc_index_(0) {
-    for (auto &node : nodes_) node = new Node();
-  }
-
-  ~NodePool() {
-    for (auto &node : nodes_) delete node;
-  }
-
-  // Alloc a node
-  Node *Alloc() {
-    Node *node;
-    if (alloc_index_ == nodes_.size()) {
-      nodes_.push_back(new Node());
-    }
-    return nodes_[alloc_index_++];
-  }
-
-  // Release all node alloced before
-  void ReleaseAll() {
-    alloc_index_ = 0;
-  }
-
- private:
-  std::vector<Node *> nodes_;
-  int alloc_index_;
-};
-
-class BigramSegmenter::Beam {
- public:
-  Beam(int n_best, NodePool *node_pool, int bucket_id):
-      n_best_(n_best),
-      capability_(n_best * 3),
-      bucket_id_(bucket_id),
-      size_(0),
-      node_pool_(node_pool) {
-    nodes_ = new Node *[capability_];
-  }
-
-  ~Beam() {
-    delete[] nodes_;
-  }
-
-  int size() const { return size_; }
-  const Node *node_at(int index) const { return nodes_[index]; }
-
-  // Shrink nodes_ array and remain top n_best elements
-  void Shrink() {
-    if (size_ <= n_best_) return;
-    std::partial_sort(nodes_, nodes_ + n_best_, nodes_ + size_, NodePtrCmp);
-    size_ = n_best_;
-  }
-
-  // Clear all elements in bucket
-  void Clear() {
-    size_ = 0;
-  }
-
-  // Get min node in the bucket
-  const Node *MinimalNode() {
-    return *std::min_element(nodes_, nodes_ + size_, NodePtrCmp);
-  }
-
-  // Add an arc to decode graph
-  void AddArc(const Node *from_node, double weight, int term_id) {
-    nodes_[size_] = node_pool_->Alloc();
-    nodes_[size_]->bucket_id = bucket_id_;
-    nodes_[size_]->term_id = term_id;
-    nodes_[size_]->weight = weight;
-    nodes_[size_]->from_node = from_node;
-
-    // for the begin-of-sentence which from_node == NULL
-    if (from_node != NULL) {
-      nodes_[size_]->term_position = from_node->term_position + 1;
-    } else {
-      nodes_[size_]->term_position = -1;
-    }
-
-    size_++;
-    if (size_ >= capability_) Shrink();
-  }
-
- private:
-  Node **nodes_;
-  int capability_;
-  NodePool *node_pool_;
-  int bucket_id_;
-  int n_best_;
-  int size_;
-};
+}  // namespace
 
 BigramSegmenter::BigramSegmenter(): beam_size_(0),
                                     node_pool_(nullptr),
@@ -183,11 +95,14 @@ BigramSegmenter *BigramSegmenter::New(ModelFactory *model_factory,
   BigramSegmenter *self = new BigramSegmenter();
 
   self->beam_size_ = use_bigram? kDefaultBeamSize: 1;
-  self->node_pool_ = new NodePool(self->beam_size_ * kTokenMax);
+  self->node_pool_ = new NodePool<Node>();
 
   // Initialize the beams_
   for (int i = 0; i < self->beams_.size(); ++i) {
-    self->beams_[i] = new Beam(self->beam_size_, self->node_pool_, i);
+    self->beams_[i] = new Beam<Node>(self->beam_size_,
+                                     self->node_pool_,
+                                     i,
+                                     NodePtrCmp);
   }
 
   self->index_ = model_factory->Index(status);
@@ -311,15 +226,21 @@ int BigramSegmenter::GetTermId(const char *term_str) {
 
 void BigramSegmenter::Segment(TermInstance *term_instance,
                               TokenInstance *token_instance) {
+  Node *new_node = node_pool_->Alloc();
+  new_node->bucket_id = 0;
+  new_node->term_id = 0;
+  new_node->weight = 0;
+  new_node->from_node = nullptr;
+  new_node->term_position = -1;
   // Add begin-of-sentence node
-  beams_[0]->AddArc(nullptr, 0.0, 0);
+  beams_[0]->Add(new_node);
 
   // Strat decoding
   size_t index_node, user_node;
   bool index_flag, user_flag;
   const float *bigram_map_iter;
   double weight, right_cost;
-  const Node *node;
+  const Node *node = nullptr;
   for (int bucket_id = 0; bucket_id < token_instance->size(); ++bucket_id) {
     // Shrink current bucket to ensure node number < n_best
     beams_[bucket_id]->Shrink();
@@ -365,10 +286,14 @@ void BigramSegmenter::Segment(TermInstance *term_instance,
         }
 
         // Add the min_node to decode graph
-        beams_[bucket_id + bucket_count + 1]->AddArc(min_node,
-                                                     min_weight,
-                                                     term_id);
-
+        new_node = node_pool_->Alloc();
+        new_node->bucket_id = bucket_id + bucket_count + 1;
+        new_node->term_id = term_id;
+        new_node->weight = min_weight;
+        new_node->from_node = min_node;
+        new_node->term_position = min_node->term_position + 1;
+        // Add begin-of-sentence node
+        beams_[bucket_id + bucket_count + 1]->Add(new_node);
       } else {
         // One token out-of-vocabulary word should be always put into Decode
         // Graph When no arc to next bucket
@@ -385,8 +310,14 @@ void BigramSegmenter::Segment(TermInstance *term_instance,
             }
           }
 
-          // term_id = 0 for out-of-vocabulary word
-          beams_[bucket_id + 1]->AddArc(min_node, min_weight, 0);
+          new_node = node_pool_->Alloc();
+          new_node->bucket_id = bucket_id + bucket_count + 1;
+          new_node->term_id = 0;
+          new_node->weight = min_weight;
+          new_node->from_node = min_node;
+          new_node->term_position = min_node->term_position + 1;
+          // Add begin-of-sentence node
+          beams_[bucket_id + 1]->Add(new_node);
         }  // end if node count == 0
       }  // end if term_id >= 0
 

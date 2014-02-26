@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <array>
 #include <unordered_set>
+#include "milkcat/beam.h"
 #include "milkcat/darts.h"
 #include "milkcat/milkcat_config.h"
 #include "milkcat/segmenter.h"
@@ -49,12 +50,6 @@ class BigramSegmenter: public Segmenter {
  public:
   // A node in decode graph
   struct Node;
-
-  // A Bucket contains several node
-  class Beam;
-
-  // A pool to alloc and release nodes
-  class NodePool;
 
   // Create the bigram segmenter from a model factory. On success, return an
   // instance of BigramSegmenter. On failed, return nullptr and set status
@@ -95,10 +90,10 @@ class BigramSegmenter: public Segmenter {
   int beam_size_;
 
   // Buckets contain nodes for viterbi decoding
-  std::array<Beam *, kTokenMax + 1> beams_;
+  std::array<Beam<Node> *, kTokenMax + 1> beams_;
 
   // NodePool instance to alloc and release node
-  NodePool *node_pool_;
+  NodePool<Node> *node_pool_;
 
   // Costs for unigram and bigram.
   const StaticArray<float> *unigram_cost_;
