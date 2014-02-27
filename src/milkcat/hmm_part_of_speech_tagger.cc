@@ -35,12 +35,20 @@
 #include "milkcat/term_instance.h"
 #include "utils/utils.h"
 
+#define LOG
+
 namespace milkcat {
 
 struct HMMPartOfSpeechTagger::Node {
   int tag;
   double cost;
   const HMMPartOfSpeechTagger::Node *prevoius_node;
+
+  inline void set_value(int tag, int cost, const Node *prevoius_node) {
+    this->tag = tag;
+    this->cost = cost;
+    this->prevoius_node = prevoius_node;
+  } 
 };
 
 HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): model_(nullptr),
@@ -162,6 +170,8 @@ HMMModel::Emit *HMMPartOfSpeechTagger::GetEmitAtPosition(int position) {
     }
   } 
 
+  if (emit == nullptr) emit = PU_emit_;
+
   return emit;
 }
 
@@ -232,8 +242,8 @@ void HMMPartOfSpeechTagger::BuildBeam(int position) {
   // Beam has two BOS node at 0 and 1
   int beam_position = position + 2;
 
-  HMMModel::Emit *emit = GetEmitAtPosition(position), *emit_node;
-  const Node *leftleft_node, *left_node, *node;
+  HMMModel::Emit *emit = GetEmitAtPosition(position);
+  const Node *leftleft_node, *left_node;
   int leftleft_tag, left_tag, tag;
 
   Beam<Node> *previous_beam = beams_[beam_position - 1];
@@ -242,42 +252,52 @@ void HMMPartOfSpeechTagger::BuildBeam(int position) {
   previous_beam->Shrink();
   beam->Clear();
 
-  for (int i = 0; i < previous_beam->size(); ++i) {
-    left_node = previous_beam->node_at(i);
-    leftleft_node = left_node->prevoius_node;
 
-    leftleft_tag = leftleft_node->tag;
-    left_tag = left_node->tag;
+  while (emit) {
+    double min_cost = 1e38;
+    const Node *min_left_node;
+    for (int i = 0; i < previous_beam->size(); ++i) {
+      left_node = previous_beam->node_at(i);
+      leftleft_node = left_node->prevoius_node;
 
-    // If current word has emit information or current word is punction or 
-    // symbol
-    emit_node = emit;
-    if (emit_node) {
-      while (emit_node) {
-        tag = emit_node->tag;
-        double trans_cost = model_->trans_cost(leftleft_tag, left_tag, tag);
-        double emit_cost = emit_node->cost;
-        Node *node = node_pool_->Alloc();
-        node->tag = tag;
-        node->cost = left_node->cost + trans_cost + emit_cost;
-        node->prevoius_node = left_node;
-        beam->Add(node);
+      leftleft_tag = leftleft_node->tag;
+      left_tag = left_node->tag;
+
+      // If current word has emit information or current word is punction or 
+      // symbol
+
+      double trans_cost = model_->trans_cost(leftleft_tag, 
+                                             left_tag, 
+                                             emit->tag);
+      double emit_cost = emit->cost;
+      double cost = left_node->cost + trans_cost + emit_cost;
+      if (cost < min_cost) {
+        printf("find min cost %lf\n", cost);
+        min_cost = cost;
+        min_left_node = left_node;
+      }
 
 #ifdef LOG
-        printf("node added %s %s cost = %lf trans_cost = %lf emit_cost = %lf\n",
-               term_instance_->term_text_at(position),
-               model_->tag_str(tag), 
-               trans_cost + emit_cost,
-               trans_cost,
-               emit_cost);
+      printf("%s %s %s %s"
+             "total_cost = %lf cost = %lf trans_cost = %lf emit_cost = %lf\n",
+             term_instance_->term_text_at(position),
+             model_->tag_str(leftleft_tag), 
+             model_->tag_str(left_tag), 
+             model_->tag_str(emit->tag),
+             cost,
+             trans_cost + emit_cost,
+             trans_cost,
+             emit_cost);
 #endif
-
-        emit_node = emit_node->next;
-      }
-    } else {
-      GuessTag(leftleft_node, left_node, beam);
     }
+
+    Node *node = node_pool_->Alloc();
+    node->set_value(emit->tag, min_cost, min_left_node);
+    beam->Add(node); 
+
+    emit = emit->next;
   }
+
 }
 
 }  // namespace milkcat
