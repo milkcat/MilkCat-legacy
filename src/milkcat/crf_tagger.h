@@ -66,6 +66,13 @@ class CRFTagger {
     TagRange(feature_extractor, 0, feature_extractor->size(), -1, -1);
   }
 
+  // Get the tag probability at one position in instance, only use the unigram
+  // feature write the result into probability (probability of tag at
+  // probability[tag]).
+  void ProbabilityAtPosition(FeatureExtractor *feature_extractor, 
+                             int position,
+                             double *probability);
+
   // Get the result tag at position, position starts from 0
   int GetTagAt(int position) {
     return result_[position];

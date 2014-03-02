@@ -28,6 +28,7 @@
 #define SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_
 
 #include "milkcat/beam.h"
+#include "milkcat/crf_part_of_speech_tagger.h"
 #include "milkcat/darts.h"
 #include "milkcat/hmm_model.h"
 #include "milkcat/libmilkcat.h"
@@ -41,6 +42,45 @@ namespace milkcat {
 class PartOfSpeechTagInstance;
 class TermInstance;
 class Configuration;
+
+class CRFEmitGetter {
+ public:
+  static CRFEmitGetter *New(ModelFactory *model_factory, Status *status);
+  ~CRFEmitGetter();
+
+  // Get the emit link list of term specified by position in term_instance
+  // using CRF model. The emit nodes alloced by this function should release by
+  // calling CRFEmitGetter::ReleaseAllEmits()
+  HMMModel::Emit *GetEmits(TermInstance *term_instance, int position);
+
+  // Release all emit nodes alloced by GetEmits
+  void ReleaseAllEmits() { pool_top_ = 0; }
+
+ private:
+  std::vector<HMMModel::Emit *> emit_pool_;
+  int pool_top_;
+  PartOfSpeechFeatureExtractor *feature_extractor_;
+
+  CRFPartOfSpeechTagger *crf_part_of_speech_tagger_;
+  CRFTagger *crf_tagger_;
+
+  double *probabilities_;
+  int *crf_to_hmm_tag_;
+  int crf_tag_num_;
+
+  CRFEmitGetter();
+
+  HMMModel::Emit *AllocEmit() {
+    if (pool_top_ < emit_pool_.size()) {
+      return emit_pool_[pool_top_++];
+    } else {
+      HMMModel::Emit *emit = new HMMModel::Emit(0, 0.0, nullptr);
+      pool_top_++;
+      emit_pool_.push_back(emit);
+      return emit;
+    }
+  }
+};
 
 class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
  public:
@@ -63,6 +103,7 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
 
   const HMMModel *model_;
   const TrieTree *index_;
+  CRFEmitGetter *crf_emit_getter_;
 
   HMMModel::Emit *PU_emit_;
   HMMModel::Emit *DT_emit_;

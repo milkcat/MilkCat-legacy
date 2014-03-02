@@ -33,58 +33,47 @@
 
 namespace milkcat {
 
-class PartOfSpeechFeatureExtractor: public FeatureExtractor {
- public:
-  void set_term_instance(const TermInstance *term_instance) {
-    term_instance_ = term_instance;
+void PartOfSpeechFeatureExtractor::ExtractFeatureAt(
+    size_t position,
+    char (*feature_list)[kFeatureLengthMax],
+    int list_size) {
+  assert(list_size == 3);
+  int term_type = term_instance_->term_type_at(position);
+  const char *term_text = term_instance_->term_text_at(position);
+  size_t term_length = strlen(term_text);
+
+  switch (term_type) {
+   case TermInstance::kChineseWord:
+    // term itself
+    strlcpy(feature_list[0], term_text, kFeatureLengthMax);
+
+    // first character of the term
+    strlcpy(feature_list[1], term_text, 4);
+
+    // last character of the term
+    strlcpy(feature_list[2], term_text + term_length - 3, kFeatureLengthMax);
+    break;
+
+   case TermInstance::kEnglishWord:
+   case TermInstance::kSymbol:
+    strlcpy(feature_list[0], "A", kFeatureLengthMax);
+    strlcpy(feature_list[1], "A", kFeatureLengthMax);
+    strlcpy(feature_list[2], "A", kFeatureLengthMax);
+    break;
+
+   case TermInstance::kNumber:
+    strlcpy(feature_list[0], "1", kFeatureLengthMax);
+    strlcpy(feature_list[1], "1", kFeatureLengthMax);
+    strlcpy(feature_list[2], "1", kFeatureLengthMax);
+    break;
+
+   default:
+    strlcpy(feature_list[0], ".", kFeatureLengthMax);
+    strlcpy(feature_list[1], ".", kFeatureLengthMax);
+    strlcpy(feature_list[2], ".", kFeatureLengthMax);
+    break;
   }
-  size_t size() const { return term_instance_->size(); }
-
-  void ExtractFeatureAt(size_t position,
-                        char (*feature_list)[kFeatureLengthMax],
-                        int list_size) {
-    assert(list_size == 3);
-    int term_type = term_instance_->term_type_at(position);
-    const char *term_text = term_instance_->term_text_at(position);
-    size_t term_length = strlen(term_text);
-
-    switch (term_type) {
-     case TermInstance::kChineseWord:
-      // term itself
-      strlcpy(feature_list[0], term_text, kFeatureLengthMax);
-
-      // first character of the term
-      strlcpy(feature_list[1], term_text, 4);
-
-      // last character of the term
-      strlcpy(feature_list[2], term_text + term_length - 3, kFeatureLengthMax);
-      break;
-
-     case TermInstance::kEnglishWord:
-     case TermInstance::kSymbol:
-      strlcpy(feature_list[0], "A", kFeatureLengthMax);
-      strlcpy(feature_list[1], "A", kFeatureLengthMax);
-      strlcpy(feature_list[2], "A", kFeatureLengthMax);
-      break;
-
-     case TermInstance::kNumber:
-      strlcpy(feature_list[0], "1", kFeatureLengthMax);
-      strlcpy(feature_list[1], "1", kFeatureLengthMax);
-      strlcpy(feature_list[2], "1", kFeatureLengthMax);
-      break;
-
-     default:
-      strlcpy(feature_list[0], ".", kFeatureLengthMax);
-      strlcpy(feature_list[1], ".", kFeatureLengthMax);
-      strlcpy(feature_list[2], ".", kFeatureLengthMax);
-      break;
-    }
-  }
-
- private:
-  const TermInstance *term_instance_;
-};
-
+}
 
 
 CRFPartOfSpeechTagger::CRFPartOfSpeechTagger(const CRFModel *model) {

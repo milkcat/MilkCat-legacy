@@ -33,6 +33,7 @@
 
 #include "milkcat/crf_tagger.h"
 #include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -106,6 +107,26 @@ void CRFTagger::TagRange(FeatureExtractor *feature_extractor,
 
   Viterbi(begin, end, begin_tag, end_tag);
   FindBestResult(begin, end, end_tag);
+}
+
+void CRFTagger::ProbabilityAtPosition(FeatureExtractor *feature_extractor, 
+                                      int position,
+                                      double *probability) {
+  feature_extractor_ = feature_extractor;
+  ClearFeatureCache();
+  ClearBucket(position);
+
+  CalculateBucketCost(position);
+
+  // the weight value is in buckets_[position]
+  double sum = 0;
+  for (int tag = 0; tag < model_->GetTagNumber(); ++tag) {
+    probability[tag] = exp(buckets_[position][tag].cost);
+    sum += probability[tag];
+  }
+  for (int tag = 0; tag < model_->GetTagNumber(); ++tag) {
+    probability[tag] /= sum;
+  }
 }
 
 void CRFTagger::Viterbi(int begin, int end, int begin_tag, int end_tag) {

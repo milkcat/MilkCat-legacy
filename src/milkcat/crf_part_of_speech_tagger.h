@@ -38,13 +38,28 @@
 
 namespace milkcat {
 
-class FeatureExtractor;
-class PartOfSpeechFeatureExtractor;
+class PartOfSpeechFeatureExtractor: public FeatureExtractor {
+ public:
+  void set_term_instance(const TermInstance *term_instance) {
+    term_instance_ = term_instance;
+  }
+  size_t size() const { return term_instance_->size(); }
+
+  void ExtractFeatureAt(size_t position,
+                        char (*feature_list)[kFeatureLengthMax],
+                        int list_size) override;
+
+ private:
+  const TermInstance *term_instance_;
+};
+
 
 class CRFPartOfSpeechTagger: public PartOfSpeechTagger {
  public:
   explicit CRFPartOfSpeechTagger(const CRFModel *model);
   ~CRFPartOfSpeechTagger();
+
+  CRFTagger *crf_tagger() const { return crf_tagger_; }
 
   // Tag the TermInstance and put the result to PartOfSpeechTagInstance
   void Tag(PartOfSpeechTagInstance *part_of_speech_tag_instance,
