@@ -100,16 +100,12 @@ HMMModel::Emit *CRFEmitGetter::GetEmits(TermInstance *term_instance,
   crf_tagger_->ProbabilityAtPosition(feature_extractor_,
                                      position,
                                      probabilities_);
-
-#ifdef LOG
-  printf("get_emits: %s\n", term_instance->term_text_at(position));
-#endif
   
   double max_probability = *std::max_element(probabilities_,
                                              probabilities_ + crf_tag_num_);
   HMMModel::Emit *emit = nullptr, *p;
   for (int crf_tag = 0; crf_tag < crf_tag_num_; ++crf_tag) {
-    if (probabilities_[crf_tag] > 0.1 * max_probability) {
+    if (probabilities_[crf_tag] > 0.2 * max_probability) {
       int hmm_tag = crf_to_hmm_tag_[crf_tag];
       if (hmm_tag < 0) continue;
 
@@ -140,7 +136,8 @@ HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): model_(nullptr),
                                                 node_pool_(nullptr),
                                                 index_(nullptr),
                                                 PU_emit_(nullptr),
-                                                DT_emit_(nullptr),
+                                                CD_emit_(nullptr),
+                                                NN_emit_(nullptr),
                                                 term_instance_(nullptr),
                                                 crf_emit_getter_(nullptr) {
   for (int i = 0; i < kMaxBeams; ++i) {
@@ -155,8 +152,11 @@ HMMPartOfSpeechTagger::~HMMPartOfSpeechTagger() {
   delete PU_emit_;
   PU_emit_ = nullptr;
 
-  delete DT_emit_;
-  DT_emit_ = nullptr;
+  delete CD_emit_;
+  CD_emit_ = nullptr;
+
+  delete NN_emit_;
+  NN_emit_ = nullptr;
 
   delete crf_emit_getter_;
   crf_emit_getter_ = nullptr;
@@ -213,7 +213,8 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(
                                                                 status);
 
   if (status->ok()) self->PU_emit_ = NewEmitFromTag("PU", self->model_, status);
-  if (status->ok()) self->DT_emit_ = NewEmitFromTag("DT", self->model_, status);
+  if (status->ok()) self->CD_emit_ = NewEmitFromTag("CD", self->model_, status);
+  if (status->ok()) self->NN_emit_ = NewEmitFromTag("NN", self->model_, status);
 
   if (status->ok()) {
     self->BOS_tagid_ = self->model_->tag_id("BOS");
@@ -257,18 +258,19 @@ HMMModel::Emit *HMMPartOfSpeechTagger::GetEmitAtPosition(int position) {
         emit = PU_emit_;
         break;
       case TermInstance::kNumber:
-        emit = DT_emit_;
+        emit = CD_emit_;
+        break;
+      case TermInstance::kEnglishWord:
+        emit = NN_emit_;
         break;
     }
   } 
 
-  if (emit == nullptr) {
-    if (crf_emit_getter_) {
+  if (emit == nullptr && crf_emit_getter_) {
       emit = crf_emit_getter_->GetEmits(term_instance_, position);
-    } else {
-      emit = PU_emit_;
-    }
   }
+
+  if (emit == nullptr) emit = NN_emit_;
 
   return emit;
 }
@@ -321,25 +323,12 @@ void HMMPartOfSpeechTagger::Tag(
   node_pool_->ReleaseAll();
 }
 
-void HMMPartOfSpeechTagger::GuessTag(const Node *leftleft_node, 
-                                     const Node *left_node,
-                                     Beam<Node> *beam) {
-  int leftleft_tag = leftleft_node->tag, 
-      left_tag = left_node->tag;
-  Node *node = nullptr;
-
-  node = node_pool_->Alloc();
-  node->tag = NN_tagid_;
-  node->cost = left_node->cost;
-  node->prevoius_node = left_node;
-  beam->Add(node);
-}
-
 void HMMPartOfSpeechTagger::BuildBeam(int position) {
   // Beam has two BOS node at 0 and 1
   int beam_position = position + 2;
 
   HMMModel::Emit *emit = GetEmitAtPosition(position);
+
   const Node *leftleft_node, *left_node;
   int leftleft_tag, left_tag, tag;
 
@@ -349,10 +338,11 @@ void HMMPartOfSpeechTagger::BuildBeam(int position) {
   previous_beam->Shrink();
   beam->Clear();
 
-
+  double min_cost;
+  const Node *min_left_node;
   while (emit) {
-    double min_cost = 1e38;
-    const Node *min_left_node;
+    min_cost = 1e38;
+    min_left_node = nullptr;
     for (int i = 0; i < previous_beam->size(); ++i) {
       left_node = previous_beam->node_at(i);
       leftleft_node = left_node->prevoius_node;

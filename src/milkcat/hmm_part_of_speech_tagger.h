@@ -106,7 +106,8 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   CRFEmitGetter *crf_emit_getter_;
 
   HMMModel::Emit *PU_emit_;
-  HMMModel::Emit *DT_emit_;
+  HMMModel::Emit *CD_emit_;
+  HMMModel::Emit *NN_emit_;
 
   int BOS_tagid_;
   int NN_tagid_;
@@ -124,10 +125,6 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
       PartOfSpeechTagInstance *part_of_speech_tag_instance);
 
   HMMModel::Emit *GetEmitAtPosition(int position);
-
-  void GuessTag(const Node *leftleft_node, 
-                const Node *left_node, 
-                Beam<Node> *beam);
 
   DISALLOW_COPY_AND_ASSIGN(HMMPartOfSpeechTagger);
 };
