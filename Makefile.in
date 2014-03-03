@@ -78,7 +78,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = milkcat$(EXEEXT) neko$(EXEEXT) mc_model$(EXEEXT)
+bin_PROGRAMS = milkcat$(EXEEXT) neko$(EXEEXT) mctools$(EXEEXT)
 subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
@@ -106,9 +106,9 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_mc_model_OBJECTS = src/mk_model.$(OBJEXT)
-mc_model_OBJECTS = $(am_mc_model_OBJECTS)
-mc_model_DEPENDENCIES = src/libmilkcat.la
+am_mctools_OBJECTS = src/mctools.$(OBJEXT)
+mctools_OBJECTS = $(am_mctools_OBJECTS)
+mctools_DEPENDENCIES = src/libmilkcat.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -170,8 +170,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(mc_model_SOURCES) $(milkcat_SOURCES) $(neko_SOURCES)
-DIST_SOURCES = $(mc_model_SOURCES) $(milkcat_SOURCES) $(neko_SOURCES)
+SOURCES = $(mctools_SOURCES) $(milkcat_SOURCES) $(neko_SOURCES)
+DIST_SOURCES = $(mctools_SOURCES) $(milkcat_SOURCES) $(neko_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -387,8 +387,8 @@ milkcat_SOURCES = src/main.c
 milkcat_LDADD = src/libmilkcat.la
 neko_SOURCES = src/neko_main.cc
 neko_LDADD = src/libmilkcat.la
-mc_model_SOURCES = src/mk_model.cc 
-mc_model_LDADD = src/libmilkcat.la
+mctools_SOURCES = src/mctools.cc 
+mctools_LDADD = src/libmilkcat.la
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -495,11 +495,11 @@ clean-binPROGRAMS:
 src/$(am__dirstamp):
 	@$(MKDIR_P) src
 	@: > src/$(am__dirstamp)
-src/mk_model.$(OBJEXT): src/$(am__dirstamp)
+src/mctools.$(OBJEXT): src/$(am__dirstamp)
 
-mc_model$(EXEEXT): $(mc_model_OBJECTS) $(mc_model_DEPENDENCIES) $(EXTRA_mc_model_DEPENDENCIES) 
-	@rm -f mc_model$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(mc_model_OBJECTS) $(mc_model_LDADD) $(LIBS)
+mctools$(EXEEXT): $(mctools_OBJECTS) $(mctools_DEPENDENCIES) $(EXTRA_mctools_DEPENDENCIES) 
+	@rm -f mctools$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(mctools_OBJECTS) $(mctools_LDADD) $(LIBS)
 src/main.$(OBJEXT): src/$(am__dirstamp)
 
 milkcat$(EXEEXT): $(milkcat_OBJECTS) $(milkcat_DEPENDENCIES) $(EXTRA_milkcat_DEPENDENCIES) 

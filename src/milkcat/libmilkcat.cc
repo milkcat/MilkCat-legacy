@@ -285,12 +285,8 @@ const CRFModel *ModelFactory::CRFPosModel(Status *status) {
 const HMMModel *ModelFactory::HMMPosModel(Status *status) {
   mutex.lock();
   if (hmm_pos_model_ == NULL) {
-    std::string index_path = model_dir_path_ + UNIGRAM_INDEX;
-    hmm_pos_model_ = HMMModel::NewFromText("trans.txt", 
-                                           "emit.txt",
-                                           "y_set.txt",
-                                           index_path.c_str(),
-                                           status);
+    std::string model_path = model_dir_path_ + HMM_PART_OF_SPEECH_MODEL;
+    hmm_pos_model_ = HMMModel::New(model_path.c_str(), status);
   }
   mutex.unlock();
   return hmm_pos_model_;

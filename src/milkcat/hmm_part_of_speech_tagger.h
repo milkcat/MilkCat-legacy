@@ -24,6 +24,13 @@
 // hmm_part_of_speech_tagger.h --- Created at 2013-11-08
 //
 
+// Use the second order Hidden Markov Model (TnT Model) for tagging
+// see also:
+//     TnT -- A Statistical Part-of-Speech Tagger
+//     http://aclweb.org/anthology//A/A00/A00-1031.pdf
+// 
+// Use CRF model to get emit probabilities of OOV words
+
 #ifndef SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_
 #define SRC_MILKCAT_HMM_PART_OF_SPEECH_TAGGER_H_
 
@@ -35,6 +42,7 @@
 #include "milkcat/milkcat_config.h"
 #include "milkcat/part_of_speech_tagger.h"
 #include "milkcat/trie_tree.h"
+#include "utils/status.h"
 #include "utils/utils.h"
 
 namespace milkcat {
@@ -63,6 +71,8 @@ class CRFEmitGetter {
 
   CRFPartOfSpeechTagger *crf_part_of_speech_tagger_;
   CRFTagger *crf_tagger_;
+
+  const HMMModel *hmm_model_;
 
   double *probabilities_;
   int *crf_to_hmm_tag_;
@@ -109,10 +119,16 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
   HMMModel::Emit *CD_emit_;
   HMMModel::Emit *NN_emit_;
 
+  // Possible emits for OOV words
+  HMMModel::Emit *oov_emits_;
+
   int BOS_tagid_;
   int NN_tagid_;
 
   TermInstance *term_instance_;
+
+  // Initialize the emit nodes in this class such as PU_emit_ or oov_emits_
+  static void InitEmit(HMMPartOfSpeechTagger *self, Status *status);
 
   HMMPartOfSpeechTagger();
 

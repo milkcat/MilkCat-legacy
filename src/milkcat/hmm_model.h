@@ -28,6 +28,7 @@
 #define SRC_MILKCAT_HMM_MODEL_H_
 
 #include <string.h>
+#include <unordered_map>
 #include "utils/status.h"
 
 namespace milkcat {
@@ -37,6 +38,9 @@ class HMMModel {
   struct Emit;
 
   static HMMModel *New(const char *model_path, Status *status);
+
+  // Save the model to file specified by model_path
+  void Save(const char *model_path, Status *status);
 
   // Create the HMMModel instance from some text model file
   static HMMModel *NewFromText(const char *trans_model_path, 
@@ -78,15 +82,38 @@ class HMMModel {
                               right_tag];
   }
 
+  // Get the cost of the probability of single tag
+  float tag_cost(int tag_id) const { return tag_cost_[tag_id]; }
+
  private:
-  static constexpr int kTagStrLenMax = 16; 
+  static constexpr int kTagStrLenMax = 16;
   Emit **emits_;
   int max_term_id_;
+  int emit_num_;
   int tag_num_;
   char (* tag_str_)[kTagStrLenMax];
   float *transition_matrix_;
+  float *tag_cost_;
 
   HMMModel();
+
+  static void LoadTransFromText(
+      HMMModel *self,
+      const char *trans_model_path,
+      const std::unordered_map<std::string, int> &y_tag,
+      Status *status);
+
+  static void LoadEmitFromText(
+      HMMModel *self,
+      const char *emit_model_path,
+      const char *index_path,
+      const std::unordered_map<std::string, int> &y_tag,
+      Status *status);
+
+  static std::unordered_map<std::string, int> 
+  LoadYTagFromText(HMMModel *self,
+                   const char *emit_model_path,
+                   Status *status);
 };
 
 struct HMMModel::Emit {

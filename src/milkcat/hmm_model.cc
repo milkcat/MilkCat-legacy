@@ -29,15 +29,28 @@
 //     TnT -- A Statistical Part-of-Speech Tagger
 //     http://aclweb.org/anthology//A/A00/A00-1031.pdf
 
+// HMMModel data file struct
+// -------------------------
+// int32_t kHmmModelMagicNumber
+// int32_t tag_num
+// int32_t max_termid
+// int32_t emit_num
+// char[kTagStrLenMax * tag_num] tag_str
+// float[tag_num] tag_cost
+// float[tag_num ^ 3] transition_matrix
+// HMMEmitRecord[emit_num] emits
+
 #include "milkcat/hmm_model.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <string>
 #include <unordered_map>
+#include "milkcat/milkcat_config.h"
 #include "milkcat/trie_tree.h"
 #include "utils/utils.h"
 #include "utils/readable_file.h"
+#include "utils/writable_file.h"
 
 namespace milkcat {
 
@@ -53,20 +66,23 @@ HMMModel *HMMModel::New(const char *model_path, Status *status) {
   HMMModel *self = new HMMModel();
   ReadableFile *fd = ReadableFile::New(model_path, status);
 
-  int32_t magic_number;
+  int32_t magic_number = 0;
   if (status->ok()) fd->ReadValue<int32_t>(&magic_number, status);
 
-  if (magic_number != 0x3322)
+  LOG_IF(status->ok(), "Magic number is %d\n", magic_number);
+
+  if (magic_number != kHmmModelMagicNumber) 
     *status = Status::Corruption(model_path);
 
-  int32_t tag_num;
-  if (status->ok()) fd->ReadValue<int32_t>(&tag_num, status);
+  if (status->ok()) fd->ReadValue<int32_t>(&(self->tag_num_), status);
+  if (status->ok()) fd->ReadValue<int32_t>(&(self->max_term_id_), status);
 
-  int32_t max_term_id;
-  if (status->ok()) fd->ReadValue<int32_t>(&max_term_id, status);
-
-  int32_t emit_num;
+  int tag_num = self->tag_num_;
+  int32_t emit_num = 0;
   if (status->ok()) fd->ReadValue<int32_t>(&emit_num, status);
+
+  LOG_IF(status->ok(), "Tag number is %d\n", tag_num);
+  LOG_IF(status->ok(), "Emit number is %d\n", emit_num);
 
   self->tag_str_ = reinterpret_cast<char (*)[kTagStrLenMax]>(
       new char[kTagStrLenMax * tag_num]);
@@ -74,15 +90,20 @@ HMMModel *HMMModel::New(const char *model_path, Status *status) {
     fd->Read(self->tag_str_[i], 16, status);
   }
 
-  self->transition_matrix_ = new float[tag_num * tag_num];
+  if (status->ok()) {
+    self->tag_cost_ = new float[tag_num];
+    fd->Read(self->tag_cost_, sizeof(float) * tag_num, status);
+  }
+  
+  self->transition_matrix_ = new float[tag_num * tag_num * tag_num];
   float f_weight;
-  for (int i = 0; i < tag_num * tag_num && status->ok(); ++i) {
+  for (int i = 0; i < tag_num * tag_num * tag_num && status->ok(); ++i) {
     fd->ReadValue<float>(&f_weight, status);
     self->transition_matrix_[i] = f_weight;
   }
 
-  self->emits_ = new Emit *[max_term_id + 1];
-  memset(self->emits_, 0, sizeof(Emit *) * (max_term_id + 1));
+  self->emits_ = new Emit *[self->max_term_id_ + 1];
+  memset(self->emits_, 0, sizeof(Emit *) * (self->max_term_id_ + 1));
   HMMEmitRecord emit_record;
   Emit *emit_node;
   for (int i = 0; i < emit_num && status->ok(); ++i) {
@@ -93,41 +114,39 @@ HMMModel *HMMModel::New(const char *model_path, Status *status) {
     self->emits_[emit_record.term_id] = emit_node;
   }
 
+  LOG_IF(status->ok(), "File size: %ld, Tell: %ld\n", fd->Size(), fd->Tell());
+
   if (status->ok() && fd->Tell() != fd->Size())
     *status = Status::Corruption(model_path);
-
-  self->tag_num_ = tag_num;
-  self->max_term_id_ = max_term_id;
 
   delete fd;
   if (!status->ok()) {
     delete self;
-    return NULL;
-
+    return nullptr;
   } else {
     return self;
   }
 }
 
-// Create the HMMModel instance from some text model file
-HMMModel *HMMModel::NewFromText(const char *trans_model_path, 
-                                const char *emit_model_path,
-                                const char *yset_model_path,
-                                const char *index_path,
-                                Status *status) {
-  char buff[1024];
-  HMMModel *self = new HMMModel();
-
+std::unordered_map<std::string, int>
+HMMModel::LoadYTagFromText(HMMModel *self,
+                           const char *yset_model_path,
+                           Status *status) {
+  char buff[1024];  
+  char tagstr[1024] = "\0";
+  double cost = 0;
 
   // Get the y-tag set from file
   std::unordered_map<std::string, int> y_tag;
+  std::vector<float> tag_cost;
   ReadableFile *fd = ReadableFile::New(yset_model_path, status);
   while (status->ok() && !fd->Eof()) {
     fd->ReadLine(buff, sizeof(buff), status);
     if (status->ok()) {
       // Remove the LF character
-      trim(buff);
-      y_tag.emplace(buff, y_tag.size());
+      sscanf(buff, "%s %lf", tagstr, &cost);
+      y_tag.emplace(tagstr, y_tag.size());
+      tag_cost.push_back(static_cast<float>(cost));
     }
   }
   delete fd;
@@ -140,16 +159,30 @@ HMMModel *HMMModel::NewFromText(const char *trans_model_path,
     }
     self->tag_num_ = y_tag.size();
 
-    int trans_matrix_size = self->tag_num_ * self->tag_num_ * self->tag_num_;
-    self->transition_matrix_ = new float[trans_matrix_size];
+    self->tag_cost_ = new float[self->tag_num_];
+    for (int i = 0; i < self->tag_num_; ++i)
+      self->tag_cost_[i] = tag_cost[i];
   }
 
-  // Get the transition data from trans_model file
-  fd = nullptr;
+  return y_tag;
+}
+
+void HMMModel::LoadTransFromText(
+    HMMModel *self,
+    const char *trans_model_path,
+    const std::unordered_map<std::string, int> &y_tag,
+    Status *status) {
+  char buff[1024];
   char leftleft_tagstr[1024] = "\0",
        left_tagstr[1024] = "\0",
        tagstr[1024] = "\0";
   double cost = 0;
+
+  int trans_matrix_size = self->tag_num_ * self->tag_num_ * self->tag_num_;
+  self->transition_matrix_ = new float[trans_matrix_size];  
+
+  // Get the transition data from trans_model file
+  ReadableFile *fd = nullptr;
   decltype(y_tag.begin()) it_leftleft, it_left, it_curr;
   if (status->ok()) fd = ReadableFile::New(trans_model_path, status);
   while (status->ok() && !fd->Eof()) {
@@ -190,9 +223,20 @@ HMMModel *HMMModel::NewFromText(const char *trans_model_path,
     }
   }
   delete fd;
+}
+
+void HMMModel::LoadEmitFromText(
+    HMMModel *self,
+    const char *emit_model_path,
+    const char *index_path,
+    const std::unordered_map<std::string, int> &y_tag,
+    Status *status) {
+  char buff[1024];
+  char tagstr[1024] = "\0";
+  double cost = 0;
 
   // Get emit data from file
-  fd = nullptr;
+  ReadableFile *fd = nullptr;
   TrieTree *index = nullptr;
   std::unordered_map<int, Emit *> emit_map;
   char word[1024] = "\0";
@@ -200,7 +244,9 @@ HMMModel *HMMModel::NewFromText(const char *trans_model_path,
   if (status->ok()) fd = ReadableFile::New(emit_model_path, status);
 
   self->max_term_id_ = 0;
+  self->emit_num_ = 0;
   int term_id;
+  decltype(y_tag.begin()) it_curr;
   while (status->ok() && !fd->Eof()) {
     fd->ReadLine(buff, sizeof(buff), status);
     if (status->ok()) {
@@ -236,8 +282,11 @@ HMMModel *HMMModel::NewFromText(const char *trans_model_path,
                                      next);
       }
     }
+
+    self->emit_num_++;
   }
   delete fd;
+  delete index;
 
   if (status->ok()) {
     self->emits_ = new Emit *[self->max_term_id_ + 1];
@@ -246,8 +295,22 @@ HMMModel *HMMModel::NewFromText(const char *trans_model_path,
       self->emits_[x.first] = x.second;
     }
   }
+}
 
-  delete index;
+// Create the HMMModel instance from some text model file
+HMMModel *HMMModel::NewFromText(const char *trans_model_path, 
+                                const char *emit_model_path,
+                                const char *yset_model_path,
+                                const char *index_path,
+                                Status *status) {
+  HMMModel *self = new HMMModel();
+  auto y_tag = LoadYTagFromText(self, yset_model_path, status);
+
+  if (status->ok())
+    LoadTransFromText(self, trans_model_path, y_tag, status);
+  if (status->ok())
+    LoadEmitFromText(self, emit_model_path, index_path, y_tag, status);
+
   if (status->ok()) {
     return self;
   } else {
@@ -256,8 +319,49 @@ HMMModel *HMMModel::NewFromText(const char *trans_model_path,
   }
 }
 
+void HMMModel::Save(const char *model_path, Status *status) {
+  WritableFile *fd = WritableFile::New(model_path, status);
 
-HMMModel::HMMModel(): emits_(nullptr),
+  if (status->ok()) fd->WriteValue<int32_t>(kHmmModelMagicNumber, status);
+  if (status->ok()) fd->WriteValue<int32_t>(tag_num_, status);
+  if (status->ok()) fd->WriteValue<int32_t>(max_term_id_, status);
+  if (status->ok()) fd->WriteValue<int32_t>(emit_num_, status);
+
+  if (status->ok()) fd->Write(tag_str_, kTagStrLenMax * tag_num_, status);
+  if (status->ok()) fd->Write(tag_cost_, sizeof(float) * tag_num_, status);
+  if (status->ok()) {
+    fd->Write(transition_matrix_, 
+              sizeof(float) * tag_num_ * tag_num_ * tag_num_,
+              status);
+  }
+
+  HMMEmitRecord emit_record;
+  Emit *emit = nullptr;
+
+  int emit_num = 0;
+  for (int term_id = 0; status->ok() && term_id <= max_term_id_; ++term_id) {
+    emit = emits_[term_id];
+    while (status->ok() && emit) {
+      emit_record.term_id = term_id;
+      emit_record.tag_id = emit->tag;
+      emit_record.cost = emit->cost;
+      fd->WriteValue<HMMEmitRecord>(emit_record, status);
+
+      emit = emit->next;
+      emit_num++;
+    }
+  }
+
+  LOG_IF(status->ok(), "%d emit record writted\n", emit_num);
+
+  delete fd;
+}
+
+
+HMMModel::HMMModel(): emit_num_(0),
+                      emits_(nullptr),
+                      tag_num_(0),
+                      tag_cost_(nullptr),
                       transition_matrix_(nullptr),
                       tag_str_(nullptr) {}
 
@@ -267,6 +371,9 @@ HMMModel::~HMMModel() {
 
   delete[] tag_str_;
   tag_str_ = nullptr;
+
+  delete[] tag_cost_;
+  tag_cost_ = nullptr;
 
   Emit *p, *q;
   if (emits_ != nullptr) {

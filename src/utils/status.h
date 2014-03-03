@@ -29,6 +29,7 @@
 #define SRC_UTILS_STATUS_H_
 
 #include <stdio.h>
+#include <assert.h>
 #include <string>
 
 namespace milkcat {

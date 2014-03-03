@@ -40,6 +40,9 @@ const int kHMMSegmentAndPOSTaggingNBest = 3;
 const int kUserTermIdStart = 0x40000000;
 const double kDefaultCost = 16.0;
 
+
+const int kHmmModelMagicNumber = 0x3322;
+
 }  // namespace milkcat
 
 #endif  // SRC_MILKCAT_MILKCAT_CONFIG_H_

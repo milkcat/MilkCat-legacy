@@ -41,6 +41,7 @@
 #include "utils/utils.h"
 #include "utils/readable_file.h"
 #include "utils/writable_file.h"
+#include "milkcat/hmm_part_of_speech_tagger.h"
 #include "milkcat/milkcat.h"
 #include "milkcat/static_hashtable.h"
 #include "milkcat/darts.h"
@@ -300,192 +301,35 @@ int MakeIndexFile(int argc, char **argv) {
   return 0;
 }
 
-//
-// Build the HMM Tagger Model
-//
-// Model format is
-//
-// int32_t: magic_number = 0x3322
-// int32_t: tag_num
-// int32_t: max_term_id
-// int32_t: emit_num
-// char[16] * tag_num: tag_text
-// float * tag_num * tag_num: transition matrix
-// n * HMMEmitRecord: emit matrix
-//
 int MakeHMMTaggerModel(int argc, char **argv) {
-  if (argc < 4) {
-    fprintf(stderr, "Usage: mc_model hmm_tag [TAGSET-FILE]"
-                    " [EMIT-FILE] [TRANS-FILE] [INDEX-FILE]\n");
-    return 1;
-  }
+  Status status;
+  if (argc != 7)
+    status = Status::Info("Usage: mctools hmm index-file tag-set-file "
+                          "trans-file emit-file binary-model-file");
 
-  const char *tagset_path = argv[argc - 4];
-  const char *emit_path = argv[argc - 3];
-  const char *trans_path = argv[argc - 2];
-  const char *index_path = argv[argc - 1];
+  const char *index_file = argv[2];
+  const char *yset_file = argv[3];
+  const char *trans_file = argv[4];
+  const char *emit_file = argv[5];
+  const char *model_file = argv[6];
 
-  FILE *fd_output = fopen(HMM_MODEL_FILE, "w");
-  if (fd_output == NULL) {
-    fprintf(stderr, "error: unable to open %s for write.\n", HMM_MODEL_FILE);
-    return 1;
+  HMMModel *hmm_model = nullptr;
+  if (status.ok()) {
+    hmm_model = HMMModel::NewFromText(trans_file,
+                                      emit_file,
+                                      yset_file,
+                                      index_file,
+                                      &status);
   }
+  if (status.ok()) hmm_model->Save(model_file, &status);
 
-  int32_t magic_number = 0x3322;
-  if (1 != fwrite(&magic_number, sizeof(int32_t), 1, fd_output)) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
+  delete hmm_model;
+  if (status.ok()) {
+    return 0;
+  } else {
+    puts(status.what());
+    return -1;
   }
-
-  // Get tagset from tagset_file
-  char line_buf[1024];
-  FILE *fd_tagset = fopen(tagset_path, "r");
-  int count = 0;
-  std::map<std::string, int> tag_id_map;
-  std::vector<std::string> tag_str;
-  if (NULL == fd_tagset) {
-    fprintf(stderr, "error: unable to open %s for read.\n", tagset_path);
-    return 1;
-  }
-  while (NULL != fgets(line_buf, 1024, fd_tagset)) {
-    trim(line_buf);
-    if (strlen(line_buf) > 15) {
-      fprintf(stderr, "error: invalid tag length (>15) %s.\n", line_buf);
-      return 1;
-    }
-
-    tag_id_map[line_buf] = count++;
-    tag_str.push_back(line_buf);
-  }
-  fclose(fd_tagset);
-  printf("get %d tags from tagset file.\n", count);
-  fflush(stdout);
-
-  // Put tagset data into model file
-  int32_t tag_number = static_cast<int32_t>(count);
-  if (1 != fwrite(&tag_number, sizeof(int32_t), 1, fd_output)) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
-  }
-
-  // Write max_term_id and emit_num later, temporarily 0
-  int32_t max_term_id = 0;
-  if (1 != fwrite(&max_term_id, sizeof(int32_t), 1, fd_output)) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
-  }
-  int32_t emit_num = 0;
-  if (1 != fwrite(&emit_num, sizeof(int32_t), 1, fd_output)) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
-  }
-  for (auto &x : tag_str) {
-    memset(line_buf, 0, 16);
-    strlcpy(line_buf, x.c_str(), 16);
-    if (16 != fwrite(&line_buf, sizeof(char), 16, fd_output)) {
-      fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-      return 1;
-    }
-  }
-
-  // Read transition matrix file data
-  printf("build transition matrix ...");
-  fflush(stdout);
-  FILE *fd_trans = fopen(trans_path, "r");
-  if (fd_trans == NULL) {
-    fprintf(stderr, "error: unable to open %s for read.\n", trans_path);
-    return 1;
-  }
-
-  char tag_left[128],
-       tag_right[128];
-  double log_prob;
-  float *trans_matrix_data = new float[tag_number * tag_number];
-  for (int i = 0; i < tag_number * tag_number; ++i) {
-    trans_matrix_data[i] = 1e37;
-  }
-  while (EOF != fscanf(fd_trans, "%s %s %lf", tag_left, tag_right, &log_prob)) {
-    if (tag_id_map.find(tag_left) == tag_id_map.end() ||
-        tag_id_map.find(tag_right) == tag_id_map.end()) {
-      fprintf(stderr,
-              "error: invalid tag pair (not in tagset) %s %s.\n",
-              tag_left,
-              tag_right);
-      return 1;
-    }
-    int id = tag_id_map[tag_left] * tag_number + tag_id_map[tag_right];
-    trans_matrix_data[id] = static_cast<float>(log_prob);
-  }
-  int result = fwrite(trans_matrix_data,
-                      sizeof(float),
-                      tag_number * tag_number,
-                      fd_output);
-  if (tag_number * tag_number != result) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
-  }
-  delete[] trans_matrix_data;
-  fclose(fd_trans);
-  printf("OK\n");
-  fflush(stdout);
-
-
-  // Read transition matrix file data
-  printf("build emit matrix ...");
-  fflush(stdout);
-  Darts::DoubleArray double_array;
-  if (-1 == double_array.open(index_path)) {
-    fprintf(stderr, "error: unable to open index file %s.\n", index_path);
-    return 1;
-  }
-  FILE *fd_emit = fopen(emit_path, "r");
-  count = 0;
-  int ignore_count = 0;
-  HMMEmitRecord record;
-  while (EOF != fscanf(fd_emit, "%s %s %lf", line_buf, tag_left, &log_prob)) {
-    int32_t term_id = double_array.exactMatchSearch<int>(line_buf);
-    if (term_id < 0) {
-      ignore_count++;
-      continue;
-    }
-    if (term_id > max_term_id) {
-      max_term_id = term_id;
-    }
-    record.term_id = term_id;
-    count++;
-    if (tag_id_map.find(tag_left) == tag_id_map.end()) {
-      fprintf(stderr, "error: invalid tag (not in tagset) %s.\n", tag_left);
-      return 1;
-    }
-    record.tag_id = tag_id_map[tag_left];
-    record.weight = static_cast<float>(log_prob);
-    if (1 != fwrite(&record, sizeof(record), 1, fd_output)) {
-      fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-      return 1;
-    }
-    emit_num++;
-  }
-  printf("OK write %d records, ignore %d records\n", count, ignore_count);
-  fflush(stdout);
-
-  // Come back and write max_term_id and emit_size
-  if (0 != fseek(fd_output, 8, SEEK_SET)) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
-  }
-  if (1 != fwrite(&max_term_id, sizeof(int32_t), 1, fd_output)) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
-  }
-  if (1 != fwrite(&emit_num, sizeof(int32_t), 1, fd_output)) {
-    fprintf(stderr, "error: unable to write to file %s.\n", HMM_MODEL_FILE);
-    return 1;
-  }
-
-  printf("Success!\n");
-  fflush(stdout);
-
-  return 0;
 }
 
 int MakeMaxentFile(int argc, char **argv) {

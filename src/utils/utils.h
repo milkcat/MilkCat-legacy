@@ -43,4 +43,17 @@ char *trim(char *str);
 
 }  // namespace milkcat
 
+#ifdef ENABLE_LOG
+#define LOG(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define LOG(...)
+#endif
+
+#ifdef ENABLE_LOG
+#define LOG_IF(cond, ...) if (cond) fprintf(stderr, __VA_ARGS__)
+#else
+#define LOG_IF(...)
+#endif
+
+
 #endif  // SRC_UTILS_UTILS_H_
