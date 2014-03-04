@@ -194,7 +194,7 @@ class StaticHashTable {
   int data_size_;
   int bucket_size_;
 
-  StaticHashTable(): buckets_(NULL), bucket_size_(0), data_size_(0) {}
+  StaticHashTable(): buckets_(NULL), data_size_(0), bucket_size_(0) {}
 
   // Serialize size of each bucket
   static const int kSerializeBukcetSize = sizeof(int32_t) +

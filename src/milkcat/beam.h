@@ -28,6 +28,7 @@
 #define SRC_MILKCAT_BEAM_H_
 
 #include <algorithm>
+#include <vector>
 
 template<class Node>
 class NodePool {
@@ -40,7 +41,6 @@ class NodePool {
 
   // Alloc a node
   Node *Alloc() {
-    Node *node;
     if (alloc_index_ == nodes_.size()) {
       nodes_.push_back(new Node());
     }
@@ -64,12 +64,12 @@ class Beam {
        NodePool<Node> *node_pool, 
        int beam_id,
        bool (* node_ptr_cmp)(Node *n1, Node *n2)):
-      n_best_(n_best),
       capability_(n_best * 10),
       beam_id_(beam_id),
-      size_(0),
       node_pool_(node_pool),
-      node_ptr_cmp_(node_ptr_cmp) {
+      node_ptr_cmp_(node_ptr_cmp),
+      n_best_(n_best),
+      size_(0) {
     nodes_ = new Node *[capability_];
   }
 

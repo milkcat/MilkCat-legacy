@@ -145,8 +145,6 @@ std::unordered_map<std::string, int> GetVocabularyFromFile(
   if (status->ok()) fd = ReadableFile::New(path, status);
 
   if (status->ok()) {
-    int64_t file_size = fd->Size();
-
     // Thread number = CPU core number
     std::vector<Status> status_vec(n_threads);
     std::vector<std::thread> threads;

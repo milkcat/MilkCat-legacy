@@ -31,9 +31,9 @@ namespace milkcat {
 
 InstanceData::InstanceData(int string_number,
                            int integer_number,
-                           int capability): size_(0),
-                                            string_data_(NULL),
-                                            integer_data_(NULL) {
+                           int capability): string_data_(nullptr),
+                                            integer_data_(nullptr),
+                                            size_(0) {
   if (string_number != 0) {
     string_data_ = new char **[string_number];
     for (int i = 0; i < string_number; ++i) {
@@ -57,7 +57,7 @@ InstanceData::InstanceData(int string_number,
 }
 
 InstanceData::~InstanceData() {
-  if (string_data_ != NULL) {
+  if (string_data_ != nullptr) {
     for (int i = 0; i < string_number_; ++i) {
       for (size_t j = 0; j < capability_; ++j) {
         delete[] string_data_[i][j];
@@ -67,7 +67,7 @@ InstanceData::~InstanceData() {
     delete[] string_data_;
   }
 
-  if (integer_data_ != NULL) {
+  if (integer_data_ != nullptr) {
     for (int i = 0; i < integer_number_; ++i) {
       delete[] integer_data_[i];
     }

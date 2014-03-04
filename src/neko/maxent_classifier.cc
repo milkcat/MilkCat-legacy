@@ -39,11 +39,11 @@
 
 namespace milkcat {
 
-MaxentModel::MaxentModel(): xsize_(0),
+MaxentModel::MaxentModel(): index_data_(nullptr),
+                            xsize_(0),
                             ysize_(0),
                             yname_(nullptr),
-                            cost_(nullptr),
-                            index_data_(nullptr) {
+                            cost_(nullptr) {
 }
 
 MaxentModel *MaxentModel::NewFromText(const char *model_path, Status *status) {

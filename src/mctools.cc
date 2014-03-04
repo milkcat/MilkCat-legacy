@@ -168,15 +168,12 @@ int SaveBigramBinFile(
     int total_count,
     const Darts::DoubleArray &double_array,
     Status *status) {
-
-  BigramRecord bigram_record;
   const char *left_word, *right_word;
   int32_t left_id, right_id;
   int count;
   std::vector<int64_t> keys;
   std::vector<float> values;
 
-  int write_num = 0;
   for (auto &x : bigram_data) {
     left_word = x.first.first.c_str();
     right_word = x.first.second.c_str();

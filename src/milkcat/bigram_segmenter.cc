@@ -238,7 +238,6 @@ void BigramSegmenter::Segment(TermInstance *term_instance,
   // Strat decoding
   size_t index_node, user_node;
   bool index_flag, user_flag;
-  const float *bigram_map_iter;
   double weight, right_cost;
   const Node *node = nullptr;
   for (int bucket_id = 0; bucket_id < token_instance->size(); ++bucket_id) {

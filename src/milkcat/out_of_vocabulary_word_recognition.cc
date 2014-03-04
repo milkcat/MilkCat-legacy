@@ -78,7 +78,6 @@ void OutOfVocabularyWordRecognition::Process(TermInstance *term_instance,
   int current_token_type;
   int ner_term_number = 0;
   const char *term_str;
-  const char *pos_tag;
   bool oov_flag = false,
        next_oov_flag = false;
 

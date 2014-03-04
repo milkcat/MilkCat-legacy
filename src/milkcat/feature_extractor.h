@@ -38,7 +38,10 @@ class FeatureExtractor {
                                 char (*feature_list)[kFeatureLengthMax],
                                 int list_size) = 0;
   virtual size_t size() const = 0;
+  virtual ~FeatureExtractor();
 };
+
+inline FeatureExtractor::~FeatureExtractor() {}
 
 }  // namespace milkcat
 

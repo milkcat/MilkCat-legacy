@@ -65,7 +65,6 @@ class SegmentFeatureExtractor: public FeatureExtractor {
 };
 
 CRFSegmenter *CRFSegmenter::New(ModelFactory *model_factory, Status *status) {
-  char error_message[1024];
   CRFSegmenter *self = new CRFSegmenter();
   const CRFModel *model = model_factory->CRFSegModel(status);
   

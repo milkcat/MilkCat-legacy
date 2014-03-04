@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects
-AM_CXXFLAGS = -DMODEL_PATH=\"$(pkgdatadir)/\" -pthread -std=c++11 -fno-rtti \
-              -fno-exceptions 
+AM_CXXFLAGS = -I$(top_srcdir)/src -DMODEL_PATH=\"$(pkgdatadir)/\" -std=c++11 -fno-rtti \
+              -fno-exceptions -Wall -Werror
+
 ACLOCAL_AMFLAGS = -I m4
 
 include_HEADERS = milkcat/milkcat.h

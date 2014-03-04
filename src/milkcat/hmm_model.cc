@@ -358,12 +358,14 @@ void HMMModel::Save(const char *model_path, Status *status) {
 }
 
 
-HMMModel::HMMModel(): emit_num_(0),
-                      emits_(nullptr),
+HMMModel::HMMModel(): emits_(nullptr),
+                      max_term_id_(0),
+                      emit_num_(0),
                       tag_num_(0),
-                      tag_cost_(nullptr),
+                      tag_str_(nullptr),
                       transition_matrix_(nullptr),
-                      tag_str_(nullptr) {}
+                      tag_cost_(nullptr) {
+}
 
 HMMModel::~HMMModel() {
   delete[] transition_matrix_;

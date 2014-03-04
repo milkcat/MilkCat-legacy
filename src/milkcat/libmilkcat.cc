@@ -82,10 +82,7 @@ Segmenter *SegmenterFactory(ModelFactory *factory,
 PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
                                               int part_of_speech_tagger_id,
                                               Status *status) {
-  const HMMModel *hmm_pos_model;
   const CRFModel *crf_pos_model;
-  const TrieTree *index;
-  const Configuration *default_tag;
 
   switch (part_of_speech_tagger_id) {
     case kCrfPartOfSpeechTagger:
@@ -120,14 +117,14 @@ Status global_status;
 ModelFactory::ModelFactory(const char *model_dir_path):
     model_dir_path_(model_dir_path),
     unigram_index_(nullptr),
+    user_index_(nullptr),
     unigram_cost_(nullptr),
     user_cost_(nullptr),
     bigram_cost_(nullptr),
     seg_model_(nullptr),
     crf_pos_model_(nullptr),
     hmm_pos_model_(nullptr),
-    oov_property_(nullptr),
-    user_index_(nullptr) {
+    oov_property_(nullptr) {
 }
 
 ModelFactory::~ModelFactory() {

@@ -138,15 +138,15 @@ HMMModel::Emit *CRFEmitGetter::GetEmits(TermInstance *term_instance,
   return emit;
 }
 
-HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): model_(nullptr),
-                                                node_pool_(nullptr),
+HMMPartOfSpeechTagger::HMMPartOfSpeechTagger(): node_pool_(nullptr),
+                                                model_(nullptr),
                                                 index_(nullptr),
+                                                crf_emit_getter_(nullptr),
                                                 PU_emit_(nullptr),
                                                 CD_emit_(nullptr),
                                                 NN_emit_(nullptr),
                                                 oov_emits_(nullptr),
-                                                term_instance_(nullptr),
-                                                crf_emit_getter_(nullptr) {
+                                                term_instance_(nullptr) {
   for (int i = 0; i < kMaxBeams; ++i) {
     beams_[i] = nullptr;
   }
@@ -376,7 +376,7 @@ void HMMPartOfSpeechTagger::BuildBeam(int position) {
   HMMModel::Emit *emit = GetEmitAtPosition(position);
 
   const Node *leftleft_node, *left_node;
-  int leftleft_tag, left_tag, tag;
+  int leftleft_tag, left_tag;
 
   Beam<Node> *previous_beam = beams_[beam_position - 1];
   Beam<Node> *beam = beams_[beam_position];
