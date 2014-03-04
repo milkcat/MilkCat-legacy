@@ -42,28 +42,33 @@
 namespace milkcat {
 
 struct BigramSegmenter::Node {
-  // The bucket contains this node
-  int bucket_id;
+  int beam_id;            // The bucket contains this node
+  int term_id;            // term_id for this node
+  double cost;            // Cost in this path  
+  const Node *from_node;  // Previous node pointer
+  int term_position;      // Position in a term_instance
 
-  // term_id for this node
-  int term_id;
+  inline void 
+  set_value(int beam_id, int term_id, double cost, const Node *from_node) {
+    this->beam_id = beam_id;
+    this->term_id = term_id;
+    this->cost = cost;
+    this->from_node = from_node;
 
-  // Weight summation in this path
-  double weight;
-
-  // Previous node pointer
-  const Node *from_node;
-
-  // Position in a term_instance
-  int term_position;
+    if (from_node) {
+      this->term_position = from_node->term_position + 1;
+    } else {
+      this->term_position = -1;
+    }
+  }
 };
 
 namespace {
 
-// Compare two Node in weight
+// Compare two Node in cost
 static inline bool NodePtrCmp(BigramSegmenter::Node *n1,
                               BigramSegmenter::Node *n2) {
-  return n1->weight < n2->weight;
+  return n1->cost < n2->cost;
 }
 
 }  // namespace
@@ -149,7 +154,7 @@ inline int BigramSegmenter::GetTermIdAndUnigramCost(
     if (term_id == TrieTree::kNone) *system_flag = false;
     if (term_id >= 0) {
       *right_cost = unigram_cost_->get(term_id);
-      // printf("system unigram find %d %lf\n", term_id, right_cost);
+      LOG("system unigram find %d %lf\n", term_id, *right_cost);
     }
   }
 
@@ -159,7 +164,8 @@ inline int BigramSegmenter::GetTermIdAndUnigramCost(
 
     if (uterm_id >= 0) {
       double cost = user_cost_->get(uterm_id - kUserTermIdStart);
-      // printf("user unigram find %d %lf\n", uterm_id, cost);
+      LOG("user unigram find %d %lf\n", uterm_id, cost);
+
       if (term_id < 0) {
         *right_cost = cost;
 
@@ -201,7 +207,7 @@ inline double BigramSegmenter::CalculateBigramCost(int left_id,
   if (it != nullptr) {
     // if have bigram data use p(x_n+1|x_n) = p(x_n+1, x_n) / p(x_n)
     cost = left_cost + (*it - unigram_cost_->get(left_id));
-    // printf("bigram find %d %d %lf\n", left_id, right_id, cost - left_cost);
+    LOG("bigram find %d %d %lf\n", left_id, right_id, cost - left_cost);
   } else {
     cost = left_cost + right_cost;
   }
@@ -224,137 +230,132 @@ int BigramSegmenter::GetTermId(const char *term_str) {
                                  &cost);
 }
 
-void BigramSegmenter::Segment(TermInstance *term_instance,
-                              TokenInstance *token_instance) {
-  Node *new_node = node_pool_->Alloc();
-  new_node->bucket_id = 0;
-  new_node->term_id = 0;
-  new_node->weight = 0;
-  new_node->from_node = nullptr;
-  new_node->term_position = -1;
-  // Add begin-of-sentence node
-  beams_[0]->Add(new_node);
-
-  // Strat decoding
-  size_t index_node, user_node;
-  bool index_flag, user_flag;
-  double weight, right_cost;
+void BigramSegmenter::BuildBeamFromPosition(TokenInstance *token_instance, 
+                                            int position) {
+  size_t index_node = 0,
+         user_node = 0;
+  bool index_flag = true, 
+       user_flag = has_user_index_;
+  double cost, right_cost;
   const Node *node = nullptr;
-  for (int bucket_id = 0; bucket_id < token_instance->size(); ++bucket_id) {
-    // Shrink current bucket to ensure node number < n_best
-    beams_[bucket_id]->Shrink();
+  Node *new_node = nullptr;
 
-    index_node = 0;
-    user_node = 0;
-    index_flag = true;
-    user_flag = has_user_index_;
-    for (int bucket_count = 0;
-         bucket_count + bucket_id < token_instance->size();
-         ++bucket_count) {
-      // printf("pos: %d %d\n", bucket_id, bucket_count);
-      // Get current term-id from system and user dictionary
-      const char *token_str = token_instance->token_text_at(
-          bucket_id + bucket_count);
-      int term_id = GetTermIdAndUnigramCost(token_str,
-                                            &index_flag,
-                                            &user_flag,
-                                            &index_node,
-                                            &user_node,
-                                            &right_cost);
+  beams_[position]->Shrink();
+  const char *token_str = nullptr;
+  int length_end = token_instance->size() - position;
+  for (int length = 0; length < length_end; ++length) {
+    LOG("Position: [%d, %d)\n", position, position + length + 1);
 
-      double min_weight = 100000000;
-      const Node *min_node = NULL;
+    // Get current term-id from system and user dictionary
+    token_str = token_instance->token_text_at(position + length);
+    int term_id = GetTermIdAndUnigramCost(token_str,
+                                          &index_flag,
+                                          &user_flag,
+                                          &index_node,
+                                          &user_node,
+                                          &right_cost);
 
-      assert(beams_[bucket_id]->size() > 0);
+    double min_cost = 1e38;
+    const Node *min_node = nullptr;
 
-      if (term_id >= 0) {
-        // This token exists in unigram data
+    assert(beams_[position]->size() > 0);
+
+    if (term_id >= 0) {
+      // This token exists in unigram data
+      for (int node_id = 0;
+           node_id < beams_[position]->size();
+           ++node_id) {
+        node = beams_[position]->node_at(node_id);
+        double cost = CalculateBigramCost(node->term_id,
+                                          term_id,
+                                          node->cost,
+                                          right_cost);
+        LOG("final cost is %lf\n", cost - node->cost);
+        if (cost < min_cost) {
+          min_cost = cost;
+          min_node = node;
+        }
+      }
+
+      // Add the min_node to decode graph
+      new_node = node_pool_->Alloc();
+      new_node->set_value(position + length + 1, term_id, min_cost, min_node);
+      beams_[position + length + 1]->Add(new_node);
+    } else {
+      // One token out-of-vocabulary word should be always put into Decode
+      // Graph When no arc to next bucket
+      if (length == 0 && beams_[position + 1]->size() == 0) {
         for (int node_id = 0;
-             node_id < beams_[bucket_id]->size();
+             node_id < beams_[position]->size();
              ++node_id) {
-          node = beams_[bucket_id]->node_at(node_id);
-          double weight = CalculateBigramCost(node->term_id,
-                                              term_id,
-                                              node->weight,
-                                              right_cost);
-          // printf("final cost is %lf\n", weight - node->weight);
-          if (weight < min_weight) {
-            min_weight = weight;
+          node = beams_[position]->node_at(node_id);
+          cost = node->cost + 20;
+
+          if (cost < min_cost) {
+            min_cost = cost;
             min_node = node;
           }
         }
 
-        // Add the min_node to decode graph
         new_node = node_pool_->Alloc();
-        new_node->bucket_id = bucket_id + bucket_count + 1;
-        new_node->term_id = term_id;
-        new_node->weight = min_weight;
-        new_node->from_node = min_node;
-        new_node->term_position = min_node->term_position + 1;
-        // Add begin-of-sentence node
-        beams_[bucket_id + bucket_count + 1]->Add(new_node);
-      } else {
-        // One token out-of-vocabulary word should be always put into Decode
-        // Graph When no arc to next bucket
-        if (bucket_count == 0 && beams_[bucket_id + 1]->size() == 0) {
-          for (int node_id = 0;
-               node_id < beams_[bucket_id]->size();
-               ++node_id) {
-            node = beams_[bucket_id]->node_at(node_id);
-            weight = node->weight + 20;
+        new_node->set_value(position + length + 1, 0, min_cost, min_node);
+        beams_[position + 1]->Add(new_node);
+      }  // end if node count == 0
+    }  // end if term_id >= 0
 
-            if (weight < min_weight) {
-              min_weight = weight;
-              min_node = node;
-            }
-          }
+    if (index_flag == false && user_flag == false) break;
+  }  // end for length
+}
 
-          new_node = node_pool_->Alloc();
-          new_node->bucket_id = bucket_id + bucket_count + 1;
-          new_node->term_id = 0;
-          new_node->weight = min_weight;
-          new_node->from_node = min_node;
-          new_node->term_position = min_node->term_position + 1;
-          // Add begin-of-sentence node
-          beams_[bucket_id + 1]->Add(new_node);
-        }  // end if node count == 0
-      }  // end if term_id >= 0
-
-      if (index_flag == false && user_flag == false) break;
-    }  // end for bucket_count
-  }  // end for decode_start
-
+void BigramSegmenter::FindTheBestResult(TermInstance *term_instance, 
+                                        TokenInstance *token_instance) {
   // Find the best result from decoding graph
-  node = beams_[token_instance->size()]->MinimalNode();
+  const Node *node = beams_[token_instance->size()]->MinimalNode();
 
   // Set the cost data for RecentSegCost()
-  cost_ = node->weight;
+  cost_ = node->cost;
 
   term_instance->set_size(node->term_position + 1);
-  int bucket_id, from_bucket_id, term_type;
+  int beam_id, from_beam_id, term_type;
   std::string buffer;
   while (node->term_position >= 0) {
     buffer.clear();
-    bucket_id = node->bucket_id;
-    from_bucket_id = node->from_node->bucket_id;
+    beam_id = node->beam_id;
+    from_beam_id = node->from_node->beam_id;
 
-    for (int i = from_bucket_id; i < bucket_id; ++i) {
+    for (int i = from_beam_id; i < beam_id; ++i) {
       buffer.append(token_instance->token_text_at(i));
     }
 
-    term_type = bucket_id - from_bucket_id > 1?
+    term_type = beam_id - from_beam_id > 1?
         TermInstance::kChineseWord:
-        TokenTypeToTermType(token_instance->token_type_at(from_bucket_id));
+        TokenTypeToTermType(token_instance->token_type_at(from_beam_id));
 
-    int out_of_vocabulary_id = TermInstance::kTermIdOutOfVocabulary;
+    int oov_id = TermInstance::kTermIdOutOfVocabulary;
     term_instance->set_value_at(
         node->term_position,
         buffer.c_str(),
-        bucket_id - from_bucket_id,
+        beam_id - from_beam_id,
         term_type,
-        node->term_id == 0? out_of_vocabulary_id: node->term_id);
+        node->term_id == 0? oov_id: node->term_id);
     node = node->from_node;
   }  // end while
+}
+
+void BigramSegmenter::Segment(TermInstance *term_instance,
+                              TokenInstance *token_instance) {
+  Node *new_node = node_pool_->Alloc();
+  new_node->set_value(0, 0, 0, nullptr);
+  // Add begin-of-sentence node
+  beams_[0]->Add(new_node);
+
+  // Strat decoding
+  for (int beam_id = 0; beam_id < token_instance->size(); ++beam_id) {
+    // Shrink current bucket to ensure node number < n_best
+    BuildBeamFromPosition(token_instance, beam_id);
+  }  // end for decode_start
+
+  FindTheBestResult(term_instance, token_instance);
 
   // Clear decode_node
   for (int i = 0; i < token_instance->size() + 1; ++i) {

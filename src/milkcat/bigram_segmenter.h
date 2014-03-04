@@ -115,13 +115,6 @@ class BigramSegmenter: public Segmenter {
 
   BigramSegmenter();
 
-  // Add an arc to the decode graph with the weight and term_id
-  void AddArcToDecodeGraph(int from_position,
-                           int from_index,
-                           int to_position,
-                           double weight,
-                           int term_id);
-
   double CalculateBigramCost(int left_id,
                              int right_id,
                              double left_cost,
@@ -133,6 +126,13 @@ class BigramSegmenter: public Segmenter {
                               size_t *system_node,
                               size_t *user_node,
                               double *right_cost);
+
+  // Builds the beams_ from the words starts from current position in index
+  void BuildBeamFromPosition(TokenInstance *token_instance, int position);
+
+  // Finds the best result from beams_ and save the result to term_instance 
+  void FindTheBestResult(TermInstance *term_instance,
+                         TokenInstance *token_instance);
 };
 
 }  // namespace milkcat
