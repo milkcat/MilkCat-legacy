@@ -50,27 +50,27 @@ extern "C" {
 #endif
 
 enum {
-  // DEFAULT_PROCESSOR is the Mixed Bigram & CRF segmenter and Mixed HMM & CRF
-  // part-of-speech tagger
-  DEFAULT_PROCESSOR = 0,
+  TOKENIZER_NORMAL = 0x00000001,
 
-  // CRF_SEGMENTER is a CRF-model chinese word segmenter using the character
-  // tagging algorithm. It is better for Out-Of-Vocabulary word but not good at
-  // the recall on In-Vocabulary words. Moreover, it is slower than HMM-model
-  // word-based segmenter.
-  CRF_SEGMENTER = 1,
+  SEGMENTER_CRF = 0x00000010,
+  SEGMENTER_UNIGRAM = 0x00000020,
+  SEGMENTER_BIGRAM = 0x00000030,
+  SEGMENTER_MIXED = 0x00000040,
 
-  // CRF_PROCESSOR is a CRF-model chinese word segmenter and Part-of-Speech
-  // Tagger. segmention using CRF_SEGMENTER, and Part-of-Speech Tagging also
-  // using CRF model.
-  CRF_PROCESSOR = 2,
+  POSTAGGER_HMM = 0x00001000,
+  POSTAGGER_CRF = 0x00002000,
+  POSTAGGER_MIXED = 0x00003000
+};
 
-  // DEFAULT_SEGMENTER is the Mixed Bigram & CRF segmenter
-  DEFAULT_SEGMENTER = 3,
+enum {
+  DEFAULT_ANALYZER = TOKENIZER_NORMAL | SEGMENTER_MIXED | POSTAGGER_MIXED,
+  DEFAULT_SEGMENTER = TOKENIZER_NORMAL | SEGMENTER_MIXED,
 
-  BIGRAM_SEGMENTER = 4,
+  CRF_SEGMENTER = TOKENIZER_NORMAL | SEGMENTER_CRF | POSTAGGER_CRF,
+  CRF_ANALYZER = TOKENIZER_NORMAL | SEGMENTER_CRF,
 
-  UNIGRAM_SEGMENTER = 5
+  BIGRAM_SEGMENTER = TOKENIZER_NORMAL | SEGMENTER_BIGRAM,
+  UNIGRAM_SEGMENTER = TOKENIZER_NORMAL | SEGMENTER_BIGRAM
 };
 
 // Word types

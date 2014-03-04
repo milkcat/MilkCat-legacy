@@ -74,8 +74,6 @@ struct milkcat_t {
 
 namespace milkcat {
 
-constexpr int32_t kCursorMagic = 0x63727372;
-
 // Model filenames
 constexpr const char *UNIGRAM_INDEX = "unigram.idx";
 constexpr const char *UNIGRAM_DATA = "unigram.bin";
@@ -86,23 +84,12 @@ constexpr const char *CRF_SEGMENTER_MODEL = "ctb_seg.crf";
 constexpr const char *DEFAULT_TAG = "default_tag.cfg";
 constexpr const char *OOV_PROPERTY = "oov_property.idx";
 
-// Tokenizer ids for TokenizerFactory
-const int kDefaultTokenizer = 0;
-
-// Segmenter ids for SegmenterFactory
-const int kBigramSegmenter = 0;
-const int kCrfSegmenter = 1;
-const int kMixedSegmenter = 2;
-const int kUnigramSegmenter = 3;
-
-// Part-of-speech ids for PartOfSpeechTaggerFactory
-const int kCrfPartOfSpeechTagger = 0;
-const int kHmmPartOfSpeechTagger = 1;
-const int kMixedPartOfSpeechTagger = 2;
+constexpr int kTokenizerMask = 0x0000000f;
+constexpr int kSegmenterMask = 0x00000ff0;
+constexpr int kPartOfSpeechTaggerMask = 0x000ff000;
 
 class Cursor;
 class ModelFactory;
-
 
 // A factory class that can obtain any model data class needed by MilkCat
 // in singleton mode. All the getXX fucnctions are thread safe

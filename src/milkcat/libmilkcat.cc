@@ -25,7 +25,6 @@
 // libmilkcat.cc --- Created at 2013-09-03
 //
 
-
 #include "milkcat/libmilkcat.h"
 #include <stdio.h>
 #include <string.h>
@@ -47,9 +46,11 @@
 
 namespace milkcat {
 
-Tokenization *TokenizerFactory(int tokenizer_id) {
-  switch (tokenizer_id) {
-    case kDefaultTokenizer:
+Tokenization *TokenizerFactory(int analyzer_type) {
+  int tokenizer_type = analyzer_type & kTokenizerMask;
+
+  switch (tokenizer_type) {
+    case TOKENIZER_NORMAL:
       return new Tokenization();
 
     default:
@@ -58,34 +59,39 @@ Tokenization *TokenizerFactory(int tokenizer_id) {
 }
 
 Segmenter *SegmenterFactory(ModelFactory *factory,
-                            int segmenter_id,
+                            int analyzer_type,
                             Status *status) {
-  switch (segmenter_id) {
-    case kBigramSegmenter:
+  int segmenter_type = analyzer_type & kSegmenterMask;
+
+  switch (segmenter_type) {
+    case SEGMENTER_BIGRAM:
       return BigramSegmenter::New(factory, true, status);
 
-    case kUnigramSegmenter:
+    case SEGMENTER_UNIGRAM:
       return BigramSegmenter::New(factory, false, status);
 
-    case kCrfSegmenter:
+    case SEGMENTER_CRF:
       return CRFSegmenter::New(factory, status);
 
-    case kMixedSegmenter:
+    case SEGMENTER_MIXED:
       return MixedSegmenter::New(factory, status);
 
     default:
-      *status = Status::NotImplemented("");
+      *status = Status::NotImplemented("Invalid segmenter type");
       return nullptr;
   }
 }
 
 PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
-                                              int part_of_speech_tagger_id,
+                                              int analyzer_type,
                                               Status *status) {
   const CRFModel *crf_pos_model;
+  int tagger_type = analyzer_type & kPartOfSpeechTaggerMask;
 
-  switch (part_of_speech_tagger_id) {
-    case kCrfPartOfSpeechTagger:
+  LOG("Tagger type: %x\n", tagger_type);
+
+  switch (tagger_type) {
+    case POSTAGGER_CRF:
       if (status->ok()) crf_pos_model = factory->CRFPosModel(status);
 
       if (status->ok()) {
@@ -94,15 +100,25 @@ PartOfSpeechTagger *PartOfSpeechTaggerFactory(ModelFactory *factory,
         return nullptr;
       }
 
-    case kHmmPartOfSpeechTagger:
+    case POSTAGGER_HMM:
       if (status->ok()) {
-        return HMMPartOfSpeechTagger::New(factory, status);
+        return HMMPartOfSpeechTagger::New(factory, false, status);
       } else {
         return nullptr;
       }
 
+    case POSTAGGER_MIXED:
+      if (status->ok()) {
+        return HMMPartOfSpeechTagger::New(factory, true, status);
+      } else {
+        return nullptr;
+      }
+
+    case 0:
+      return nullptr;
+
     default:
-      *status = Status::NotImplemented("");
+      *status = Status::NotImplemented("Invalid Part-of-speech tagger type");
       return nullptr;
   }
 }
@@ -303,7 +319,7 @@ const TrieTree *ModelFactory::OOVProperty(Status *status) {
 
 Cursor::Cursor():
     analyzer_(nullptr),
-    tokenizer_(TokenizerFactory(kDefaultTokenizer)),
+    tokenizer_(TokenizerFactory(TOKENIZER_NORMAL)),
     token_instance_(new TokenInstance()),
     term_instance_(new TermInstance()),
     part_of_speech_tag_instance_(new PartOfSpeechTagInstance()),
@@ -378,73 +394,16 @@ milkcat_t *milkcat_new(milkcat_model_t *model, int analyzer_type) {
 
   analyzer->model = model;
 
-  switch (analyzer_type) {
-    case DEFAULT_PROCESSOR:
-      if (milkcat::global_status.ok())
-        analyzer->segmenter = milkcat::SegmenterFactory(
-            analyzer->model->model_factory,
-            milkcat::kMixedSegmenter,
-            &milkcat::global_status);
-      if (milkcat::global_status.ok())
-        analyzer->part_of_speech_tagger = milkcat::PartOfSpeechTaggerFactory(
-            analyzer->model->model_factory,
-            milkcat::kHmmPartOfSpeechTagger,
-            &milkcat::global_status);
-      break;
-
-    case CRF_SEGMENTER:
-      if (milkcat::global_status.ok())
-        analyzer->segmenter = milkcat::SegmenterFactory(
-            analyzer->model->model_factory,
-            milkcat::kCrfSegmenter,
-            &milkcat::global_status);
-      analyzer->part_of_speech_tagger = NULL;
-      break;
-
-    case CRF_PROCESSOR:
-      if (milkcat::global_status.ok())
-        analyzer->segmenter = milkcat::SegmenterFactory(
-            analyzer->model->model_factory,
-            milkcat::kCrfSegmenter,
-            &milkcat::global_status);
-      if (milkcat::global_status.ok())
-        analyzer->part_of_speech_tagger = milkcat::PartOfSpeechTaggerFactory(
-            analyzer->model->model_factory,
-            milkcat::kCrfPartOfSpeechTagger,
-            &milkcat::global_status);
-      break;
-
-    case DEFAULT_SEGMENTER:
-      if (milkcat::global_status.ok())
-        analyzer->segmenter = milkcat::SegmenterFactory(
-            analyzer->model->model_factory,
-            milkcat::kMixedSegmenter,
-            &milkcat::global_status);
-      analyzer->part_of_speech_tagger = NULL;
-      break;
-
-    case BIGRAM_SEGMENTER:
-      if (milkcat::global_status.ok())
-        analyzer->segmenter = milkcat::SegmenterFactory(
-            analyzer->model->model_factory,
-            milkcat::kBigramSegmenter,
-            &milkcat::global_status);
-      analyzer->part_of_speech_tagger = nullptr;
-      break;
-
-    case UNIGRAM_SEGMENTER:
-      if (milkcat::global_status.ok())
-        analyzer->segmenter = milkcat::SegmenterFactory(
-            analyzer->model->model_factory,
-            milkcat::kUnigramSegmenter,
-            &milkcat::global_status);
-      analyzer->part_of_speech_tagger = nullptr;
-      break;
-
-    default:
-      milkcat::global_status = milkcat::Status::NotImplemented("");
-      break;
-  }
+  if (milkcat::global_status.ok())
+    analyzer->segmenter = milkcat::SegmenterFactory(
+        analyzer->model->model_factory,
+        analyzer_type,
+        &milkcat::global_status);
+  if (milkcat::global_status.ok())
+    analyzer->part_of_speech_tagger = milkcat::PartOfSpeechTaggerFactory(
+        analyzer->model->model_factory,
+        analyzer_type,
+        &milkcat::global_status);
 
   if (!milkcat::global_status.ok()) {
     milkcat_destroy(analyzer);

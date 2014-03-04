@@ -105,6 +105,7 @@ class HMMPartOfSpeechTagger: public PartOfSpeechTagger {
            TermInstance *term_instance);
 
   static HMMPartOfSpeechTagger *New(ModelFactory *model_factory,
+                                    bool use_crf,
                                     Status *status);
 
  private:

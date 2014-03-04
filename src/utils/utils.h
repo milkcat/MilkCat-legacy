@@ -30,6 +30,7 @@
 #define SRC_UTILS_UTILS_H_
 
 #include <stdio.h>
+#include <string.h>
 #include "utils/status.h"
 
 namespace milkcat {
@@ -43,14 +44,26 @@ char *trim(char *str);
 
 }  // namespace milkcat
 
+inline const char *_filename(const char *path) {
+  int len = strlen(path);
+  const char *p = path + len;
+
+  while (*(p - 1) != '/' && *(p - 1) != '\\' && p != path) p--;
+  return p;
+}
+
 #ifdef ENABLE_LOG
-#define LOG(...) fprintf(stderr, __VA_ARGS__)
+#define LOG(format, ...) \
+        fprintf(stderr, "[%s:%d] " format, _filename(__FILE__), \
+                __LINE__, __VA_ARGS__)
 #else
 #define LOG(...)
 #endif
 
 #ifdef ENABLE_LOG
-#define LOG_IF(cond, ...) if (cond) fprintf(stderr, __VA_ARGS__)
+#define LOG_IF(cond, format, ...) if (cond) \
+        fprintf(stderr, "[%s:%d] " format, _filename(__FILE__), \
+                __LINE__, __VA_ARGS__)
 #else
 #define LOG_IF(...)
 #endif

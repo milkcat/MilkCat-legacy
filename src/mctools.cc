@@ -417,7 +417,8 @@ int CorpusVocabulary(int argc, char **argv) {
 
   if (!status.ok()) {
     if (*status.what()) puts(status.what());
-    puts("Usage: mctools vocab [-m crf_seg|bigram_seg] [-d model_dir] [-u userdict] -o output_file corpus_file");
+    puts("Usage: mctools vocab [-m crf_seg|bigram_seg] [-d model_dir] "
+         "[-u userdict] -o output_file corpus_file");
   }
 
   milkcat_model_t *model = nullptr;

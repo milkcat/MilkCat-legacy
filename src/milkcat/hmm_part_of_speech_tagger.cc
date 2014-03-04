@@ -250,6 +250,7 @@ void HMMPartOfSpeechTagger::InitEmit(HMMPartOfSpeechTagger *self,
 
 HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(
     ModelFactory *model_factory,
+    bool use_crf,
     Status *status) {
   HMMPartOfSpeechTagger *self = new HMMPartOfSpeechTagger();
   self->node_pool_ = new NodePool<Node>(); 
@@ -264,8 +265,8 @@ HMMPartOfSpeechTagger *HMMPartOfSpeechTagger::New(
   self->model_ = model_factory->HMMPosModel(status);
 
   if (status->ok()) InitEmit(self, status);
-  if (status->ok()) self->crf_emit_getter_ = CRFEmitGetter::New(model_factory,
-                                                                status);
+  if (status->ok() && use_crf) 
+    self->crf_emit_getter_ = CRFEmitGetter::New(model_factory, status);
   if (status->ok()) {
     self->BOS_tagid_ = self->model_->tag_id("BOS");
     if (self->BOS_tagid_ < 0) 

@@ -57,7 +57,7 @@ const char *word_type_str(int word_type) {
 int main(int argc, char **argv) {
 
   char model_path[1024] = "";
-  int method = DEFAULT_PROCESSOR;
+  int method = DEFAULT_ANALYZER;
   char c;
   int errflag = 0;
   FILE *fp = NULL;
@@ -91,13 +91,13 @@ int main(int argc, char **argv) {
         method = UNIGRAM_SEGMENTER;
         display_tag = 0;
       } else if (strcmp(optarg, "crf") == 0) {
-        method = CRF_PROCESSOR;
+        method = CRF_ANALYZER;
         display_tag = 1;      
       } else if (strcmp(optarg, "seg") == 0) {
         method = DEFAULT_SEGMENTER;
         display_tag = 0;
       } else if (strcmp(optarg, "hmm_crf") == 0) {
-        method = DEFAULT_PROCESSOR;
+        method = DEFAULT_ANALYZER;
         display_tag = 1;
       } else if (strcmp(optarg, "bigram_seg") == 0) {
         method = BIGRAM_SEGMENTER;
