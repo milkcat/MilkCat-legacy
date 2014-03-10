@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects
+AUTOMAKE_OPTIONS = gnu subdir-objects
 AM_CXXFLAGS = -I$(top_srcdir)/src -DMODEL_PATH=\"$(pkgdatadir)/\" -std=c++11 -fno-rtti \
               -fno-exceptions -Wall -Werror
 
