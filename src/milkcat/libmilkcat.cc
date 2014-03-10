@@ -219,7 +219,7 @@ void ModelFactory::LoadUserDictionary(Status *status) {
   }
 
   if (status->ok() && term_ids.size() == 0) {
-    errmsg = std::string("user dictionary ") +
+    errmsg = std::string("User dictionary ") +
              user_dictionary_path_ +
              " is empty.";
     *status = Status::Corruption(errmsg.c_str());

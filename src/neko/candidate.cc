@@ -67,10 +67,10 @@ std::vector<std::string> ExtractNameFeature(const char *name_str) {
 }
 
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
-// Returns a map the key is the word, and the value is its cost in unigram,
-// which is used for bigram segmentation
+// Returns a map the key is the word, and the value is its cost in unigram.
 std::unordered_map<std::string, float> GetCandidate(
     const char *model_path,
+    const char *vocabulary_path,
     const std::unordered_map<std::string, int> &crf_vocab,
     int total_count,
     int (* log_func)(const char *message),
@@ -80,7 +80,16 @@ std::unordered_map<std::string, float> GetCandidate(
   char msg_text[1024];
 
   ModelFactory *model_factory = new ModelFactory(MODEL_PATH);
-  const TrieTree *index = model_factory->Index(status);
+
+  // If vocabulary_path != nullptr use vocabulary_path as OOV-filter otherwise
+  // use system dictionary as the OOV-word filter 
+  const TrieTree *index = nullptr;
+  if (vocabulary_path) {
+    model_factory->SetUserDictionary(vocabulary_path);
+    index = model_factory->UserIndex(status);
+  } else {
+    index = model_factory->Index(status);
+  }
 
   MaxentModel *name_model = nullptr;
   if (status->ok()) name_model = MaxentModel::New(model_path, status);

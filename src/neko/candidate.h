@@ -37,10 +37,10 @@ namespace milkcat {
 constexpr int kDefaultThresFreq = -1;
 
 // Get the candidate from crf segmentation vocabulary specified by crf_vocab.
-// Returns a map the key is the word, and the value is its cost in unigram,
-// which is used for bigram segmentation
+// Returns a map the key is the word, and the value is its cost in unigram
 std::unordered_map<std::string, float> GetCandidate(
     const char *model_path,
+    const char *vocabulary_path,
     const std::unordered_map<std::string, int> &crf_vocab,
     int total_count,
     int (* log_func)(const char *message),

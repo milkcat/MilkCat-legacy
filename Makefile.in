@@ -83,9 +83,9 @@ subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(srcdir)/config.h.in scripts/ar-lib scripts/compile \
-	scripts/config.guess scripts/config.sub scripts/install-sh \
-	scripts/missing scripts/ltmain.sh $(top_srcdir)/scripts/ar-lib \
-	$(top_srcdir)/scripts/compile \
+	scripts/config.guess scripts/config.sub scripts/depcomp \
+	scripts/install-sh scripts/missing scripts/ltmain.sh \
+	$(top_srcdir)/scripts/ar-lib $(top_srcdir)/scripts/compile \
 	$(top_srcdir)/scripts/config.guess \
 	$(top_srcdir)/scripts/config.sub \
 	$(top_srcdir)/scripts/install-sh \

@@ -25,6 +25,8 @@
 //
 
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -33,6 +35,7 @@
 #include "neko/bigram_anal.h"
 #include "neko/mutual_information.h"
 #include "neko/final_rank.h"
+#include "utils/utils.h"
 #include "utils/writable_file.h"
 
 namespace milkcat {
@@ -54,13 +57,42 @@ void DisplayProgress(int64_t bytes_processed,
 int main(int argc, char **argv) {
   Status status;
   int total_count = 0;
+  char errmsg[1024],
+       vocabulary_file[1024] = "",
+       output_file[1024] = "";
+  int c;
 
-  printf("Segment corpus %s with CRF model.\n", argv[1]);
-  std::unordered_map<std::string, int> vocab = GetCrfVocabulary(
-      argv[1],
-      &total_count,
-      DisplayProgress,
-      &status);
+  while ((c = getopt(argc, argv, "u:o:")) != -1) {
+    switch (c) {
+      case 'u':
+        strlcpy(vocabulary_file, optarg, sizeof(errmsg));
+        break;
+
+      case 'o':
+        strlcpy(output_file, optarg, sizeof(errmsg));
+        break;
+
+      case ':':
+        sprintf(errmsg, "Option -%c requires an operand", optopt);
+        status = Status::Info(errmsg);
+        break;
+
+      case '?':
+        sprintf(errmsg, "Unrecognized option: -%c", optopt);
+        status = Status::Info(errmsg);
+        break;
+    }
+  }
+
+  printf("Segment corpus %s with CRF model.\n", argv[optind]);
+  std::unordered_map<std::string, int> vocab;
+  if (status.ok()) {
+    vocab = GetCrfVocabulary(
+        argv[optind],
+        &total_count,
+        DisplayProgress,
+        &status);    
+  }
 
   if (status.ok()) {
     printf("\nOK, %d words in corpus, vocabulary size is"
@@ -73,11 +105,13 @@ int main(int argc, char **argv) {
   if (status.ok()) {
     std::string model_path = MODEL_PATH;
     model_path += "person_name.maxent";
-    candidates = GetCandidate(model_path.c_str(),
-                              vocab,
-                              total_count,
-                              puts,
-                              &status);
+    candidates = GetCandidate(
+        model_path.c_str(),
+        *vocabulary_file != '\0' ? vocabulary_file : nullptr,
+        vocab,
+        total_count,
+        puts,
+        &status);
   }
 
   if (status.ok()) {
@@ -105,9 +139,9 @@ int main(int argc, char **argv) {
   std::unordered_map<std::string, double> mutual_information;
 
   if (status.ok()) {
-    printf("Analyze %s with bigram segmentation.\n", argv[1]);
+    printf("Analyze %s with bigram segmentation.\n", argv[optind]);
     BigramAnalyze(candidates,
-                  argv[1],
+                  argv[optind],
                   &adjacent_entropy,
                   &vocab,
                   DisplayProgress,
@@ -151,8 +185,8 @@ int main(int argc, char **argv) {
   }
 
   if (status.ok()) {
-    printf("Write result to %s\n", argv[2]);
-    WritableFile *wf = WritableFile::New(argv[2], &status);
+    printf("Write result to %s\n", output_file);
+    WritableFile *wf = WritableFile::New(output_file, &status);
     for (auto &x : final_rank) {
       if (!status.ok()) break;
 

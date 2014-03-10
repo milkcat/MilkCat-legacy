@@ -81,7 +81,7 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(include_HEADERS)
+	$(top_srcdir)/scripts/depcomp $(include_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
@@ -156,8 +156,9 @@ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
 am__v_at_0 = @
 am__v_at_1 = 
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
-depcomp =
-am__depfiles_maybe =
+depcomp = $(SHELL) $(top_srcdir)/scripts/depcomp
+am__depfiles_maybe = depfiles
+am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
 LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -342,9 +343,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = gnu no-dependencies subdir-objects
+AUTOMAKE_OPTIONS = gnu subdir-objects
 AM_CXXFLAGS = -I$(top_srcdir)/src -DMODEL_PATH=\"$(pkgdatadir)/\" -std=c++11 -fno-rtti \
-              -fno-exceptions -Wall -Werror
+              -fno-exceptions -Wall -Werror -pthread
 
 ACLOCAL_AMFLAGS = -I m4
 include_HEADERS = milkcat/milkcat.h
@@ -487,44 +488,80 @@ clean-libLTLIBRARIES:
 common/$(am__dirstamp):
 	@$(MKDIR_P) common
 	@: > common/$(am__dirstamp)
-common/get_vocabulary.lo: common/$(am__dirstamp)
+common/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) common/$(DEPDIR)
+	@: > common/$(DEPDIR)/$(am__dirstamp)
+common/get_vocabulary.lo: common/$(am__dirstamp) \
+	common/$(DEPDIR)/$(am__dirstamp)
 milkcat/$(am__dirstamp):
 	@$(MKDIR_P) milkcat
 	@: > milkcat/$(am__dirstamp)
-milkcat/bigram_segmenter.lo: milkcat/$(am__dirstamp)
-milkcat/crf_model.lo: milkcat/$(am__dirstamp)
-milkcat/crf_part_of_speech_tagger.lo: milkcat/$(am__dirstamp)
-milkcat/crf_segmenter.lo: milkcat/$(am__dirstamp)
-milkcat/crf_tagger.lo: milkcat/$(am__dirstamp)
-milkcat/hmm_model.lo: milkcat/$(am__dirstamp)
-milkcat/hmm_part_of_speech_tagger.lo: milkcat/$(am__dirstamp)
-milkcat/instance_data.lo: milkcat/$(am__dirstamp)
-milkcat/libmilkcat.lo: milkcat/$(am__dirstamp)
-milkcat/mixed_segmenter.lo: milkcat/$(am__dirstamp)
+milkcat/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) milkcat/$(DEPDIR)
+	@: > milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/bigram_segmenter.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/crf_model.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/crf_part_of_speech_tagger.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/crf_segmenter.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/crf_tagger.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/hmm_model.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/hmm_part_of_speech_tagger.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/instance_data.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/libmilkcat.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/mixed_segmenter.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
 milkcat/out_of_vocabulary_word_recognition.lo:  \
-	milkcat/$(am__dirstamp)
-milkcat/part_of_speech_tag_instance.lo: milkcat/$(am__dirstamp)
-milkcat/term_instance.lo: milkcat/$(am__dirstamp)
-milkcat/token_instance.lo: milkcat/$(am__dirstamp)
-milkcat/token_lex.lo: milkcat/$(am__dirstamp)
-milkcat/tokenizer.lo: milkcat/$(am__dirstamp)
-milkcat/trie_tree.lo: milkcat/$(am__dirstamp)
+	milkcat/$(am__dirstamp) milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/part_of_speech_tag_instance.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/term_instance.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/token_instance.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/token_lex.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/tokenizer.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
+milkcat/trie_tree.lo: milkcat/$(am__dirstamp) \
+	milkcat/$(DEPDIR)/$(am__dirstamp)
 neko/$(am__dirstamp):
 	@$(MKDIR_P) neko
 	@: > neko/$(am__dirstamp)
-neko/bigram_anal.lo: neko/$(am__dirstamp)
-neko/candidate.lo: neko/$(am__dirstamp)
-neko/crf_vocab.lo: neko/$(am__dirstamp)
-neko/final_rank.lo: neko/$(am__dirstamp)
-neko/maxent_classifier.lo: neko/$(am__dirstamp)
-neko/mutual_information.lo: neko/$(am__dirstamp)
+neko/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) neko/$(DEPDIR)
+	@: > neko/$(DEPDIR)/$(am__dirstamp)
+neko/bigram_anal.lo: neko/$(am__dirstamp) \
+	neko/$(DEPDIR)/$(am__dirstamp)
+neko/candidate.lo: neko/$(am__dirstamp) neko/$(DEPDIR)/$(am__dirstamp)
+neko/crf_vocab.lo: neko/$(am__dirstamp) neko/$(DEPDIR)/$(am__dirstamp)
+neko/final_rank.lo: neko/$(am__dirstamp) \
+	neko/$(DEPDIR)/$(am__dirstamp)
+neko/maxent_classifier.lo: neko/$(am__dirstamp) \
+	neko/$(DEPDIR)/$(am__dirstamp)
+neko/mutual_information.lo: neko/$(am__dirstamp) \
+	neko/$(DEPDIR)/$(am__dirstamp)
 utils/$(am__dirstamp):
 	@$(MKDIR_P) utils
 	@: > utils/$(am__dirstamp)
-utils/readable_file.lo: utils/$(am__dirstamp)
-utils/strlcpy.lo: utils/$(am__dirstamp)
-utils/utils.lo: utils/$(am__dirstamp)
-utils/writable_file.lo: utils/$(am__dirstamp)
+utils/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) utils/$(DEPDIR)
+	@: > utils/$(DEPDIR)/$(am__dirstamp)
+utils/readable_file.lo: utils/$(am__dirstamp) \
+	utils/$(DEPDIR)/$(am__dirstamp)
+utils/strlcpy.lo: utils/$(am__dirstamp) \
+	utils/$(DEPDIR)/$(am__dirstamp)
+utils/utils.lo: utils/$(am__dirstamp) utils/$(DEPDIR)/$(am__dirstamp)
+utils/writable_file.lo: utils/$(am__dirstamp) \
+	utils/$(DEPDIR)/$(am__dirstamp)
 
 libmilkcat.la: $(libmilkcat_la_OBJECTS) $(libmilkcat_la_DEPENDENCIES) $(EXTRA_libmilkcat_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(CXXLINK) -rpath $(libdir) $(libmilkcat_la_OBJECTS) $(libmilkcat_la_LIBADD) $(LIBS)
@@ -543,14 +580,58 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@common/$(DEPDIR)/get_vocabulary.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/bigram_segmenter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/crf_model.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/crf_part_of_speech_tagger.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/crf_segmenter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/crf_tagger.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/hmm_model.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/hmm_part_of_speech_tagger.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/instance_data.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/libmilkcat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/mixed_segmenter.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/out_of_vocabulary_word_recognition.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/part_of_speech_tag_instance.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/term_instance.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/token_instance.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/token_lex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/tokenizer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@milkcat/$(DEPDIR)/trie_tree.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@neko/$(DEPDIR)/bigram_anal.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@neko/$(DEPDIR)/candidate.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@neko/$(DEPDIR)/crf_vocab.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@neko/$(DEPDIR)/final_rank.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@neko/$(DEPDIR)/maxent_classifier.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@neko/$(DEPDIR)/mutual_information.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/readable_file.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/strlcpy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/utils.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utils/$(DEPDIR)/writable_file.Plo@am__quote@
+
 .cc.o:
-	$(AM_V_CXX)$(CXXCOMPILE) -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
 .cc.obj:
-	$(AM_V_CXX)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cc.lo:
-	$(AM_V_CXX)$(LTCXXCOMPILE) -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -698,9 +779,13 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f common/$(DEPDIR)/$(am__dirstamp)
 	-rm -f common/$(am__dirstamp)
+	-rm -f milkcat/$(DEPDIR)/$(am__dirstamp)
 	-rm -f milkcat/$(am__dirstamp)
+	-rm -f neko/$(DEPDIR)/$(am__dirstamp)
 	-rm -f neko/$(am__dirstamp)
+	-rm -f utils/$(DEPDIR)/$(am__dirstamp)
 	-rm -f utils/$(am__dirstamp)
 
 maintainer-clean-generic:
@@ -712,6 +797,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
+	-rm -rf common/$(DEPDIR) milkcat/$(DEPDIR) neko/$(DEPDIR) utils/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -757,6 +843,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
+	-rm -rf common/$(DEPDIR) milkcat/$(DEPDIR) neko/$(DEPDIR) utils/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

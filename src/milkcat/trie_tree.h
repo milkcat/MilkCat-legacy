@@ -58,7 +58,7 @@ class DoubleArrayTrieTree: public TrieTree {
  public:
   static DoubleArrayTrieTree *New(const char *file_path, Status *status);
 
-  // Create the double array from the unordered_map data. The key of map is the
+  // Create the double array from the map data. The key of map is the
   // word itself, and the value of map is the id of word
   static DoubleArrayTrieTree *NewFromMap(
     const std::map<std::string, int> &src_map);
